@@ -15,7 +15,7 @@
 #include <NDArray.h>
 #include "dimension.h"
 
-void util_fill_ndarr_dims(NDArray &ndarr, unsigned long int *sizes, int ndims)
+void util_fill_ndarr_dims(NDArray &ndarr, dimsize_t *sizes, int ndims)
 {
     int i=0;
     ndarr.ndims = ndims;
@@ -27,7 +27,7 @@ struct DimensionFixture
 {
     NDArray ndarr_2d;
     NDArray ndarr_3d;
-    unsigned long int sizes[3];
+    dimsize_t sizes[3];
     NDArrayInfo_t ndarr_info;
 
     DimensionFixture()
@@ -136,12 +136,12 @@ struct DimensionFeatureFixture {
     NDArray ndarr_flat_frame;
     NDArray ndarr_2d_frame;
     NDArray ndarr_6d_dset;
-    unsigned long int small_even_sizes[3];
-    unsigned long int small_uneven_sizes[3];
-    unsigned long int large_even_sizes[3];
-    unsigned long int flat_frame_sizes[3];
-    unsigned long int frame_2d_sizes[2];
-    unsigned long int dset_6d_sizes[6];
+    dimsize_t small_even_sizes[3];
+    dimsize_t small_uneven_sizes[3];
+    dimsize_t large_even_sizes[3];
+    dimsize_t flat_frame_sizes[3];
+    dimsize_t frame_2d_sizes[2];
+    dimsize_t dset_6d_sizes[6];
 
     DimensionFeatureFixture(){
         BOOST_TEST_MESSAGE("Setup DimensionFeatureFixture");

@@ -67,6 +67,23 @@ void WriteConfig::get_fill_value(void *fill_value, size_t *max_size_bytes)
     *max_size_bytes = num_bytes;
 }
 
+/** Return the istore_k based on the chunking and full dataset size
+ * According to HDF5 forum an appropriate value is to use a value which is
+ * half the number of chunks in the full dataset.
+ */
+long int WriteConfig::istorek()
+{
+    int istore_k = 0;
+    int num_chunks_dset = 0;
+    num_chunks_dset = this->dim_chunk.num_fits( this->dim_full_dataset, true);
+    cout << "istorek num_chunks_dset: " << num_chunks_dset << endl;
+    // if invalid (i.e. the dataset size is not known or too small) we return error
+    if (num_chunks_dset <= 0) return -1;
+
+    istore_k = num_chunks_dset << 1;
+    return istore_k;
+}
+
 DimensionDesc WriteConfig::min_chunk_cache()
 {
     DimensionDesc min_cache_block = this->dim_roi_frame;
@@ -153,7 +170,7 @@ int WriteConfig::get_attr_fill_val(NDAttributeList *ptr_attr_list)
  * Parse a a series of attributes formatted: "h5_nnnn_%d"
  */
 int WriteConfig::get_attr_array(string& attr_name, NDAttributeList *ptr_attr_list,
-                                vector<unsigned long int>& dst)
+                                vec_ds_t& dst)
 {
     unsigned int i = 0;
     int size = 1;
@@ -162,6 +179,7 @@ int WriteConfig::get_attr_array(string& attr_name, NDAttributeList *ptr_attr_lis
         stringstream ss_attr(stringstream::out);
         ss_attr << attr_name << i;
         size = this->get_attr_value(ss_attr.str(), ptr_attr_list);
+        //cout << "get_attr_values return: " << size << endl;
         if (size > 0) dst.push_back((unsigned long)size);
         else break;
         i++;
@@ -177,7 +195,7 @@ void WriteConfig::parse_ndarray_attributes(NDArray& ndarray)
 {
     NDAttributeList * list = ndarray.pAttributeList;
     string attr_name;
-    vector <unsigned long int> tmpdims;
+    vec_ds_t tmpdims;
     int ret=0;
 
     // Get the dimensions of the ndarray.
@@ -189,27 +207,32 @@ void WriteConfig::parse_ndarray_attributes(NDArray& ndarray)
     this->dim_full_frame = this->dim_roi_frame;
 
     attr_name = ATTR_CHUNK_SIZE;
+    tmpdims.clear();
     ret = this->get_attr_array(attr_name, list, tmpdims);
     if (ret > 0) {
         this->dim_chunk = DimensionDesc(tmpdims, this->dim_roi_frame.element_size);
     }
 
     attr_name = ATTR_FRAME_SIZE;
+    tmpdims.clear();
     ret = this->get_attr_array(attr_name, list, tmpdims);
     if (ret > 0) {
         this->dim_full_frame = DimensionDesc(tmpdims, this->dim_roi_frame.element_size);
     }
 
     attr_name = ATTR_ROI_ORIGIN;
+    tmpdims.clear();
     ret = this->get_attr_array(attr_name, list, tmpdims);
     if (ret > 0) {
         // Todo: what to do with origins?
     }
 
     attr_name = ATTR_DSET_SIZE;
+    tmpdims.clear();
     ret = this->get_attr_array(attr_name, list, tmpdims);
     if (ret > 0) {
         this->dim_full_dataset = DimensionDesc(tmpdims, this->dim_roi_frame.element_size);
+        cout << "full dataset: " << this->dim_full_dataset << endl;
     }
 
     /* Collect the fill value from the ndarray attributes */
@@ -223,10 +246,11 @@ long int WriteConfig::get_attr_value(const string& attr_name, NDAttributeList *p
     long int retval = 0;
     int retcode = 0;
     NDAttribute *ptr_ndattr;
-    cout << "getting attribute: " << attr_name << endl;
+    //cout << "getting attribute: " << attr_name << endl;
     ptr_ndattr = ptr_attr_list->find(attr_name.c_str());
     if (ptr_ndattr == NULL) return -1;
     if (ptr_ndattr->dataType ==  NDAttrString ) return -1;
+
 
     retcode = ptr_ndattr->getValue(NDAttrUInt32, (void*)&retval, sizeof(long int));
     if (retcode == ND_ERROR) {

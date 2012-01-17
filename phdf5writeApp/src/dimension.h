@@ -16,21 +16,24 @@
 
 class NDArray; // forward declaration
 
+typedef unsigned long int dimsize_t;
+typedef std::vector<dimsize_t> vec_ds_t;
+
 // Describe an N-dimension blob.
 // A convenience class to keep track of dimension sizes, names and calculations
 class DimensionDesc {
 public:
     DimensionDesc();                          /** Default constructor */
     DimensionDesc(int num_dimensions,
-                  const unsigned long int *sizes,
+                  const dimsize_t *sizes,
                   size_t element_size=sizeof(short));   /** Constructor based on dimension arrays */
-    DimensionDesc(const std::vector<unsigned long int>& sizes,
+    DimensionDesc(const vec_ds_t& sizes,
                   size_t element_size=sizeof(short));   /** Constructor based on a vector of dimension sizes */
     DimensionDesc(NDArray& ndarr);                      /** NDArray constructor */
     DimensionDesc( const DimensionDesc& src);           /** copy constructor */
     ~DimensionDesc();
     DimensionDesc& operator=(const DimensionDesc& src); /** Assignment operator */
-    DimensionDesc& operator+=(const unsigned long int dimsize);
+    DimensionDesc& operator+=(const dimsize_t dimsize);
     DimensionDesc& operator+=(const DimensionDesc& src);
     bool operator==(const DimensionDesc& compare);
     bool operator!=(const DimensionDesc& compare);
@@ -43,7 +46,7 @@ public:
     std::string _str_();  /** Return a string representation of the object */
 
     int grow_by_block(DimensionDesc& block); /** Grow the dimensions in multiple of the input block */
-    const unsigned long int * dim_sizes();   /** return an array of the size of each dimension */
+    const dimsize_t * dim_sizes();   /** return an array of the size of each dimension */
     size_t data_num_bytes();       /** return the total number of data bytes in the dataset */
     long int data_num_elements();  /** return the total number of data elements in the dataset */
     int num_dimensions();          /** Return the number of dimensions in the block (rank) */
@@ -56,7 +59,7 @@ private:
     void copy(const DimensionDesc& src);
 
     // list of dimension sizes
-    std::vector<unsigned long int> dims;
+    vec_ds_t dims;
     // list of dimension names
 };
 

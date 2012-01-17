@@ -35,7 +35,7 @@ public:
     WriteConfig(std::string& filename, NDArray &ndarray);
     ~WriteConfig();
 
-    unsigned int istorek();
+    long int istorek();
     const HSIZE_T alignment;
     DimensionDesc min_chunk_cache();
     unsigned long int cache_num_slots( DimensionDesc& cache_block );
@@ -55,7 +55,7 @@ private:
     int get_attr_fill_val(NDAttributeList *ptr_attr_list);
     int get_attr_array(std::string& attr_name,
                        NDAttributeList *ptr_attr_list,
-                       std::vector<unsigned long int>& dst);
+                       vec_ds_t& dst);
     void parse_ndarray_attributes(NDArray& ndarray); // go through a list of attributes and turn them into dimensions
     long int get_attr_value(const std::string& attr_name, NDAttributeList *ptr_attr_list);
     void _default_init();

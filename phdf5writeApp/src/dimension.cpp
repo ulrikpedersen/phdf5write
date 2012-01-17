@@ -27,7 +27,7 @@ DimensionDesc::DimensionDesc()
 DimensionDesc::DimensionDesc(NDArray& ndarray)
 {
     int ndims = ndarray.ndims;
-    this->dims = vector<unsigned long int>(ndims);
+    this->dims = vec_ds_t(ndims);
     for (int i=0; i < ndims; i++)
     {
         this->dims[i] = ndarray.dims[i].size;
@@ -41,12 +41,12 @@ DimensionDesc::DimensionDesc(NDArray& ndarray)
 DimensionDesc::DimensionDesc(int num_dimensions, const unsigned long * sizes, size_t element_size)
 {
     this->dims.clear();
-    if (sizes != NULL) this->dims = vector<unsigned long int>(sizes, sizes+num_dimensions);
-    else this->dims = vector<unsigned long int>();
+    if (sizes != NULL) this->dims = vec_ds_t(sizes, sizes+num_dimensions);
+    else this->dims = vec_ds_t();
     this->element_size = element_size;
 }
 
-DimensionDesc::DimensionDesc(const vector <unsigned long int>& sizes, size_t element_size)
+DimensionDesc::DimensionDesc(const vec_ds_t& sizes, size_t element_size)
 {
     this->dims.clear();
     this->dims = sizes;
@@ -73,14 +73,14 @@ DimensionDesc& DimensionDesc::operator =(const DimensionDesc& src)
     return *this;
 }
 
-DimensionDesc& DimensionDesc::operator +=(const unsigned long int dimsize)
+DimensionDesc& DimensionDesc::operator +=(const dimsize_t dimsize)
 {
     this->dims.push_back(dimsize);
     return *this;
 }
 DimensionDesc& DimensionDesc::operator +=(const DimensionDesc& src)
 {
-    vector<unsigned long int> srcdims = src.dims;
+    vec_ds_t srcdims = src.dims;
     this->dims.insert(this->dims.end(), srcdims.begin(), srcdims.end());
     return *this;
 }
@@ -111,7 +111,7 @@ bool DimensionDesc::is_equal(const DimensionDesc& compare)
 void DimensionDesc::copy( const DimensionDesc& src)
 {
     this->dims.clear();
-    this->dims = vector<unsigned long int>(src.dims);
+    this->dims = vec_ds_t(src.dims);
     this->element_size = src.element_size;
 }
 
@@ -122,7 +122,7 @@ string DimensionDesc::DimensionDesc::_str_()
     out << "<DimensionDesc:";
     out << " n="<< this->dims.size();
     out << " [ ";
-    vector<unsigned long int>::const_iterator it;
+    vec_ds_t::const_iterator it;
     for (it = this->dims.begin(); it != this->dims.end(); ++it)
     {
         out << *it << ", ";
@@ -144,8 +144,8 @@ int DimensionDesc::grow_by_block(DimensionDesc& block)
     // This may be improved later so that a container with more dimensions can be checked.
     if (block.num_dimensions() != this->num_dimensions()) return -1;
 
-    vector<unsigned long int>::iterator it_this;
-    vector<unsigned long int>::const_iterator it_block;
+    vec_ds_t::iterator it_this;
+    vec_ds_t::const_iterator it_block;
     for (it_this=this->dims.begin(), it_block=block.dims.begin();
             it_this != this->dims.end();
             ++it_this, ++it_block)
@@ -153,14 +153,14 @@ int DimensionDesc::grow_by_block(DimensionDesc& block)
         block_size = (double)*it_block;
         this_size = (double)*it_this;
         div_result = ceil(this_size/block_size);
-        *it_this = (unsigned long int)(div_result * block_size);
+        *it_this = (dimsize_t)(div_result * block_size);
     }
     return 0;
 }
 
-const unsigned long int * DimensionDesc::dim_sizes()
+const dimsize_t * DimensionDesc::dim_sizes()
 {
-    const unsigned long int * ptr = this->dims.data();
+    const dimsize_t * ptr = this->dims.data();
     return ptr;
 }
 
@@ -178,7 +178,7 @@ long int DimensionDesc::data_num_elements()
     // in case no dimensions are defined we simply return zero.
     if (this->dims.size() <= 0) return 0;
 
-    vector<unsigned long int>::const_iterator it;
+    vec_ds_t::const_iterator it;
     for (it = this->dims.begin(); it != this->dims.end(); ++it)
     {
         num_elements *= *it;
@@ -198,11 +198,12 @@ int DimensionDesc::num_fits(DimensionDesc &container, bool overlap)
 {
     int result = 1;
     double div_result = 0.0;
-    vector<unsigned long int> tmpdims = this->dims;
+    vec_ds_t tmpdims = this->dims;
 
-    // sanity check: the container must have the same number of dimensions as this object...
-    // This may be improved later so that a container with more dimensions can be checked.
+    // sanity check: the container cannot have a smaller number of dimensions than this object...
     if (container.num_dimensions() < this->num_dimensions()) {
+        cout << "### ERROR: num fits problem: cont:" << container;
+        cout << " this: " << *this << endl;
         return -1;
     } else {
         // for each dimension that the container is bigger than this->dims we
@@ -212,7 +213,7 @@ int DimensionDesc::num_fits(DimensionDesc &container, bool overlap)
             tmpdims.push_back(1);
     }
     //cout << "tmp block size: " << tmpdims.size() << " container size: " << container.num_dimensions() << endl;
-    vector<unsigned long int>::const_iterator it_this, it_cont;
+    vec_ds_t::const_iterator it_this, it_cont;
     for (it_this=tmpdims.begin(), it_cont=container.dims.begin();
             it_this != tmpdims.end();
             ++it_this, ++it_cont)
@@ -240,7 +241,7 @@ int test_dimensiondesc_simple()
     int nddim[3] = {3,6,7};
     int fits = 0;
     NDArray ndarr;
-    unsigned long int sizes[3] = {8,12,14};
+    dimsize_t sizes[3] = {8,12,14};
 
     ndarr.dataType = NDUInt16;
     ndarr.ndims = 3;
