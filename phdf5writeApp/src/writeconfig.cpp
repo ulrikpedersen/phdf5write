@@ -6,6 +6,7 @@
  */
 #include <iostream>
 #include <sstream>
+#include <algorithm>
 #include <stdio.h>
 #include <stdlib.h>
 using namespace std;
@@ -75,13 +76,46 @@ DimensionDesc WriteConfig::min_chunk_cache()
     return min_cache_block;
 }
 
-/** Calculate the number of 'slots' in the cache. According to HDF5 documentation
- * this is advised to be a prime number of about 10 to 100 times the number of
- * chunks that fit in the cache.
- */
-unsigned int WriteConfig::cache_num_slots( DimensionDesc& cache_block )
-{
 
+/** Calculate the number of 'slots' in the cache.
+ * According to HDF5 documentation this is advised to be a prime number of
+ * about 10 to 100 times the number of chunks that fit in the cache.
+ * Returns a prime number. If the chunk dimensions does not fit in the
+ * cache_block a 0 is returned.
+ */
+unsigned long int WriteConfig::cache_num_slots( DimensionDesc& cache_block )
+{
+    cout << "num_fits in cache block" << endl;
+
+    int num_chunks = this->dim_chunk.num_fits(cache_block, true);
+    if (num_chunks <= 0) return 0; // a fault: the cache_block is smaller than the chunk dimensions
+
+    unsigned long int start_range =  10*num_chunks;
+    unsigned long int end_range   = 100*num_chunks;
+    cout << "start_range: " << start_range << endl;
+    vector<unsigned int long> range (end_range-start_range, 0);
+
+    // Range of numbers from 10 to 100 times the number of chunks in the cache block
+    for (unsigned long int i=start_range; i<end_range; i++) range[i-start_range] = i;
+
+    // find the first prime in the range
+    vector<unsigned int long>::iterator it_first_prime;
+    it_first_prime = find_if(range.begin(), range.end(), is_prime);
+
+    if (*it_first_prime <= 0) return 10*num_chunks;
+
+    return *it_first_prime;
+}
+
+string WriteConfig::_str_()
+{
+    stringstream out(stringstream::out);
+    out << "<WriteConfig:";
+    out << " filename=" << this->file_name();
+    out << " dset n=" << this->dim_full_dataset.num_dimensions();
+    out << " roi n=" << this->dim_roi_frame.num_dimensions();
+    out << ">";
+    return out.str();
 }
 
 /*========================================================================
@@ -89,6 +123,10 @@ unsigned int WriteConfig::cache_num_slots( DimensionDesc& cache_block )
  * Private method implementations
  *
  * ======================================================================= */
+void WriteConfig::_default_init()
+{
+    this->ptr_fill_value = (void*)calloc(FILL_VALUE_SIZE, sizeof(char));
+}
 
 
 int WriteConfig::get_attr_fill_val(NDAttributeList *ptr_attr_list)
@@ -115,20 +153,20 @@ int WriteConfig::get_attr_fill_val(NDAttributeList *ptr_attr_list)
  * Parse a a series of attributes formatted: "h5_nnnn_%d"
  */
 int WriteConfig::get_attr_array(string& attr_name, NDAttributeList *ptr_attr_list,
-                                unsigned long int **dst, size_t max_num_elements)
+                                vector<unsigned long int>& dst)
 {
     unsigned int i = 0;
-    int size = 0;
-    unsigned long int* sizes = *dst;
-    for(i=0; i<max_num_elements; i++)
+    int size = 1;
+    while (size > 0)
     {
         stringstream ss_attr(stringstream::out);
         ss_attr << attr_name << i;
         size = this->get_attr_value(ss_attr.str(), ptr_attr_list);
-        if (size > 0) sizes[i] += (unsigned long)size;
+        if (size > 0) dst.push_back((unsigned long)size);
         else break;
+        i++;
     }
-    return i-1;
+    return dst.size();
 }
 
 /** Parse the attributes of an NDArray and use the information
@@ -139,8 +177,7 @@ void WriteConfig::parse_ndarray_attributes(NDArray& ndarray)
 {
     NDAttributeList * list = ndarray.pAttributeList;
     string attr_name;
-    unsigned long int *tmpdims;
-    tmpdims = (unsigned long int*)calloc(ND_ARRAY_MAX_DIMS, sizeof(unsigned long int));
+    vector <unsigned long int> tmpdims;
     int ret=0;
 
     // Get the dimensions of the ndarray.
@@ -152,36 +189,33 @@ void WriteConfig::parse_ndarray_attributes(NDArray& ndarray)
     this->dim_full_frame = this->dim_roi_frame;
 
     attr_name = ATTR_CHUNK_SIZE;
-    ret = this->get_attr_array(attr_name, list, &tmpdims, ND_ARRAY_MAX_DIMS);
+    ret = this->get_attr_array(attr_name, list, tmpdims);
     if (ret > 0) {
-        this->dim_chunk = DimensionDesc(ret, tmpdims, this->dim_roi_frame.element_size);
+        this->dim_chunk = DimensionDesc(tmpdims, this->dim_roi_frame.element_size);
     }
 
     attr_name = ATTR_FRAME_SIZE;
-    ret = this->get_attr_array(attr_name, list, &tmpdims, ND_ARRAY_MAX_DIMS);
+    ret = this->get_attr_array(attr_name, list, tmpdims);
     if (ret > 0) {
-        this->dim_full_frame = DimensionDesc(ret, tmpdims, this->dim_roi_frame.element_size);
+        this->dim_full_frame = DimensionDesc(tmpdims, this->dim_roi_frame.element_size);
     }
 
     attr_name = ATTR_ROI_ORIGIN;
-    ret = this->get_attr_array(attr_name, list, &tmpdims, ND_ARRAY_MAX_DIMS);
+    ret = this->get_attr_array(attr_name, list, tmpdims);
     if (ret > 0) {
         // Todo: what to do with origins?
     }
 
     attr_name = ATTR_DSET_SIZE;
-    ret = this->get_attr_array(attr_name, list, &tmpdims, ND_ARRAY_MAX_DIMS);
+    ret = this->get_attr_array(attr_name, list, tmpdims);
     if (ret > 0) {
-        this->dim_full_dataset = DimensionDesc(ret, tmpdims, this->dim_roi_frame.element_size);
+        this->dim_full_dataset = DimensionDesc(tmpdims, this->dim_roi_frame.element_size);
     }
 
     /* Collect the fill value from the ndarray attributes */
     ret = this->get_attr_fill_val(list);
 
-    free(tmpdims);
-
-    cout << this->dim_roi_frame << " ";
-    cout << this->dim_chunk << endl;
+    cout << *this << endl;
 }
 
 long int WriteConfig::get_attr_value(const string& attr_name, NDAttributeList *ptr_attr_list)
@@ -202,13 +236,25 @@ long int WriteConfig::get_attr_value(const string& attr_name, NDAttributeList *p
     return retval;
 }
 
-void WriteConfig::_default_init()
-{
-    this->ptr_fill_value = (void*)calloc(FILL_VALUE_SIZE, sizeof(char));
-}
 
 bool WriteConfig::delay_dim_config()
 {
     if (this->dim_roi_frame.num_dimensions() <= 0) return false;
     else return true;
+}
+
+/** find out whether or not the input is a prime number.
+ * Returns true if number is a prime. False if not.
+ */
+bool is_prime(unsigned int long number)
+{
+    //0 and 1 are prime numbers
+    if(number == 0 || number == 1) return true;
+
+    //find divisor that divides without a remainder
+    int divisor;
+    for(divisor = (number/2); (number%divisor) != 0; --divisor){;}
+
+    //if no divisor greater than 1 is found, it is a prime number
+    return divisor == 1;
 }

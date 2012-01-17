@@ -38,19 +38,28 @@ public:
     unsigned int istorek();
     const HSIZE_T alignment;
     DimensionDesc min_chunk_cache();
-    unsigned int cache_num_slots( DimensionDesc& cache_block );
+    unsigned long int cache_num_slots( DimensionDesc& cache_block );
     void get_fill_value(void *fill_value, size_t *max_size_bytes);
 
     std::string file_name();
     bool delay_dim_config();
 
+    /** Stream operator: use to prints a string representation of this class */
+    inline friend std::ostream& operator<<(std::ostream& out, WriteConfig& wc) {
+        out << wc._str_();
+        return out;
+    }
+    std::string _str_();  /** Return a string representation of the object */
+
 private:
     int get_attr_fill_val(NDAttributeList *ptr_attr_list);
-    int get_attr_array(std::string& attr_name, NDAttributeList *ptr_attr_list,
-                                    unsigned long int *dst[], size_t max_num_elements);
+    int get_attr_array(std::string& attr_name,
+                       NDAttributeList *ptr_attr_list,
+                       std::vector<unsigned long int>& dst);
     void parse_ndarray_attributes(NDArray& ndarray); // go through a list of attributes and turn them into dimensions
     long int get_attr_value(const std::string& attr_name, NDAttributeList *ptr_attr_list);
     void _default_init();
+
     DimensionDesc dim_chunk;
     DimensionDesc dim_roi_frame;
     DimensionDesc dim_full_frame;
@@ -60,5 +69,8 @@ private:
     void * ptr_fill_value;
     std::string str_file_name;
 };
+
+// utility functions
+bool is_prime(unsigned int long number);
 
 #endif /* WRITECONFIG_HPP_ */

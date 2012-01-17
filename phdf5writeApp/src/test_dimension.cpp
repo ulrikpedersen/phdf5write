@@ -134,10 +134,14 @@ struct DimensionFeatureFixture {
     NDArray ndarr_small_uneven;
     NDArray ndarr_large_even;
     NDArray ndarr_flat_frame;
+    NDArray ndarr_2d_frame;
+    NDArray ndarr_6d_dset;
     unsigned long int small_even_sizes[3];
     unsigned long int small_uneven_sizes[3];
     unsigned long int large_even_sizes[3];
     unsigned long int flat_frame_sizes[3];
+    unsigned long int frame_2d_sizes[2];
+    unsigned long int dset_6d_sizes[6];
 
     DimensionFeatureFixture(){
         BOOST_TEST_MESSAGE("Setup DimensionFeatureFixture");
@@ -156,6 +160,19 @@ struct DimensionFeatureFixture {
         flat_frame_sizes[0]=1; flat_frame_sizes[1]=13; flat_frame_sizes[2]=23;
         ndarr_flat_frame.dataType = NDUInt16;
         util_fill_ndarr_dims(ndarr_flat_frame, flat_frame_sizes, 3);
+
+        frame_2d_sizes[0]=3; frame_2d_sizes[1]=7;
+        ndarr_2d_frame.dataType = NDUInt16;
+        util_fill_ndarr_dims(ndarr_2d_frame, frame_2d_sizes, 2);
+
+        dset_6d_sizes[0] = 23;
+        dset_6d_sizes[1] = 45;
+        dset_6d_sizes[2] = 4;
+        dset_6d_sizes[3] = 5;
+        dset_6d_sizes[4] = 6;
+        dset_6d_sizes[5] = 2;
+        ndarr_6d_dset.dataType = NDUInt16;
+        util_fill_ndarr_dims(ndarr_6d_dset, dset_6d_sizes, 6);
 }
     ~DimensionFeatureFixture(){
         BOOST_TEST_MESSAGE("Teardown DimensionFeatureFixture");
@@ -198,6 +215,48 @@ BOOST_AUTO_TEST_CASE(num_fit_2)
     BOOST_CHECK( dim1.num_fits(dim2, false) == 3*2*1 ); // fits inside container (no overlap)
     BOOST_CHECK( dim1.num_fits(dim2, true) == 4*3*2 ); // cover full container (with overlap)
 }
+
+// Boundry case: the container being smaller size than the block
+BOOST_AUTO_TEST_CASE(num_fit_3)
+{
+    DimensionDesc dim1(ndarr_small_uneven);
+    DimensionDesc dim2(ndarr_large_even);
+    BOOST_CHECK( dim2.num_fits(dim1, false) == 0 ); // fits inside container (no overlap)
+    BOOST_CHECK( dim2.num_fits(dim1, true) == 1 ); // cover full container (with overlap)
+}
+
+// Boundry case: the block has fewer dimensions than the container
+//               This should be OK as the block should expand it's number
+//               of dimensions temporarily with size 1 to match the container.
+BOOST_AUTO_TEST_CASE(num_fit_4)
+{
+    DimensionDesc dim1(ndarr_2d_frame);
+    DimensionDesc dim2(ndarr_large_even);
+    BOOST_CHECK( dim1.num_fits(dim2, false) == 3*2*20 ); // fits inside container (no overlap)
+    BOOST_CHECK( dim1.num_fits(dim2, true) == 4*3*20 ); // cover full container (with overlap)
+}
+
+// Boundry case: the block has more dimensions than the container
+//               This is not ok so the return value is -1
+BOOST_AUTO_TEST_CASE(num_fit_5)
+{
+    DimensionDesc dim1(ndarr_2d_frame);
+    DimensionDesc dim2(ndarr_large_even);
+    BOOST_CHECK( dim2.num_fits(dim1, false) == -1 ); // fits inside container (no overlap)
+    BOOST_CHECK( dim2.num_fits(dim1, true) == -1 ); // cover full container (with overlap)
+}
+
+// Boundry case: the block has fewer dimensions than the container
+//               This should be OK as the block should expand it's number
+//               of dimensions temporarily with size 1 to match the container.
+BOOST_AUTO_TEST_CASE(num_fit_6)
+{
+    DimensionDesc dim1(ndarr_2d_frame);
+    DimensionDesc dim2(ndarr_6d_dset);
+    BOOST_CHECK( dim1.num_fits(dim2, false) == 7*6*4*5*6*2); // fits inside container (no overlap)
+    BOOST_CHECK( dim1.num_fits(dim2, true) == 8*7*4*5*6*2 ); // cover full container (with overlap)
+}
+
 
 BOOST_AUTO_TEST_CASE(object_string)
 {

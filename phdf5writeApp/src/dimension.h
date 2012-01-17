@@ -24,6 +24,8 @@ public:
     DimensionDesc(int num_dimensions,
                   const unsigned long int *sizes,
                   size_t element_size=sizeof(short));   /** Constructor based on dimension arrays */
+    DimensionDesc(const std::vector<unsigned long int>& sizes,
+                  size_t element_size=sizeof(short));   /** Constructor based on a vector of dimension sizes */
     DimensionDesc(NDArray& ndarr);                      /** NDArray constructor */
     DimensionDesc( const DimensionDesc& src);           /** copy constructor */
     ~DimensionDesc();

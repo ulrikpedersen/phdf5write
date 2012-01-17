@@ -95,5 +95,14 @@ BOOST_AUTO_TEST_CASE(simple)
     BOOST_TEST_MESSAGE( cache_block._str_() );
 }
 
+BOOST_AUTO_TEST_CASE(cache_num_slots)
+{
+    WriteConfig wc(fname, ndarr_2d);
+    HSIZE_T cachebytes=0;
+    DimensionDesc cache_block = wc.min_chunk_cache();
+    unsigned long int num_slots = wc.cache_num_slots( cache_block );
+    BOOST_CHECK_MESSAGE( is_prime(num_slots), num_slots );
+}
+
 BOOST_AUTO_TEST_SUITE_END()
 

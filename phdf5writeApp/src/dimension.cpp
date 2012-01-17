@@ -46,6 +46,13 @@ DimensionDesc::DimensionDesc(int num_dimensions, const unsigned long * sizes, si
     this->element_size = element_size;
 }
 
+DimensionDesc::DimensionDesc(const vector <unsigned long int>& sizes, size_t element_size)
+{
+    this->dims.clear();
+    this->dims = sizes;
+    this->element_size = element_size;
+}
+
 DimensionDesc::DimensionDesc( const DimensionDesc& src)
 {
     this->copy(src);
@@ -191,15 +198,23 @@ int DimensionDesc::num_fits(DimensionDesc &container, bool overlap)
 {
     int result = 1;
     double div_result = 0.0;
+    vector<unsigned long int> tmpdims = this->dims;
 
     // sanity check: the container must have the same number of dimensions as this object...
     // This may be improved later so that a container with more dimensions can be checked.
-    if (container.num_dimensions() != this->num_dimensions()) return -1;
-
-    //const long int *container_dims = container.dim_sizes();
+    if (container.num_dimensions() < this->num_dimensions()) {
+        return -1;
+    } else {
+        // for each dimension that the container is bigger than this->dims we
+        // add an additional dimension of size 1.
+        // So tmpdims will get the same number of dimensions as the container.
+        while ((int)tmpdims.size() < container.num_dimensions())
+            tmpdims.push_back(1);
+    }
+    //cout << "tmp block size: " << tmpdims.size() << " container size: " << container.num_dimensions() << endl;
     vector<unsigned long int>::const_iterator it_this, it_cont;
-    for (it_this=this->dims.begin(), it_cont=container.dims.begin();
-            it_this != this->dims.end();
+    for (it_this=tmpdims.begin(), it_cont=container.dims.begin();
+            it_this != tmpdims.end();
             ++it_this, ++it_cont)
     {
         div_result = (double)*it_cont / (double)*it_this;
@@ -208,6 +223,7 @@ int DimensionDesc::num_fits(DimensionDesc &container, bool overlap)
         else div_result = floor(div_result);
 
         result *= (int)div_result;
+        //cout << "div_result: " << result << endl;
     }
     return result;
 }
