@@ -63,6 +63,18 @@ test_writeconfig_LIBS += boost_unit_test_framework
 boost_unit_test_framework_DIR=$(BOOSTDIR)/lib
 test_writeconfig_LDFLAGS += -L$(BOOSTDIR)/lib
 
+PROD_IOC += test_ndarray_hdf5
+test_ndarray_hdf5_INCLUDES = -I$(BOOSTDIR)/include
+test_ndarray_hdf5_SRCS_DEFAULT += test_ndarray_hdf5.cpp
+test_ndarray_hdf5_OBJS += dimension writeconfig ndarray_hdf5
+test_ndarray_hdf5_LIBS += adtransferPlugin asyn ADBase NDPlugin Com
+test_ndarray_hdf5_LIBS += boost_unit_test_framework
+boost_unit_test_framework_DIR=$(BOOSTDIR)/lib
+test_ndarray_hdf5_LDFLAGS += -L$(BOOSTDIR)/lib
+test_ndarray_hdf5_LIBS += mpi_cxx mpi open-rte open-pal 
+test_ndarray_hdf5_SYS_LIBS += dl nsl util m dl z
+test_ndarray_hdf5_LIBS += hdf5 sz
+
 endif
 
 # ------------------------

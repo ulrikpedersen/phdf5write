@@ -7,6 +7,7 @@
 
 #include <cstdlib>
 #include <iostream>
+#include <string>
 using namespace std;
 
 #include <NDArray.h>
@@ -17,13 +18,16 @@ using namespace std;
 int NDArrayToHDF5::h5_open(const char *filename)
 {
     int retcode = 0;
-
+    string fname(filename);
     return retcode;
 }
 
 int NDArrayToHDF5::h5_write(NDArray& ndarray)
 {
     int retcode = 0;
+
+    this->conf.next_frame(ndarray);
+    msg(this->conf._str_());
 
     return retcode;
 }

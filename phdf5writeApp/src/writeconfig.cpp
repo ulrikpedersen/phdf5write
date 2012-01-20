@@ -32,6 +32,14 @@ WriteConfig::WriteConfig()
     this->_default_init();
 }
 
+WriteConfig::WriteConfig(string& filename)
+:alignment(H5_DEFAULT_ALIGN)
+{
+    this->_default_init();
+    this->str_file_name = filename;
+}
+
+
 WriteConfig::WriteConfig(string& filename, NDArray& ndarray)
 :alignment(H5_DEFAULT_ALIGN)
 {
@@ -127,6 +135,12 @@ void WriteConfig::inc_position(NDArray& ndarray)
  */
 int WriteConfig::next_frame(NDArray& ndarray)
 {
+    // First check whether this instance has been configured with or without
+    // an initial NDArray. If not, run the NDArray attribute parser to initialise.
+    if (this->dim_roi_frame.num_dimensions() == 0) {
+        this->parse_ndarray_attributes(ndarray);
+    }
+
     this->inc_position(ndarray);
 
     // TODO: what can we do about dropped/lost frames here?

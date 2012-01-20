@@ -15,6 +15,7 @@
 #include <hdf5.h>
 
 #include "dimension.h"
+#include "writeconfig.hpp"
 
 class NDArray; //forward declaration
 
@@ -41,9 +42,11 @@ public:
 
 protected:
     // print error and debug messages by default
-    virtual void msg(const char *msg,
+    virtual void msg(std::string text, bool error=false)
+        { msg(text.c_str(), error);};
+    virtual void msg(const char *text,
                      bool error=false)
-    { std::cout << "NDArrayToHDF5: " << msg << std::endl;};
+        { std::cout << "NDArrayToHDF5: " << text << std::endl;};
 
 private:
     // attribute dataset operations
@@ -65,10 +68,7 @@ private:
     int write_h5attr_nxs(){};
 
     //===== properties and attributes regarding file and dataset access =======
-
-    // file access
-    hsize_t alignment;
-    unsigned int istorek;
+    WriteConfig conf;
 
     //===== HDF5 library handles ===============================================
     hid_t h5file;

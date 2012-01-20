@@ -30,7 +30,7 @@ class NDAttributeList;
 class WriteConfig {
 public:
     WriteConfig();
-    //WriteConfig(std::string& filename);
+    WriteConfig(std::string& filename);
     WriteConfig(std::string& filename, NDArray &ndarray);
     ~WriteConfig();
 
