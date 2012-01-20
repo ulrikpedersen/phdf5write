@@ -97,6 +97,7 @@ BOOST_AUTO_TEST_CASE(simple)
     size_t nbytes = sizeof(int);
 
     WriteConfig wc(fname, ndarr_2d);
+    BOOST_TEST_MESSAGE( wc._str_() );
     BOOST_CHECK( wc.file_name() == fname );
     BOOST_CHECK( wc.alignment == H5_DEFAULT_ALIGN );
 
@@ -138,3 +139,103 @@ BOOST_AUTO_TEST_CASE(istorek_2)
 
 BOOST_AUTO_TEST_SUITE_END()
 
+struct DynamicFixture{
+    std::string fname;
+    NDArray frames[3];
+    unsigned long int sizes[3], chunks[3], dsetdims[3];
+    unsigned long int zero;
+
+    DynamicFixture()
+    {
+        BOOST_TEST_MESSAGE("setup DynamicFixture");
+        zero = 0;
+        fname = "Dynamic.h5";
+        sizes[0]=1; sizes[1]=2;
+        chunks[0]=1; chunks[1]=2; chunks[2]=2;
+        dsetdims[0]=2; dsetdims[1]=4; dsetdims[2]=3;
+        for (int i=0; i<3; i++)
+        {
+            util_fill_ndarr_dims( frames[i], sizes, 2);
+            frames[i].pAttributeList->add("h5_chunk_size_0", "dimension 0", NDAttrUInt32, (void*)(chunks) );
+            frames[i].pAttributeList->add("h5_chunk_size_1", "dimension 1", NDAttrUInt32, (void*)(chunks+1) );
+            frames[i].pAttributeList->add("h5_chunk_size_2", "dimension 2", NDAttrUInt32, (void*)(chunks+2) );
+
+            frames[i].pAttributeList->add("h5_dset_size_0", "dset 0", NDAttrUInt32, (void*)(dsetdims) );
+            frames[i].pAttributeList->add("h5_dset_size_1", "dset 1", NDAttrUInt32, (void*)(dsetdims+1) );
+            frames[i].pAttributeList->add("h5_dset_size_2", "dset 2", NDAttrUInt32, (void*)(dsetdims+2) );
+
+            //frames[i].report(11);
+        }
+    }
+    ~DynamicFixture()
+    {
+        BOOST_TEST_MESSAGE("teardown DynamicFixture");
+
+    }
+};
+
+BOOST_FIXTURE_TEST_SUITE(dynamic, DynamicFixture)
+
+BOOST_AUTO_TEST_CASE(frames_attr_offset)
+{
+    for (int i=0; i<3; i++)
+    {
+        frames[i].pAttributeList->add("h5_roi_origin_0", "offset 0", NDAttrUInt32, (void*)&zero );
+        frames[i].pAttributeList->add("h5_roi_origin_1", "offset 1", NDAttrUInt32, (void*)&zero );
+        frames[i].pAttributeList->add("h5_roi_origin_2", "offset 2", NDAttrUInt32, (void*)&i );
+    }
+
+    WriteConfig wc(fname, frames[0]);
+    HSIZE_T cachebytes=0;
+    BOOST_TEST_MESSAGE( "WC created: \n" << wc._str_() );
+    BOOST_CHECK( wc.get_offsets().size() == 0);
+    BOOST_CHECK( wc.get_dset_dims()[0] == dsetdims[0]);
+    BOOST_CHECK( wc.get_dset_dims()[1] == dsetdims[1]);
+
+    wc.next_frame( frames[0] );
+    BOOST_TEST_MESSAGE( "  ADDED FRAME 0\n" << wc._str_() );
+    BOOST_CHECK( wc.get_offsets()[0] == 0);
+    BOOST_CHECK( wc.get_offsets()[2] == 0);
+    BOOST_CHECK( wc.get_dset_dims()[2] == 1);
+
+    wc.next_frame( frames[1] );
+    BOOST_TEST_MESSAGE( "  ADDED FRAME 1\n" << wc._str_() );
+    BOOST_CHECK( wc.get_offsets()[2] == 1);
+    BOOST_CHECK( wc.get_dset_dims()[2] == 2);
+
+    wc.next_frame( frames[2] );
+    BOOST_TEST_MESSAGE( "  ADDED FRAME 2\n" << wc._str_() );
+    BOOST_CHECK( wc.get_offsets()[2] == 2);
+    BOOST_CHECK( wc.get_dset_dims()[2] == 3);
+}
+
+BOOST_AUTO_TEST_CASE(frames_auto_offset)
+{
+    WriteConfig wc(fname, frames[0]);
+    HSIZE_T cachebytes=0;
+    BOOST_TEST_MESSAGE( "WC created: \n" << wc._str_() );
+    BOOST_CHECK( wc.get_offsets().size() == 0);
+    BOOST_CHECK( wc.get_dset_dims()[0] == dsetdims[0]);
+    BOOST_CHECK( wc.get_dset_dims()[1] == dsetdims[1]);
+
+    wc.next_frame( frames[0] );
+    BOOST_TEST_MESSAGE( "  ADDED FRAME 0\n" << wc._str_() );
+    BOOST_CHECK( wc.get_offsets()[0] == 0);
+    BOOST_CHECK( wc.get_offsets()[2] == 0);
+    BOOST_CHECK( wc.get_dset_dims()[2] == 1);
+
+    wc.next_frame( frames[1] );
+    BOOST_TEST_MESSAGE( "  ADDED FRAME 1\n" << wc._str_() );
+    BOOST_CHECK( wc.get_offsets()[2] == 1);
+    BOOST_CHECK( wc.get_dset_dims()[2] == 2);
+
+    wc.next_frame( frames[2] );
+    BOOST_TEST_MESSAGE( "  ADDED FRAME 2\n" << wc._str_() );
+    BOOST_CHECK( wc.get_offsets()[2] == 2);
+    BOOST_CHECK( wc.get_dset_dims()[2] == 3);
+}
+
+
+
+
+BOOST_AUTO_TEST_SUITE_END()

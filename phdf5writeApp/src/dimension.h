@@ -45,8 +45,11 @@ public:
     }
     std::string _str_();  /** Return a string representation of the object */
 
+    int set_dimension_size(int dimension, dimsize_t size);
+
     int grow_by_block(DimensionDesc& block); /** Grow the dimensions in multiple of the input block */
     const dimsize_t * dim_sizes();   /** return an array of the size of each dimension */
+    vec_ds_t dim_size_vec();            /** return a copy of the dimension size vector */
     size_t data_num_bytes();       /** return the total number of data bytes in the dataset */
     long int data_num_elements();  /** return the total number of data elements in the dataset */
     int num_dimensions();          /** Return the number of dimensions in the block (rank) */

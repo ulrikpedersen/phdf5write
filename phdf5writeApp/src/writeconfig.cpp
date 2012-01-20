@@ -59,6 +59,80 @@ string WriteConfig::file_name()
     return this->str_file_name;
 }
 
+void WriteConfig::inc_position(NDArray& ndarray)
+{
+    NDAttributeList * list = ndarray.pAttributeList;
+    string attr_name;
+    vec_ds_t attr_origins;
+    vec_ds_t::iterator it_origen;
+    int idim = 0;
+    int ret = 0;
+
+    attr_name = ATTR_ROI_ORIGIN;
+    ret = this->get_attr_array(attr_name, list, attr_origins);
+    if (ret == this->dim_full_dataset.num_dimensions()) {
+        // Origins/Offsets from the NDArray attribute if they are available for every dimension.
+        this->origin = attr_origins;
+    } else {
+        // if origin not available as NDAttr for every dimension then
+        // we increment manually.
+
+        // If this is the first frame to write then we need to create the origin
+        // vector and initialise it to zero
+        if (this->origin.size() <= 0) {
+            // Get the position/origin of the ROI within the full detector frame or
+            // the full dataset.
+            // By default all origins are set to 0
+            this->origin = vec_ds_t(this->dim_full_dataset.num_dimensions(), 0);
+        } else {
+            // Iterator for the origen vector, which starts at the first extra dimension.
+            // (i.e. after the image width, height dimensions...)
+            vec_ds_t full_dset_dims = this->dim_full_dataset.dim_size_vec();
+            idim = this->dim_roi_frame.num_dimensions();
+
+            // Loop through extra dimensions to increment one frame
+            // in origin/offset and the active dataset
+            for (it_origen = this->origin.begin()+idim;
+                    it_origen != this->origin.end();
+                    ++it_origen, idim++)
+            {
+                (*it_origen)++;
+
+                // check if the end of this dimension has been reached
+                if (*it_origen == full_dset_dims.at(idim)) {
+                    // reset if it has and next iteration will increment next dim
+                    *it_origen=0;
+                } else {
+                    // else we are done: just incremented one dim and finish
+                    break;
+                }
+            }
+        }
+    }
+
+    // Loop through extra dimensions to increment one frame
+    // in the active dataset
+    idim = this->dim_roi_frame.num_dimensions();
+    for (it_origen = this->origin.begin()+idim;
+         it_origen != this->origin.end();
+         ++it_origen, idim++)
+    {
+        this->dim_active_dataset.set_dimension_size(idim, *it_origen + 1);
+    }
+}
+
+/** Next frame to process. Increment the state of origin.
+ *
+ * TODO: Full implementation of the next_frame function. Currently it only calls inc_position.
+ */
+int WriteConfig::next_frame(NDArray& ndarray)
+{
+    this->inc_position(ndarray);
+
+    // TODO: what can we do about dropped/lost frames here?
+    return 0;
+}
+
 void WriteConfig::get_fill_value(void *fill_value, size_t *max_size_bytes)
 {
     size_t num_bytes = FILL_VALUE_SIZE;
@@ -128,10 +202,13 @@ string WriteConfig::_str_()
 {
     stringstream out(stringstream::out);
     out << "<WriteConfig:";
-    out << " filename=" << this->file_name();
-    out << " dset n=" << this->dim_full_dataset.num_dimensions();
-    out << " roi n=" << this->dim_roi_frame.num_dimensions();
-    out << ">";
+    out << " filename=  " << this->file_name();
+    out << "\n\tROI:    " << this->dim_roi_frame;
+    out << "\n\tchunk:  " << this->dim_chunk;
+    out << "\n\tdset:   " << this->dim_full_dataset;
+    out << "\n\tactive: " << this->dim_active_dataset;
+    out << "\n\toffset: " << DimensionDesc(this->origin, this->dim_roi_frame.element_size)._str_();
+    out << "\n /WriteConfig>";
     return out.str();
 }
 
@@ -145,6 +222,17 @@ void WriteConfig::_default_init()
     this->ptr_fill_value = (void*)calloc(FILL_VALUE_SIZE, sizeof(char));
 }
 
+DimensionDesc WriteConfig::get_detector_dims()
+{
+    vec_ds_t tmpdims;
+    // Get the individual detector frame size from a combination of the ndarray (ROI)
+    // and the full dataset size. The ROI will tell how many dimensions the detector produce
+    // and the actual size can be found from the first dimensions of the full dataset size.
+    int ndims = this->dim_roi_frame.num_dimensions();
+    vec_ds_t vec_dset = this->dim_full_dataset.dim_size_vec();
+    tmpdims.assign(vec_dset.begin(), vec_dset.begin()+ndims);
+    return DimensionDesc(tmpdims, this->dim_roi_frame.element_size);
+}
 
 int WriteConfig::get_attr_fill_val(NDAttributeList *ptr_attr_list)
 {
@@ -173,14 +261,15 @@ int WriteConfig::get_attr_array(string& attr_name, NDAttributeList *ptr_attr_lis
                                 vec_ds_t& dst)
 {
     unsigned int i = 0;
-    int size = 1;
-    while (size > 0)
+    int retcode = 0;
+    int attr_value = 0;
+    while (retcode >= 0)
     {
         stringstream ss_attr(stringstream::out);
         ss_attr << attr_name << i;
-        size = this->get_attr_value(ss_attr.str(), ptr_attr_list);
-        //cout << "get_attr_values return: " << size << endl;
-        if (size > 0) dst.push_back((unsigned long)size);
+        retcode = this->get_attr_value(ss_attr.str(), ptr_attr_list, &attr_value);
+        //cout << "get_attr_values (" << ss_attr.str() << ")return: " << attr_value << endl;
+        if (retcode >= 0) dst.push_back((unsigned long)attr_value);
         else break;
         i++;
     }
@@ -204,8 +293,8 @@ void WriteConfig::parse_ndarray_attributes(NDArray& ndarray)
     // if this information is available in the ndarray attributes.
     this->dim_roi_frame = DimensionDesc(ndarray);
     this->dim_chunk = this->dim_roi_frame;
-    this->dim_full_frame = this->dim_roi_frame;
 
+    // Get the chunking size from the NDArray attributes
     attr_name = ATTR_CHUNK_SIZE;
     tmpdims.clear();
     ret = this->get_attr_array(attr_name, list, tmpdims);
@@ -213,20 +302,7 @@ void WriteConfig::parse_ndarray_attributes(NDArray& ndarray)
         this->dim_chunk = DimensionDesc(tmpdims, this->dim_roi_frame.element_size);
     }
 
-    attr_name = ATTR_FRAME_SIZE;
-    tmpdims.clear();
-    ret = this->get_attr_array(attr_name, list, tmpdims);
-    if (ret > 0) {
-        this->dim_full_frame = DimensionDesc(tmpdims, this->dim_roi_frame.element_size);
-    }
-
-    attr_name = ATTR_ROI_ORIGIN;
-    tmpdims.clear();
-    ret = this->get_attr_array(attr_name, list, tmpdims);
-    if (ret > 0) {
-        // Todo: what to do with origins?
-    }
-
+    // Get the full dataset size from the NDArray attributes
     attr_name = ATTR_DSET_SIZE;
     tmpdims.clear();
     ret = this->get_attr_array(attr_name, list, tmpdims);
@@ -235,13 +311,22 @@ void WriteConfig::parse_ndarray_attributes(NDArray& ndarray)
         cout << "full dataset: " << this->dim_full_dataset << endl;
     }
 
+    // Configure the current active dataset with the frame dimensions and the
+    // additional dimensions all set to 1
+    this->dim_active_dataset = this->get_detector_dims();
+    vec_ds_t vec_act_dset = this->dim_active_dataset.dim_size_vec();
+    int nextradims = this->dim_full_dataset.num_dimensions() - this->dim_roi_frame.num_dimensions();
+    vec_act_dset.insert(vec_act_dset.end(), nextradims, 1);
+    this->dim_active_dataset = DimensionDesc(vec_act_dset, this->dim_roi_frame.element_size);
+    cout << this->dim_active_dataset << endl;
+
     /* Collect the fill value from the ndarray attributes */
     ret = this->get_attr_fill_val(list);
 
-    cout << *this << endl;
+    //cout << *this << endl;
 }
 
-long int WriteConfig::get_attr_value(const string& attr_name, NDAttributeList *ptr_attr_list)
+int WriteConfig::get_attr_value(const string& attr_name, NDAttributeList *ptr_attr_list, int *attr_value)
 {
     long int retval = 0;
     int retcode = 0;
@@ -251,12 +336,11 @@ long int WriteConfig::get_attr_value(const string& attr_name, NDAttributeList *p
     if (ptr_ndattr == NULL) return -1;
     if (ptr_ndattr->dataType ==  NDAttrString ) return -1;
 
-
-    retcode = ptr_ndattr->getValue(NDAttrUInt32, (void*)&retval, sizeof(long int));
+    retcode = ptr_ndattr->getValue(NDAttrUInt32, (void*)attr_value, sizeof(long int));
     if (retcode == ND_ERROR) {
-        retcode = ptr_ndattr->getValue(NDAttrInt32, (void*)&retval, sizeof(long int));
+        retcode = ptr_ndattr->getValue(NDAttrInt32, (void*)attr_value, sizeof(long int));
     }
-    if (retcode == ND_ERROR) return -1;
+    if (retcode == ND_ERROR) {*attr_value=0; return -1;}
     return retval;
 }
 

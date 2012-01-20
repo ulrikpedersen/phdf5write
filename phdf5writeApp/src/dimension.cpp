@@ -134,6 +134,12 @@ string DimensionDesc::DimensionDesc::_str_()
     return out.str();
 }
 
+int DimensionDesc::set_dimension_size(int dimension, dimsize_t size)
+{
+    if (dimension >= this->dims.size()) return -1;
+    this->dims[dimension] = size;
+    return 0;
+}
 
 int DimensionDesc::grow_by_block(DimensionDesc& block)
 {
@@ -162,6 +168,11 @@ const dimsize_t * DimensionDesc::dim_sizes()
 {
     const dimsize_t * ptr = this->dims.data();
     return ptr;
+}
+
+vec_ds_t DimensionDesc::dim_size_vec()
+{
+    return this->dims;
 }
 
 size_t DimensionDesc::data_num_bytes()
