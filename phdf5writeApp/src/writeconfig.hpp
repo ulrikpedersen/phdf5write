@@ -29,10 +29,15 @@ class NDAttributeList;
 
 class WriteConfig {
 public:
+    // Constructors
     WriteConfig();
     WriteConfig(std::string& filename);
-    WriteConfig(std::string& filename, NDArray &ndarray);
+    WriteConfig(std::string& filename, NDArray& ndarray);
+    WriteConfig(const WriteConfig& src); /** Copy constructor */
     ~WriteConfig();
+
+    // Operators
+    WriteConfig& operator=(const WriteConfig& src); /** assignment operator copies src */
 
     vec_ds_t get_chunk_dims(){return this->dim_chunk.dim_size_vec();};
     vec_ds_t get_dset_dims(){return this->dim_active_dataset.dim_size_vec();};
@@ -58,6 +63,7 @@ public:
 
 private:
     void _default_init();
+    void _copy(const WriteConfig& src);
     DimensionDesc get_detector_dims();
     int get_attr_fill_val(NDAttributeList *ptr_attr_list);
     int get_attr_array(std::string& attr_name,
@@ -69,7 +75,7 @@ private:
     DimensionDesc dim_chunk;
     DimensionDesc dim_roi_frame;
     DimensionDesc dim_full_dataset;
-    DimensionDesc dim_active_dataset; // TODO: size of dataset with content.
+    DimensionDesc dim_active_dataset;
     vec_ds_t origin;
 
     // Datatype?

@@ -48,6 +48,13 @@ WriteConfig::WriteConfig(string& filename, NDArray& ndarray)
     this->parse_ndarray_attributes(ndarray);
 }
 
+WriteConfig::WriteConfig(const WriteConfig& src)
+:alignment(H5_DEFAULT_ALIGN)
+{
+    this->_default_init();
+    this->_copy(src);
+}
+
 /*
 WriteConfig::WriteConfig(string& filename)
 :alignment(H5_DEFAULT_ALIGN)
@@ -61,6 +68,10 @@ WriteConfig::~WriteConfig()
     free( this->ptr_fill_value );
 }
 
+WriteConfig& WriteConfig::operator =(const WriteConfig& src)
+{
+    this->_copy(src);
+}
 
 string WriteConfig::file_name()
 {
@@ -118,14 +129,18 @@ void WriteConfig::inc_position(NDArray& ndarray)
         }
     }
 
-    // Loop through extra dimensions to increment one frame
-    // in the active dataset
+    // Loop through extra dimensions to extend the size of the active dataset
+    // to fit the new frame. Note that the active dataset must never be made smaller
+    // (just in case frames arrive out of expected order within the MPI job)
     idim = this->dim_roi_frame.num_dimensions();
     for (it_origen = this->origin.begin()+idim;
          it_origen != this->origin.end();
          ++it_origen, idim++)
     {
-        this->dim_active_dataset.set_dimension_size(idim, *it_origen + 1);
+        dimsize_t dimsize = this->dim_active_dataset.dim_size_vec().at(idim);
+        if (dimsize < *it_origen + 1) {
+            this->dim_active_dataset.set_dimension_size(idim, *it_origen + 1);
+        }
     }
 }
 
@@ -234,6 +249,18 @@ string WriteConfig::_str_()
 void WriteConfig::_default_init()
 {
     this->ptr_fill_value = (void*)calloc(FILL_VALUE_SIZE, sizeof(char));
+}
+
+void WriteConfig::_copy(const WriteConfig& src)
+{
+    memcpy(this->ptr_fill_value, src.ptr_fill_value, FILL_VALUE_SIZE);
+
+    this->dim_chunk = src.dim_chunk;
+    this->dim_roi_frame = src.dim_roi_frame;
+    this->dim_full_dataset = src.dim_full_dataset;
+    this->dim_active_dataset = src.dim_active_dataset;
+    this->origin = src.origin;
+    this->str_file_name = src.str_file_name;
 }
 
 DimensionDesc WriteConfig::get_detector_dims()

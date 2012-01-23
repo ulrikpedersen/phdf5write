@@ -19,6 +19,7 @@ int NDArrayToHDF5::h5_open(const char *filename)
 {
     int retcode = 0;
     string fname(filename);
+    this->conf = WriteConfig(fname);
     return retcode;
 }
 
@@ -37,4 +38,9 @@ int NDArrayToHDF5::h5_close()
     int retcode = 0;
 
     return retcode;
+}
+
+WriteConfig NDArrayToHDF5::get_conf()
+{
+    return this->conf;
 }

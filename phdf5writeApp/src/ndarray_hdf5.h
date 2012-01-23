@@ -39,6 +39,7 @@ public:
     int h5_open(const char *filename);
     int h5_write(NDArray &ndarray);
     int h5_close();
+    WriteConfig get_conf();
 
 protected:
     // print error and debug messages by default
@@ -50,22 +51,24 @@ protected:
 
 private:
     // attribute dataset operations
-    int attr_create(){};
-    int attr_write(){};
-    int attr_close(){};
+    //int attr_create(){};
+    //int attr_write(){};
+    //int attr_close(){};
 
     // performance dataset operations
-    int perf_create(){};
-    int perf_write(){};
-    int perf_close(){};
+    //int perf_create(){};
+    //int perf_write(){};
+    //int perf_close(){};
 
     // convenience function to write a HDF5 attribute as a string
+    /*
     int write_h5attr_str(hid_t element,
                          std::string &attr_name,
                          std::string &str_attr_value){};
+    */
 
     // Write the HDF5 dataset attributes that makes the file NeXuS compatible
-    int write_h5attr_nxs(){};
+    //int write_h5attr_nxs(){};
 
     //===== properties and attributes regarding file and dataset access =======
     WriteConfig conf;
