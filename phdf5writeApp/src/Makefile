@@ -75,6 +75,14 @@ test_ndarray_hdf5_LIBS += mpi_cxx mpi open-rte open-pal
 test_ndarray_hdf5_SYS_LIBS += dl nsl util m dl z
 test_ndarray_hdf5_LIBS += hdf5 sz
 
+PROD_IOC += test_layout
+test_layout_INCLUDES = -I$(BOOSTDIR)/include
+test_layout_SRCS_DEFAULT += test_layout.cpp
+test_layout_OBJS += layout
+test_layout_LIBS += boost_unit_test_framework
+boost_unit_test_framework_DIR=$(BOOSTDIR)/lib
+test_layout_LDFLAGS += -L$(BOOSTDIR)/lib
+
 endif
 
 # ------------------------
@@ -91,6 +99,7 @@ phdf5write_SRCS += server.cpp
 phdf5write_SRCS += dimension.cpp
 phdf5write_SRCS += writeconfig.cpp
 phdf5write_SRCS += ndarray_hdf5.cpp
+phdf5write_SRCS += layout.cpp
 
 # The following adds object code from base/src/vxWorks
 phdf5write_OBJS_vxWorks += $(EPICS_BASE_BIN)/vxComLibrary
