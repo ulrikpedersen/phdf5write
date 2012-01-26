@@ -17,8 +17,10 @@ class HdfAttribute {
 public:
     HdfAttribute(){};
     HdfAttribute(const HdfAttribute& src) {this->_copy(src);};
+    HdfAttribute(std::string& name){this->name = name;};
     ~HdfAttribute(){};
     HdfAttribute& operator=(const HdfAttribute& src) {this->_copy(src); return *this;};
+    std::string get_name() {return this->name;};
 
 private:
     void _copy(const HdfAttribute& src){};
@@ -38,13 +40,16 @@ public:
     ~HdfElement(){};
     HdfElement& operator=(const HdfElement& src);
 
-    std::string get_name(){ return this->name; };
+    const std::string& get_name(){ return this->name; };
     std::string get_full_name();
     int add_attribute(HdfAttribute& attr);
+    bool has_attribute(const std::string& attr_name);
+    int tree_level();
 
 protected:
     void _copy(const HdfElement& src);
-    std::vector<HdfAttribute> attributes;
+    void build_full_path(HdfElement* new_child);
+    std::map<std::string, HdfAttribute> attributes;
     std::string path;
     std::string name;
 public:
@@ -59,7 +64,7 @@ public:
     HdfDataset(const std::string& name) : HdfElement(name){};
     HdfDataset(const HdfDataset& src);
     HdfDataset& operator=(const HdfDataset& src);
-    ~HdfDataset(){};
+    ~HdfDataset(){std::cout << "HdfDataset destructor: " << this->name << std::endl;};
 
 private:
     void _copy(const HdfDataset& src);
@@ -79,16 +84,26 @@ public:
     ~HdfGroup();
     HdfGroup& operator=(const HdfGroup& src);
 
-    int insert_dset(HdfDataset* dset);
-    int new_dset(std::string& name);
-    int insert_group(HdfGroup* group);
-    int new_group(std::string& name);
-    int find_dset_ndattr(std::string ndattr_name); /** << Find and return a reference to the dataset for a given NDAttribute */
-    int find_dset( std::string& dsetname, HdfDataset& dest);
+    HdfDataset* new_dset(const std::string& name);
+    HdfDataset* new_dset(const char * name);
+    HdfGroup* new_group(const std::string& name);
+    HdfGroup* new_group(const char * name);
+    int find_dset_ndattr(const std::string& ndattr_name, HdfDataset** dset); /** << Find and return a reference to the dataset for a given NDAttribute */
+    int find_dset( std::string& dsetname, HdfDataset** dest);
+    int num_groups();
+    int num_datasets();
+
+    /** Stream operator: use to prints a string representation of this class */
+    inline friend std::ostream& operator<<(std::ostream& out, HdfGroup& grp) {
+        out << grp._str_();
+        return out;
+    }
+    std::string _str_();  /** Return a string representation of the object */
 
 private:
     void _copy(const HdfGroup& src);
-    //template <typename T> void _delete_obj(T *obj) { delete obj->second; };
+    bool name_exist(const std::string& name);
+
     std::map<std::string, HdfDataset*> datasets;
     std::map<std::string, HdfGroup*> groups;
 };
