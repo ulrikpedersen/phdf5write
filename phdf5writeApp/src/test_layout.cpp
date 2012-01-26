@@ -10,8 +10,8 @@
 #include <boost/test/unit_test.hpp>
 //#include <boost/test/included/unit_test_framework.hpp> // for a static build use this and comment out BOOST_TEST_DYN_LINK
 
-#include <vector>
-#include <NDArray.h>
+//#include <vector>
+//#include <NDArray.h>
 #include "layout.h"
 
 BOOST_AUTO_TEST_SUITE( constructors )
@@ -209,8 +209,7 @@ BOOST_AUTO_TEST_CASE(simple)
     HdfGroup *inst_ptr = NULL;
     BOOST_CHECK_NO_THROW(inst_ptr=root.new_group( "instrument" ));
     BOOST_CHECK( inst_ptr!=NULL );
-    BOOST_CHECK( inst_ptr->get_full_name().compare("/entry/instrument") == 0);
-    BOOST_TEST_MESSAGE( "instrument full name: " << inst_ptr->get_full_name() );
+    BOOST_CHECK_EQUAL( inst_ptr->get_full_name(), "/entry/instrument");
 
     std::string dsetname = "mydata";
     // Create and insert a new dataset by name, get the name back and
@@ -218,15 +217,11 @@ BOOST_AUTO_TEST_CASE(simple)
     BOOST_CHECK_NO_THROW( inst_ptr->new_dset( dsetname ) );
     HdfDataset *dset;
     BOOST_CHECK( inst_ptr->find_dset(dsetname, &dset) == 0);
-    BOOST_CHECK( dset->get_name().compare(dsetname.c_str()) == 0);
+    BOOST_CHECK_EQUAL( dset->get_name(), dsetname);
 
     std::string dsetfullname = "/entry/instrument/mydata";
-    BOOST_TEST_MESSAGE( "Checking dsetfullname is: " << dsetfullname );
     std::string fn = dset->get_full_name();
-    BOOST_TEST_MESSAGE( "dset fullname: " << fn );
-
-    BOOST_TEST_MESSAGE( "fn: " << fn << " dsetfullname: " << dsetfullname );
-    BOOST_CHECK( fn.compare(dsetfullname.c_str()) == 0);
+    BOOST_CHECK_EQUAL( fn, dsetfullname);
     BOOST_CHECK( true ); // check whether destructors work
 }
 
@@ -295,7 +290,23 @@ BOOST_AUTO_TEST_CASE( retrieve_dset_tree )
     // and check that the dataset is the very same instance
     BOOST_CHECK_EQUAL( (int)result, (int)dset);
     BOOST_CHECK_EQUAL( result->get_full_name(), dset->get_full_name());
-    std::cout << root << std::endl;
+    BOOST_TEST_MESSAGE( "root: " << root._str_() );
+    BOOST_TEST_MESSAGE( "dset: " << dset->_str_() );
+}
+
+BOOST_AUTO_TEST_CASE( hdfdataset_not_present )
+{
+    HdfGroup root("root");
+
+    // Search for a non-existing dataset
+    std::string dset_str("neverland");
+    HdfDataset *dset_ptr = NULL;
+    BOOST_CHECK_NE( root.find_dset(dset_str, &dset_ptr), 0);
+    BOOST_CHECK( dset_ptr == NULL );
+
+    dset_ptr = NULL;
+    BOOST_CHECK_NE( root.find_dset_ndattr(dset_str, &dset_ptr), 0);
+    BOOST_CHECK( dset_ptr == NULL );
 }
 
 BOOST_AUTO_TEST_SUITE_END()

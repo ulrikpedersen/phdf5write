@@ -24,7 +24,6 @@ HdfElement::HdfElement()
 
 HdfElement::HdfElement(const string& name)
 {
-    cout << "HdfElement string name: " << name << endl;
     this->name = name;
     if (this->path.empty())
         this->path = "/";
@@ -102,9 +101,6 @@ void _delete_obj(std::pair<std::string, T*> pair )
 
 HdfGroup::~HdfGroup()
 {
-    cout << "HdfGroup destructor! " << this->name;
-    cout << " (" << this->groups.size() << ",";
-    cout << this->datasets.size() << ")" << endl;
     for_each(this->datasets.begin(), this->datasets.end(), _delete_obj<HdfDataset>);
     for_each(this->groups.begin(), this->groups.end(), _delete_obj<HdfGroup>);
 
@@ -137,7 +133,6 @@ HdfDataset* HdfGroup::new_dset(const std::string& name)
     // Check for successful insertion.
     if (ret.second == false) return NULL;
     this->build_full_path(ds);
-    cout << "new_dset fullname: " << ds->get_full_name() << endl;
     return ds;
 }
 
@@ -241,11 +236,11 @@ int HdfGroup::num_groups()
 string HdfGroup::_str_()
 {
     stringstream out(stringstream::out);
-    out << "< HdfGroup: \'" << this->name << "\'";
+    out << "< HdfGroup: \'" << this->get_full_name() << "\'";
     out << " groups=" << this->num_groups();
     out << " dsets=" << this->num_datasets();
     out << " attr=" << this->attributes.size();
-    out << " level=" << this->tree_level();
+    //out << " level=" << this->tree_level();
     out << " >";
 
     map<string, HdfGroup*>::iterator it_groups;
@@ -295,6 +290,14 @@ HdfDataset& HdfDataset::operator =(const HdfDataset& src)
         return *this;
     this->_copy(src);
     return *this;
+}
+
+string HdfDataset::_str_()
+{
+    stringstream out(stringstream::out);
+    out << "< HdfDataset: \'" << this->get_full_name() << "\'";
+    out << " NDAttribute: \'" << this->ndattr_name << "\' >";
+    return out.str();
 }
 
 /* ================== HdfDataset Class private methods ==================== */

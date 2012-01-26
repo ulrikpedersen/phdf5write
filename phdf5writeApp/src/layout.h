@@ -64,7 +64,14 @@ public:
     HdfDataset(const std::string& name) : HdfElement(name){};
     HdfDataset(const HdfDataset& src);
     HdfDataset& operator=(const HdfDataset& src);
-    ~HdfDataset(){std::cout << "HdfDataset destructor: " << this->name << std::endl;};
+    ~HdfDataset(){};
+
+    /** Stream operator: use to prints a string representation of this class */
+    inline friend std::ostream& operator<<(std::ostream& out, HdfDataset& dset) {
+        out << dset._str_();
+        return out;
+    }
+    std::string _str_();  /** Return a string representation of the object */
 
 private:
     void _copy(const HdfDataset& src);
