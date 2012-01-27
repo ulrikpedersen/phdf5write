@@ -20,6 +20,7 @@ HdfElement::HdfElement()
     this->name = "entry";
     if (this->path.empty())
         this->path = "/";
+    this->ptr_parent = NULL;
 }
 
 HdfElement::HdfElement(const string& name)
@@ -27,6 +28,7 @@ HdfElement::HdfElement(const string& name)
     this->name = name;
     if (this->path.empty())
         this->path = "/";
+    this->ptr_parent = NULL;
 }
 
 string HdfElement::get_full_name()
@@ -77,6 +79,7 @@ void HdfElement::_copy(const HdfElement& src)
     this->name = src.name;
     this->path = src.path;
     this->attributes = src.attributes;
+    this->ptr_parent = src.ptr_parent;
 }
 
 void HdfElement::build_full_path(HdfElement* new_child)
@@ -125,6 +128,7 @@ HdfDataset* HdfGroup::new_dset(const std::string& name)
 
     // Create the object
     ds = new HdfDataset(name);
+    ds->ptr_parent = this;
 
     // Insert the string, HdfDataset pointer pair in the datasets map.
     pair<map<string,HdfDataset*>::iterator,bool> ret;
@@ -156,6 +160,7 @@ HdfGroup* HdfGroup::new_group(const std::string& name)
 
     // Create the new group
     grp = new HdfGroup(name);
+    grp->ptr_parent = this;
 
     // Insert the string, HdfDataset pointer pair in the datasets map.
     pair<map<string,HdfGroup*>::iterator,bool> ret;

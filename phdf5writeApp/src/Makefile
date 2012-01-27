@@ -18,7 +18,7 @@ HOST_OPT=NO
 USR_CXXFLAGS += -I$(HDF5DIR)/include
 
 # Point to MPI header files
-USR_INCLUDES += -I$(MPIDIR)/include
+USR_INCLUDES += -I$(MPIDIR)/include -I/usr/include/libxml2
 
 
 # -------------------------------
@@ -83,6 +83,15 @@ test_layout_LIBS += boost_unit_test_framework
 boost_unit_test_framework_DIR=$(BOOSTDIR)/lib
 test_layout_LDFLAGS += -L$(BOOSTDIR)/lib
 
+PROD_IOC += test_layoutxml
+test_layoutxml_INCLUDES = -I$(BOOSTDIR)/include -I/usr/include/libxml2
+test_layoutxml_SRCS_DEFAULT += test_layoutxml.cpp
+test_layoutxml_OBJS += layoutxml layout
+test_layoutxml_LIBS += boost_unit_test_framework
+test_layoutxml_SYS_LIBS += xml2 m z
+boost_unit_test_framework_DIR=$(BOOSTDIR)/lib
+test_layoutxml_LDFLAGS += -L$(BOOSTDIR)/lib
+
 endif
 
 # ------------------------
@@ -100,6 +109,7 @@ phdf5write_SRCS += dimension.cpp
 phdf5write_SRCS += writeconfig.cpp
 phdf5write_SRCS += ndarray_hdf5.cpp
 phdf5write_SRCS += layout.cpp
+phdf5write_SRCS += layoutxml.cpp
 
 # The following adds object code from base/src/vxWorks
 phdf5write_OBJS_vxWorks += $(EPICS_BASE_BIN)/vxComLibrary
@@ -109,7 +119,7 @@ phdf5write_OBJS_vxWorks += $(EPICS_BASE_BIN)/vxComLibrary
 # mpicc -showme:compile
 # mpicc -showme:link
 phdf5write_LIBS += mpi_cxx mpi open-rte open-pal 
-phdf5write_SYS_LIBS += dl nsl util m dl z
+phdf5write_SYS_LIBS += xml2 dl nsl util m dl z
 phdf5write_LIBS += hdf5 sz
 
 # Directoris where to find these MPI and HDF5 libraries.

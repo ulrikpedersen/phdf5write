@@ -45,6 +45,7 @@ public:
     int add_attribute(HdfAttribute& attr);
     bool has_attribute(const std::string& attr_name);
     int tree_level();
+    HdfElement *get_parent() {return this->ptr_parent;};
 
 protected:
     void _copy(const HdfElement& src);
@@ -55,6 +56,7 @@ protected:
 public:
     friend class HdfGroup;
 private:
+    HdfElement *ptr_parent;
 };
 
 
