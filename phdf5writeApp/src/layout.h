@@ -12,6 +12,27 @@
 #include <vector>
 #include <map>
 
+typedef enum HdfDataSrc_t { notset, detector, ndattribute, constant };
+
+class HdfAttrValue {
+public:
+    HdfAttrValue() : data_src_type(notset), val(""){};
+    HdfAttrValue( HdfDataSrc_t srctype, const std::string& val) : data_src_type(srctype), val(val){};
+    HdfAttrValue( HdfDataSrc_t srctype) : data_src_type(srctype), val(""){};
+    HdfAttrValue( const HdfAttrValue& src) { this->data_src_type = src.data_src_type; this->val = src.val;};
+    HdfAttrValue& operator=(const HdfAttrValue& src) { this->data_src_type = src.data_src_type; this->val = src.val; return *this;};
+    ~HdfAttrValue(){};
+    bool is_src_detector();
+    bool is_src_ndattribute();
+    bool is_src_constant();
+
+    std::string get_src_def(); /** return the string that define the source: either name of NDAttribute or constant value */
+
+private:
+    HdfDataSrc_t data_src_type;
+    std::string val;
+};
+
 
 class HdfAttribute {
 public:
@@ -22,10 +43,10 @@ public:
     HdfAttribute& operator=(const HdfAttribute& src) {this->_copy(src); return *this;};
     std::string get_name() {return this->name;};
 
+    HdfAttrValue value;
 private:
     void _copy(const HdfAttribute& src){};
     std::string name;
-    // todo: type, value...
 };
 
 /** Describe a generic HDF5 structure element.
@@ -68,6 +89,8 @@ public:
     HdfDataset& operator=(const HdfDataset& src);
     ~HdfDataset(){};
 
+    void is_detector_data();
+
     /** Stream operator: use to prints a string representation of this class */
     inline friend std::ostream& operator<<(std::ostream& out, HdfDataset& dset) {
         out << dset._str_();
@@ -75,9 +98,11 @@ public:
     }
     std::string _str_();  /** Return a string representation of the object */
 
+    int set_data_source(HdfAttrValue& src);
 private:
     void _copy(const HdfDataset& src);
     std::string ndattr_name;
+    HdfAttrValue datasource;
 };
 
 /** Describe a HDF5 group element.

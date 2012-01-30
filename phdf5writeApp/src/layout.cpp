@@ -14,6 +14,23 @@ using namespace std;
 
 #include "layout.h"
 
+/* ================== HdfAttribute Class public methods ==================== */
+
+bool HdfAttrValue::is_src_constant() {
+    return this->data_src_type == constant ? true : false;
+}
+bool HdfAttrValue::is_src_detector() {
+    return this->data_src_type == detector ? true : false;
+}
+bool HdfAttrValue::is_src_ndattribute() {
+    return this->data_src_type == ndattribute ? true : false;
+}
+
+std::string HdfAttrValue::get_src_def()
+{
+    return this->val;
+}
+
 /* ================== HdfElement Class public methods ==================== */
 HdfElement::HdfElement()
 {
@@ -305,9 +322,20 @@ string HdfDataset::_str_()
     return out.str();
 }
 
+int HdfDataset::set_data_source(HdfAttrValue& src)
+{
+    int retval = -1;
+    if (src.is_src_detector() || src.is_src_ndattribute()) {
+        this->datasource = src;
+        retval = 0;
+    }
+    return retval;
+}
+
 /* ================== HdfDataset Class private methods ==================== */
 void HdfDataset::_copy(const HdfDataset& src)
 {
     HdfElement::_copy(src);
     this->ndattr_name = src.ndattr_name;
+    this->datasource = src.datasource;
 }

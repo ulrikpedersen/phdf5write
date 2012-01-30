@@ -5,20 +5,6 @@
  *      Author: up45
  */
 
-/**
- * section: xmlReader
- * synopsis: Parse an XML file with an xmlReader
- * purpose: Demonstrate the use of xmlReaderForFile() to parse an XML file
- *          and dump the informations about the nodes found in the process.
- *          (Note that the XMLReader functions require libxml2 version later
- *          than 2.6.)
- * usage: reader1 <filename>
- * test: reader1 test2.xml > reader1.tmp ; diff reader1.tmp reader1.res ; rm reader1.tmp
- * author: Daniel Veillard
- * copy: see Copyright for the status of this software.
- */
-
-//#include <cctype>
 #include <cstdlib>
 #include <algorithm>
 #include <string>
@@ -35,6 +21,13 @@ using namespace std;
 #define XML_ATTR_DATASET "dataset"
 #define XML_ATTR_ATTRIBUTE "attribute"
 
+#define XML_ATTR_SOURCE "source"
+#define XML_ATTR_SRC_DETECTOR "detector"
+#define XML_ATTR_SRC_NDATTR "ndattribute"
+#define XML_ATTR_SRC_CONST "constant"
+#define XML_ATTR_SRC_CONST_VALUE "value"
+#define XML_ATTR_SRC_CONST_TYPE "type"
+
 LayoutXML::LayoutXML() :
 ptr_tree(NULL), ptr_curr_element(NULL)
 {
@@ -48,7 +41,7 @@ ptr_tree(NULL), ptr_curr_element(NULL)
 
 int LayoutXML::load_xml(const char * filename)
 {
-    int ret;
+    int ret = 0;
 
     this->xmlreader = xmlReaderForFile(filename, NULL, 0);
     if (this->xmlreader == NULL) {
@@ -57,10 +50,8 @@ int LayoutXML::load_xml(const char * filename)
         return -1;
     }
 
-    //ret = xmlTextReaderRead(this->xmlreader);
     while ( (ret = xmlTextReaderRead(this->xmlreader)) == 1) {
         this->process_node();
-        //ret = xmlTextReaderRead(this->xmlreader);
     }
     xmlFreeTextReader(this->xmlreader);
     if (ret != 0) {
@@ -68,42 +59,97 @@ int LayoutXML::load_xml(const char * filename)
     }
 
     // If no elements were created then we've failed...
-    if (this->ptr_curr_element == NULL) return -1;
+    if (this->ptr_tree == NULL) return -1;
 
-    cout << "Tree shape: " << this->ptr_tree->_str_();
+    //cout << "Tree shape: " << this->ptr_tree->_str_() << endl;
     return ret;
 }
 
-int LayoutXML::process_node()
+HdfGroup LayoutXML::get_hdftree()
+{
+    // Would be nice to throw exception here...?
+    if (this->ptr_tree == NULL)
+        return HdfGroup();
+    return *(this->ptr_tree);
+}
+
+/** Process one XML node and create the necessary HDF5 element if necessary
+ *
+ */
+void LayoutXML::process_node()
 {
     xmlReaderTypes type = (xmlReaderTypes)xmlTextReaderNodeType(this->xmlreader);
     int ret = 0;
     const xmlChar* xmlname = NULL;
     string name;
+
+    xmlname = xmlTextReaderConstName(this->xmlreader);
+    if (xmlname == NULL) return;
+    name.clear();
+    name.append((const char*)xmlname);
+
     switch( type )
     {
+        // Elements can be either 'group', 'dataset' or 'attribute'
         case XML_READER_TYPE_ELEMENT:
-            xmlname = xmlTextReaderConstName(this->xmlreader);
-            if (xmlname == NULL) break;
-            name.clear();
-            name.append((const char*)xmlname);
-            cout << "process_node: " << name << endl;
+            cout << "process_node: \'" << name << "\' (" << xmlname << ")" << endl;
             if ( name == XML_ATTR_GROUP )
                 ret = this->new_group();
             else if ( name == XML_ATTR_DATASET )
                 ret = this->new_dataset();
             else if ( name == XML_ATTR_ATTRIBUTE )
                 ret = this->new_ndattribute();
+            if (ret != 0)
+                cerr << "Warning: adding new node: " << name << " failed..." << endl;
             break;
+
+        // Parser callback at the end of an element.
         case XML_READER_TYPE_END_ELEMENT:
-            if (this->ptr_curr_element == NULL)
-                this->ptr_curr_element = this->ptr_tree;
-            else
-                this->ptr_curr_element = this->ptr_curr_element->get_parent();
+            if (this->ptr_tree == NULL) break;
+
+            if (name == XML_ATTR_GROUP || name == XML_ATTR_DATASET)
+            {
+                cout << "END ELEMENT name: " << name << " curr: " << this->ptr_curr_element->get_full_name() << endl;
+                if (this->ptr_curr_element != NULL)
+                    this->ptr_curr_element = this->ptr_curr_element->get_parent();
+
+                if (this->ptr_curr_element == NULL)
+                    this->ptr_curr_element = this->ptr_tree;
+            }
             break;
         default:
             break;
     }
+}
+
+/** Process the XML element's attributes
+ * to work out the source of the attribute value: either detector data, NDAttribute or constant.
+ */
+int LayoutXML::process_attribute(HdfAttrValue& out)
+{
+    int ret = -1;
+    if (not xmlTextReaderHasAttributes(this->xmlreader) ) return ret;
+
+    xmlChar *attr_src = NULL;
+    string str_attr_src;
+
+    attr_src = xmlTextReaderGetAttribute(this->xmlreader, (const xmlChar*)XML_ATTR_SOURCE);
+    if (attr_src == NULL) return ret;
+    str_attr_src = (char*)attr_src;
+
+    if (str_attr_src == XML_ATTR_SRC_DETECTOR) {
+        out = HdfAttrValue( detector );
+        ret = 0;
+    }
+    if (str_attr_src == XML_ATTR_SRC_NDATTR) {
+        out = HdfAttrValue( ndattribute );
+        ret = 0;
+    }
+    if (str_attr_src == XML_ATTR_SRC_CONST) {
+        out = HdfAttrValue( constant );
+        ret = 0;
+    }
+
     return ret;
 }
 
@@ -126,14 +172,14 @@ int LayoutXML::new_group()
         this->ptr_tree = new HdfGroup(str_group_name);
         cout << "Initialised the root of the tree: " << *this->ptr_tree << endl;
         this->ptr_curr_element = this->ptr_tree;
+    } else {
+        HdfGroup *parent = (HdfGroup *)this->ptr_curr_element;
+        HdfGroup *new_group = NULL;
+        new_group = parent->new_group(str_group_name);
+        if (new_group == NULL) return -1;
+        this->ptr_curr_element = new_group;
     }
 
-    HdfGroup *parent = (HdfGroup *)this->ptr_curr_element;
-    HdfGroup *new_group = NULL;
-    new_group = parent->new_group(str_group_name);
-    if (new_group == NULL) return -1;
-
-    this->ptr_curr_element = new_group;
     return 0;
 }
 
@@ -145,7 +191,7 @@ int LayoutXML::new_dataset()
 
     xmlChar *dset_name = NULL;
     dset_name = xmlTextReaderGetAttribute(this->xmlreader,
-                                          (const xmlChar *)XML_ATTR_DATASET);
+                                          (const xmlChar *)XML_ATTR_ELEMENT_NAME);
     cout << "new_dataset: " << dset_name << endl;
     if (dset_name == NULL) return -1;
 
@@ -157,6 +203,13 @@ int LayoutXML::new_dataset()
     if (dset == NULL) return -1;
 
     this->ptr_curr_element = dset;
+
+    HdfAttrValue attrval;
+    this->process_attribute(attrval);
+    if (dset->set_data_source(attrval) < 0)
+    {
+        cerr << "Warning: could not set datasource on " << dset->get_full_name() << endl;
+    }
     return 0;
 }
 
@@ -169,12 +222,14 @@ int LayoutXML::new_ndattribute()
 
     xmlChar *ndattr_name = NULL;
     ndattr_name = xmlTextReaderGetAttribute(this->xmlreader,
-                                            (const xmlChar*)XML_ATTR_ATTRIBUTE);
-    cout << "new_attribute: " << ndattr_name << endl;
+                                            (const xmlChar*)XML_ATTR_ELEMENT_NAME);
+    cout << "new_attribute: " << ndattr_name << " attached to: " << this->ptr_curr_element->get_full_name() << endl;
     if (ndattr_name == NULL) return -1;
 
     string str_ndattr_name((char*)ndattr_name);
     HdfAttribute ndattr(str_ndattr_name);
+    this->process_attribute(ndattr.value);
+
     ret = this->ptr_curr_element->add_attribute(ndattr);
     return ret;
 }

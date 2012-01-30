@@ -24,9 +24,13 @@ public:
     int load_xml(std::string& filename){ return this->load_xml(filename.c_str()); };
     int load_xml(const char* filename);
 
+    HdfGroup get_hdftree();
+
 
 private:
-    int process_node();
+    void process_node();
+
+    int process_attribute(HdfAttrValue& out);
 
     int new_group();
     int new_dataset();

@@ -25,7 +25,11 @@ BOOST_AUTO_TEST_CASE(main_xml_layout_xml   )
 {
     LayoutXML l;
     BOOST_CHECK_EQUAL( l.load_xml("layout.xml"), 0);
-
+    //BOOST_TEST_MESSAGE( l );
+    HdfDataset *dset = NULL;
+    BOOST_CHECK_EQUAL(l.get_hdftree().find_dset_ndattr("signal", &dset), 0);
+    BOOST_REQUIRE_NE( (int)dset, (int)NULL );
+    BOOST_TEST_MESSAGE( l.get_hdftree()._str_() );
 }
 
 BOOST_AUTO_TEST_SUITE_END()
