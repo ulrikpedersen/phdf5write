@@ -50,8 +50,15 @@ HdfElement::HdfElement(const string& name)
 
 string HdfElement::get_full_name()
 {
-    string fname = this->path;
-    fname += this->name;
+    //cout << "get_full_name: " << this->path << " name: " << this->name << endl;
+    string fname;
+    if (this->path.empty() or this->name.empty())
+    {
+        cerr << "Warning: missing path or name" << endl;
+    } else {
+        fname = this->path;
+        fname += this->name;
+    }
     return fname;
 }
 

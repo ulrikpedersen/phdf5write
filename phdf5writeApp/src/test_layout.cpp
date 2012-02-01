@@ -22,6 +22,16 @@ BOOST_AUTO_TEST_CASE(hdf_element)
     BOOST_CHECK_EQUAL( hdf->get_name(), "entry");
     delete hdf;
     BOOST_CHECK(true);
+
+    HdfElement h("somename");
+    BOOST_CHECK_EQUAL(h.get_name(), "somename" );
+    HdfElement g;
+    BOOST_CHECK_NO_THROW( g = h );
+    BOOST_CHECK_EQUAL(h.get_name(), g.get_name() );
+
+    HdfElement i(g);
+    BOOST_CHECK_EQUAL(i.get_name(), g.get_name() );
+    BOOST_CHECK_EQUAL(i.get_full_name(), "/somename");
 }
 
 BOOST_AUTO_TEST_CASE(hdf_group)

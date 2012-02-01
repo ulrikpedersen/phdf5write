@@ -19,12 +19,12 @@ int main_xml(const char *fname);
 class LayoutXML {
 public:
     LayoutXML();
-    ~LayoutXML(){};
+    ~LayoutXML(){ delete this->ptr_tree;};
 
     int load_xml(std::string& filename){ return this->load_xml(filename.c_str()); };
     int load_xml(const char* filename);
 
-    HdfGroup get_hdftree();
+    HdfGroup* get_hdftree();
 
 
 private:

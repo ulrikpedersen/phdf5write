@@ -65,12 +65,9 @@ int LayoutXML::load_xml(const char * filename)
     return ret;
 }
 
-HdfGroup LayoutXML::get_hdftree()
+HdfGroup* LayoutXML::get_hdftree()
 {
-    // Would be nice to throw exception here...?
-    if (this->ptr_tree == NULL)
-        return HdfGroup();
-    return *(this->ptr_tree);
+    return this->ptr_tree;
 }
 
 /** Process one XML node and create the necessary HDF5 element if necessary

@@ -45,7 +45,7 @@ public:
 
     HdfAttrValue value;
 private:
-    void _copy(const HdfAttribute& src){};
+    void _copy(const HdfAttribute& src){this->name = src.name; this->value = src.value;};
     std::string name;
 };
 
