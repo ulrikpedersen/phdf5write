@@ -32,19 +32,11 @@ WriteConfig::WriteConfig()
     this->_default_init();
 }
 
-WriteConfig::WriteConfig(string& filename)
+
+WriteConfig::WriteConfig(NDArray& ndarray)
 :alignment(H5_DEFAULT_ALIGN)
 {
     this->_default_init();
-    this->str_file_name = filename;
-}
-
-
-WriteConfig::WriteConfig(string& filename, NDArray& ndarray)
-:alignment(H5_DEFAULT_ALIGN)
-{
-    this->_default_init();
-    this->str_file_name = filename;
     this->parse_ndarray_attributes(ndarray);
 }
 
@@ -72,6 +64,7 @@ WriteConfig& WriteConfig::operator =(const WriteConfig& src)
 {
     this->_copy(src);
 }
+
 
 string WriteConfig::file_name()
 {
@@ -190,6 +183,10 @@ long int WriteConfig::istorek()
 DimensionDesc WriteConfig::min_chunk_cache()
 {
     DimensionDesc min_cache_block = this->dim_roi_frame;
+    for (int i=this->dim_roi_frame.num_dimensions();
+            i < this->dim_chunk.num_dimensions(); i++) {
+        min_cache_block += 1;
+    }
     if (min_cache_block.grow_by_block(this->dim_chunk) < 0)
         return this->dim_roi_frame;
 
@@ -273,6 +270,19 @@ DimensionDesc WriteConfig::get_detector_dims()
     vec_ds_t vec_dset = this->dim_full_dataset.dim_size_vec();
     tmpdims.assign(vec_dset.begin(), vec_dset.begin()+ndims);
     return DimensionDesc(tmpdims, this->dim_roi_frame.element_size);
+}
+
+/** Return a vector of integers. The first dimensions will be the frame size and
+ * the remaining will be set to -1 to indicate extendible dimensions.
+ */
+vec_ds_t WriteConfig::get_dset_maxdims()
+{
+    vec_ds_t detector_dims = this->get_detector_dims().dim_size_vec();
+    vec_ds_t maxdims( detector_dims.begin(), detector_dims.end() );
+    int num_extra_dims = this->dim_full_dataset.num_dimensions() - maxdims.size();
+
+    maxdims.insert( maxdims.end(), num_extra_dims, -1);
+    return maxdims;
 }
 
 int WriteConfig::get_attr_fill_val(NDAttributeList *ptr_attr_list)
@@ -383,6 +393,11 @@ int WriteConfig::get_attr_value(const string& attr_name, NDAttributeList *ptr_at
     }
     if (retcode == ND_ERROR) {*attr_value=0; return -1;}
     return retval;
+}
+
+const HSIZE_T * WriteConfig::get_vec_ptr(vec_ds_t& vec)
+{
+    return (const HSIZE_T*)&vec.front();
 }
 
 

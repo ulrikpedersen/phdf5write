@@ -31,17 +31,20 @@ class WriteConfig {
 public:
     // Constructors
     WriteConfig();
-    WriteConfig(std::string& filename);
-    WriteConfig(std::string& filename, NDArray& ndarray);
+    WriteConfig(NDArray& ndarray);
     WriteConfig(const WriteConfig& src); /** Copy constructor */
     ~WriteConfig();
 
     // Operators
     WriteConfig& operator=(const WriteConfig& src); /** assignment operator copies src */
 
+    static const HSIZE_T *get_vec_ptr(vec_ds_t& vec);
+
     vec_ds_t get_chunk_dims(){return this->dim_chunk.dim_size_vec();};
     vec_ds_t get_dset_dims(){return this->dim_active_dataset.dim_size_vec();};
     vec_ds_t get_offsets(){return this->origin;};
+    vec_ds_t get_roi_frame(){return this->dim_roi_frame.dim_size_vec();};
+    vec_ds_t get_dset_maxdims();
 
     long int istorek();
     const HSIZE_T alignment;
@@ -50,6 +53,7 @@ public:
     void get_fill_value(void *fill_value, size_t *max_size_bytes);
 
     std::string file_name();
+    std::string file_name(const char *filename) { this->str_file_name = filename; return this->str_file_name; };
     bool delay_dim_config();
     void inc_position(NDArray& ndarray);
     int next_frame(NDArray& ndarray);
@@ -71,6 +75,7 @@ private:
                        vec_ds_t& dst);
     void parse_ndarray_attributes(NDArray& ndarray); // go through a list of attributes and turn them into dimensions
     int get_attr_value(const std::string& attr_name, NDAttributeList *ptr_attr_list, int *attr_value);
+
 
     DimensionDesc dim_chunk;
     DimensionDesc dim_roi_frame;

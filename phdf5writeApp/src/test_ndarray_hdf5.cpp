@@ -47,6 +47,7 @@ struct FrameSetFixture{
     unsigned long int sizes[8], chunks[8], dsetdims[8];
     unsigned long int lowoffset, hioffset, zero;
     int numframes;
+    int fill_value;
 
     FrameSetFixture()
     {
@@ -57,9 +58,14 @@ struct FrameSetFixture{
         chunks[0]=6; chunks[1]=2; chunks[2]=2;
         dsetdims[0]=6, dsetdims[1]=4, dsetdims[2]=8;
         numframes = 8;
+        fill_value = 4;
+
+
         for (int i=0; i<8; i++)
         {
             util_fill_ndarr_dims( hiframe[i], sizes, 2);
+            hiframe[i].pAttributeList->add("h5_fill_val", "fill value", NDAttrUInt32, (void*)&fill_value );
+
             hiframe[i].pAttributeList->add("h5_chunk_size_0", "dimension 0", NDAttrUInt32, (void*)(chunks) );
             hiframe[i].pAttributeList->add("h5_chunk_size_1", "dimension 1", NDAttrUInt32, (void*)(chunks+1) );
             hiframe[i].pAttributeList->add("h5_chunk_size_2", "dimension 2", NDAttrUInt32, (void*)(chunks+2) );
@@ -105,6 +111,51 @@ struct FrameSetFixture{
     }
 };
 
+BOOST_FIXTURE_TEST_SUITE(SingleRun, FrameSetFixture)
+/** Send 8 NDArray frames, split in a high/low half through the NDArrayToHDF5 class.
+ * The frames are sent through sequentially. This test is intended to demonstrate the
+ * normal use of the system.
+ */
+BOOST_AUTO_TEST_CASE(frames_attr_offset_loop)
+{
+    vec_ds_t test_offsets = vec_ds_t(3,0);
+    vec_ds_t test_dset_dims = vec_ds_t(3,0);
+    WriteConfig wc;
+    add_attr_origin();
+
+    BOOST_TEST_MESSAGE("Creating NDArrayToHDF5 object.");
+    NDArrayToHDF5 ndh;
+    BOOST_CHECK_NO_THROW( ndh.h5_configure(hiframe[0]));
+
+    BOOST_TEST_MESSAGE("Open file: test_frames_attr_offset_loop.h5");
+    BOOST_REQUIRE_EQUAL( ndh.h5_open("test_frames_attr_offset_loop.h5"), 0);
+
+    test_dset_dims[0]=6; test_dset_dims[1]=4;
+    for (int i = 0; i < 8; i++) {
+        test_dset_dims[2]=i+1;
+
+        BOOST_TEST_MESSAGE("Writing frame high " << i);
+        BOOST_REQUIRE_EQUAL( ndh.h5_write( hiframe[i]), 0);
+        test_offsets[1]=0; test_offsets[2]=i;
+        wc = ndh.get_conf();
+        BOOST_CHECK( wc.get_offsets() == test_offsets );
+        BOOST_CHECK( wc.get_dset_dims() == test_dset_dims );
+
+        BOOST_TEST_MESSAGE("Writing frame low " << i);
+        BOOST_REQUIRE_EQUAL( ndh.h5_write( lowframe[i]), 0);
+        test_offsets[1]=2; test_offsets[2]=i;
+        wc = ndh.get_conf();
+        BOOST_CHECK( wc.get_offsets() == test_offsets );
+        BOOST_CHECK( wc.get_dset_dims() == test_dset_dims );
+    }
+
+    BOOST_TEST_MESSAGE("Closing file");
+    BOOST_CHECK_EQUAL( ndh.h5_close(), 0);
+
+}
+BOOST_AUTO_TEST_SUITE_END()
+
+
 BOOST_FIXTURE_TEST_SUITE(FrameSet, FrameSetFixture)
 
 /** Send 3 frames (first 3 of an 8 frame dataset) through the system.
@@ -120,6 +171,8 @@ BOOST_AUTO_TEST_CASE(frames_attr_offset)
 
     BOOST_TEST_MESSAGE("Creating NDArrayToHDF5 object.");
     NDArrayToHDF5 ndh;
+
+    BOOST_CHECK_NO_THROW( ndh.h5_configure(lowframe[0]) );
 
     BOOST_TEST_MESSAGE("Open file: test_frames_attr_offset.h5");
     BOOST_CHECK( ndh.h5_open("test_frames_attr_offset.h5") == 0);
@@ -200,6 +253,7 @@ BOOST_AUTO_TEST_CASE(frames_attr_offset_loop)
 
     BOOST_TEST_MESSAGE("Creating NDArrayToHDF5 object.");
     NDArrayToHDF5 ndh;
+    BOOST_CHECK_NO_THROW( ndh.h5_configure(hiframe[0]));
 
     BOOST_TEST_MESSAGE("Open file: test_frames_attr_offset_loop.h5");
     BOOST_CHECK( ndh.h5_open("test_frames_attr_offset_loop.h5") == 0);
@@ -244,6 +298,7 @@ BOOST_AUTO_TEST_CASE(frames_attr_offset_unordered)
 
     BOOST_TEST_MESSAGE("Creating NDArrayToHDF5 object.");
     NDArrayToHDF5 ndh;
+    BOOST_CHECK_NO_THROW( ndh.h5_configure(hiframe[0]));
 
     BOOST_TEST_MESSAGE("Open file: test_frames_attr_offset_unordered.h5");
     BOOST_CHECK( ndh.h5_open("test_frames_attr_offset_unordered.h5") == 0);
@@ -323,6 +378,7 @@ BOOST_AUTO_TEST_CASE(frames_auto_offset_loop)
 
     BOOST_TEST_MESSAGE("Creating NDArrayToHDF5 object.");
     NDArrayToHDF5 ndh;
+    BOOST_CHECK_NO_THROW( ndh.h5_configure(hiframe[0]));
 
     BOOST_TEST_MESSAGE("Open file: test_frames_auto_offset.h5");
     BOOST_CHECK( ndh.h5_open("test_frames_auto_offset.h5") == 0);

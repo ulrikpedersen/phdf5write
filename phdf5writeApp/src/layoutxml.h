@@ -12,6 +12,8 @@
 
 // forward declarations
 class HdfGroup;
+class HdfAttrValue;
+class HdfElement;
 
 int main_xml(const char *fname);
 
@@ -19,7 +21,7 @@ int main_xml(const char *fname);
 class LayoutXML {
 public:
     LayoutXML();
-    ~LayoutXML(){ delete this->ptr_tree;};
+    ~LayoutXML();
 
     int load_xml(std::string& filename){ return this->load_xml(filename.c_str()); };
     int load_xml(const char* filename);

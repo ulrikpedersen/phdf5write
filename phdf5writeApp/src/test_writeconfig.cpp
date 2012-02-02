@@ -96,13 +96,14 @@ BOOST_AUTO_TEST_CASE(simple)
     void *ptrfillvalue = (void*)&fillvalue;
     size_t nbytes = sizeof(int);
 
-    WriteConfig wc(fname, ndarr_2d);
+    WriteConfig wc(ndarr_2d);
+    BOOST_CHECK_EQUAL( wc.file_name(fname.c_str()), fname );
     BOOST_TEST_MESSAGE( wc._str_() );
-    BOOST_CHECK( wc.file_name() == fname );
-    BOOST_CHECK( wc.alignment == H5_DEFAULT_ALIGN );
+    BOOST_CHECK_EQUAL( wc.file_name(), fname );
+    BOOST_CHECK_EQUAL( wc.alignment, H5_DEFAULT_ALIGN );
 
     wc.get_fill_value( ptrfillvalue, &nbytes);
-    BOOST_CHECK( fillvalue == intfillvalue );
+    BOOST_CHECK_EQUAL( fillvalue, intfillvalue );
 
     HSIZE_T cachebytes=0;
     DimensionDesc cache_block = wc.min_chunk_cache();
@@ -113,7 +114,8 @@ BOOST_AUTO_TEST_CASE(simple)
 // This testcase is not working right...
 BOOST_AUTO_TEST_CASE(cache_num_slots)
 {
-    WriteConfig wc(fname, ndarr_2d);
+    WriteConfig wc(ndarr_2d);
+    BOOST_CHECK_EQUAL( wc.file_name(fname.c_str()), fname );
     HSIZE_T cachebytes=0;
     DimensionDesc cache_block = wc.min_chunk_cache();
     unsigned long int num_slots = wc.cache_num_slots( cache_block );
@@ -122,7 +124,8 @@ BOOST_AUTO_TEST_CASE(cache_num_slots)
 
 BOOST_AUTO_TEST_CASE(istorek_1)
 {
-    WriteConfig wc(fname, ndarr_2d);
+    WriteConfig wc(ndarr_2d);
+    BOOST_CHECK_EQUAL( wc.file_name(fname.c_str()), fname );
     HSIZE_T cachebytes=0;
     BOOST_TEST_MESSAGE( wc.istorek() );
     BOOST_CHECK( wc.istorek() == 160);
@@ -130,7 +133,8 @@ BOOST_AUTO_TEST_CASE(istorek_1)
 
 BOOST_AUTO_TEST_CASE(istorek_2)
 {
-    WriteConfig wc(fname, ndarr_3d);
+    WriteConfig wc(ndarr_3d);
+    BOOST_CHECK_EQUAL( wc.file_name(fname.c_str()), fname );
     HSIZE_T cachebytes=0;
     long int istorek = 0;
     BOOST_CHECK_MESSAGE( istorek=wc.istorek(), "Calling istorek failed");
@@ -185,7 +189,8 @@ BOOST_AUTO_TEST_CASE(frames_attr_offset)
         frames[i].pAttributeList->add("h5_roi_origin_2", "offset 2", NDAttrUInt32, (void*)&i );
     }
 
-    WriteConfig wc(fname, frames[0]);
+    WriteConfig wc(frames[0]);
+    BOOST_CHECK_EQUAL( wc.file_name(fname.c_str()), fname );
     HSIZE_T cachebytes=0;
     BOOST_TEST_MESSAGE( "WC created: \n" << wc._str_() );
     BOOST_CHECK( wc.get_offsets().size() == 0);
@@ -211,7 +216,8 @@ BOOST_AUTO_TEST_CASE(frames_attr_offset)
 
 BOOST_AUTO_TEST_CASE(frames_auto_offset)
 {
-    WriteConfig wc(fname, frames[0]);
+    WriteConfig wc( frames[0]);
+    BOOST_CHECK_EQUAL( wc.file_name(fname.c_str()), fname );
     HSIZE_T cachebytes=0;
     BOOST_TEST_MESSAGE( "WC created: \n" << wc._str_() );
     BOOST_CHECK( wc.get_offsets().size() == 0);

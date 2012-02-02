@@ -38,7 +38,7 @@ DimensionDesc::DimensionDesc(NDArray& ndarray)
     this->element_size = arr_info.bytesPerElement;
 }
 
-DimensionDesc::DimensionDesc(int num_dimensions, const unsigned long * sizes, size_t element_size)
+DimensionDesc::DimensionDesc(int num_dimensions, const dimsize_t * sizes, size_t element_size)
 {
     this->dims.clear();
     if (sizes != NULL) this->dims = vec_ds_t(sizes, sizes+num_dimensions);
@@ -213,8 +213,8 @@ int DimensionDesc::num_fits(DimensionDesc &container, bool overlap)
 
     // sanity check: the container cannot have a smaller number of dimensions than this object...
     if (container.num_dimensions() < this->num_dimensions()) {
-        cout << "### ERROR: num fits problem: cont:" << container;
-        cout << " this: " << *this << endl;
+        cerr << "### ERROR: num fits problem: container:" << container;
+        cerr << " this: " << *this << endl;
         return -1;
     } else {
         // for each dimension that the container is bigger than this->dims we

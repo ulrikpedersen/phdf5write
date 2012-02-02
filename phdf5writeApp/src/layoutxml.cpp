@@ -39,6 +39,11 @@ ptr_tree(NULL), ptr_curr_element(NULL)
     this->xmlreader = NULL;
 }
 
+LayoutXML::~LayoutXML()
+{
+    delete this->ptr_tree;
+}
+
 int LayoutXML::load_xml(const char * filename)
 {
     int ret = 0;

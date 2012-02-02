@@ -16,7 +16,7 @@
 
 class NDArray; // forward declaration
 
-typedef unsigned long int dimsize_t;
+typedef unsigned long long dimsize_t;
 typedef std::vector<dimsize_t> vec_ds_t;
 
 // Describe an N-dimension blob.
