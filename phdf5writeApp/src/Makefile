@@ -45,13 +45,15 @@ USR_INCLUDES += -I$(MPIDIR)/include -I/usr/include/libxml2
 #  Build a unit test application if we have boost installed somewhere
 # -----------------------------------------------------------------------
 ifdef BOOSTDIR
+boost_unit_test_framework_DIR=$(BOOSTDIR)/lib
+
 PROD_IOC += test_dimension
 test_dimension_INCLUDES = -I$(BOOSTDIR)/include
 test_dimension_SRCS_DEFAULT += test_dimension.cpp
 test_dimension_OBJS += dimension
 test_dimension_LIBS += adtransferPlugin asyn ADBase NDPlugin Com
 test_dimension_LIBS += boost_unit_test_framework
-boost_unit_test_framework_DIR=$(BOOSTDIR)/lib
+#boost_unit_test_framework_DIR=$(BOOSTDIR)/lib
 test_dimension_LDFLAGS += -L$(BOOSTDIR)/lib
 
 PROD_IOC += test_writeconfig
@@ -60,7 +62,7 @@ test_writeconfig_SRCS_DEFAULT += test_writeconfig.cpp
 test_writeconfig_OBJS += dimension writeconfig
 test_writeconfig_LIBS += adtransferPlugin asyn ADBase NDPlugin Com
 test_writeconfig_LIBS += boost_unit_test_framework
-boost_unit_test_framework_DIR=$(BOOSTDIR)/lib
+#boost_unit_test_framework_DIR=$(BOOSTDIR)/lib
 test_writeconfig_LDFLAGS += -L$(BOOSTDIR)/lib
 
 PROD_IOC += test_ndarray_hdf5
@@ -69,18 +71,29 @@ test_ndarray_hdf5_SRCS_DEFAULT += test_ndarray_hdf5.cpp
 test_ndarray_hdf5_OBJS += ndarray_hdf5 dimension writeconfig layout layoutxml
 test_ndarray_hdf5_LIBS += adtransferPlugin asyn ADBase NDPlugin Com
 test_ndarray_hdf5_LIBS += boost_unit_test_framework
-boost_unit_test_framework_DIR=$(BOOSTDIR)/lib
+#boost_unit_test_framework_DIR=$(BOOSTDIR)/lib
 test_ndarray_hdf5_LDFLAGS += -L$(BOOSTDIR)/lib
 test_ndarray_hdf5_LIBS += mpi_cxx mpi open-rte open-pal 
 test_ndarray_hdf5_SYS_LIBS += xml2 dl nsl util m dl z
 test_ndarray_hdf5_LIBS += hdf5 sz
+
+PROD_IOC += test_mpi_ndarray_hdf5
+test_mpi_ndarray_hdf5_INCLUDES = -I$(BOOSTDIR)/include
+test_mpi_ndarray_hdf5_SRCS_DEFAULT += test_mpi_ndarray_hdf5.cpp
+test_mpi_ndarray_hdf5_OBJS += ndarray_hdf5 dimension writeconfig layout layoutxml
+test_mpi_ndarray_hdf5_LIBS += adtransferPlugin asyn ADBase NDPlugin Com
+test_mpi_ndarray_hdf5_LIBS += boost_unit_test_framework
+test_mpi_ndarray_hdf5_LDFLAGS += -L$(BOOSTDIR)/lib
+test_mpi_ndarray_hdf5_LIBS += mpi_cxx mpi open-rte open-pal 
+test_mpi_ndarray_hdf5_SYS_LIBS += xml2 dl nsl util m dl z
+test_mpi_ndarray_hdf5_LIBS += hdf5 sz
 
 PROD_IOC += test_layout
 test_layout_INCLUDES = -I$(BOOSTDIR)/include
 test_layout_SRCS_DEFAULT += test_layout.cpp
 test_layout_OBJS += layout
 test_layout_LIBS += boost_unit_test_framework
-boost_unit_test_framework_DIR=$(BOOSTDIR)/lib
+#boost_unit_test_framework_DIR=$(BOOSTDIR)/lib
 test_layout_LDFLAGS += -L$(BOOSTDIR)/lib
 
 PROD_IOC += test_layoutxml
@@ -89,7 +102,7 @@ test_layoutxml_SRCS_DEFAULT += test_layoutxml.cpp
 test_layoutxml_OBJS += layoutxml layout
 test_layoutxml_LIBS += boost_unit_test_framework
 test_layoutxml_SYS_LIBS += xml2 m z
-boost_unit_test_framework_DIR=$(BOOSTDIR)/lib
+#boost_unit_test_framework_DIR=$(BOOSTDIR)/lib
 test_layoutxml_LDFLAGS += -L$(BOOSTDIR)/lib
 
 endif

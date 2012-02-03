@@ -55,13 +55,6 @@ struct FrameSetFixture{
     int numframes;
     int fill_value;
 
-    MPI_Comm mpi_comm;
-    char mpi_name[100];
-    int mpi_name_len;
-    int mpi_size;
-    int mpi_rank;
-
-
     FrameSetFixture()
     {
         BOOST_TEST_MESSAGE("setup DynamicFixture");
@@ -99,24 +92,6 @@ struct FrameSetFixture{
             //frames[i].report(11);
         }
 
-        mpi_size = 0;
-        mpi_rank = 0;
-        mpi_name_len = 100;
-#ifdef H5_HAVE_PARALLEL
-
-        mpi_comm = MPI_COMM_WORLD;
-
-        MPI_Init(NULL, NULL);
-
-        MPI_Comm_size(mpi_comm, &mpi_size);
-        MPI_Comm_rank(mpi_comm, &mpi_rank);
-
-        MPI_Get_processor_name(mpi_name, &mpi_name_len);
-        BOOST_TEST_MESSAGE("=== TEST is parallel ===");
-        BOOST_TEST_MESSAGE("  MPI size: " << mpi_size << " MPI rank: " << mpi_rank << " host: " << mpi_name );
-
-
-#endif
 
     }
 
@@ -151,12 +126,6 @@ struct FrameSetFixture{
                 lowframe[i].pData = NULL;
             }
         }
-
-#ifdef H5_HAVE_PARALLEL
-        BOOST_TEST_MESSAGE("==== MPI_Finalize  rank: " << mpi_rank << "=====");
-        MPI_Finalize();
-#endif
-
     }
 };
 
@@ -204,67 +173,7 @@ BOOST_AUTO_TEST_CASE(frames_attr_offset_loop)
 }
 BOOST_AUTO_TEST_SUITE_END()
 
-/* Single, parallel run
- * Work as an MPI job with RANK=2
- * First process will write the high frames and second process the low frames
- */
-BOOST_FIXTURE_TEST_SUITE(SingleParallelRun, FrameSetFixture)
-BOOST_AUTO_TEST_CASE(frames_attr_offset_loop)
-{
-    vec_ds_t test_offsets = vec_ds_t(3,0);
-    vec_ds_t test_dset_dims = vec_ds_t(3,0);
 
-#ifdef H5_HAVE_PARALLEL
-
-    BOOST_TEST_MESSAGE("=== TEST SingleParallelRun is parallel ===");
-    BOOST_TEST_MESSAGE("Creating NDArrayToHDF5 object.");
-    NDArrayToHDF5 ndh(mpi_comm, MPI_INFO_NULL);
-
-#else
-    BOOST_TEST_MESSAGE("=== TEST SingleParallelRun is *not* parallel ===");
-    BOOST_TEST_MESSAGE("Creating NDArrayToHDF5 object.");
-    NDArrayToHDF5 ndh;
-#endif
-
-    WriteConfig wc;
-    add_attr_origin();
-
-    NDArray *ndarr;
-    if (mpi_rank == 0) {
-        ndarr = hiframe;
-        test_offsets[1] = 0;
-    }
-    else {
-        ndarr = lowframe;
-        test_offsets[1] = 2;
-    }
-
-    ndarr->report(11);
-
-    BOOST_CHECK_NO_THROW( ndh.h5_configure(ndarr[0]));
-
-    BOOST_TEST_MESSAGE("Open file: test_frames_attr_offset_loop.h5");
-    BOOST_REQUIRE_EQUAL( ndh.h5_open("test_frames_attr_offset_loop.h5"), 0);
-
-    test_dset_dims[0]=6; test_dset_dims[1]=4;
-    for (int i = 0; i < 8; i++) {
-        test_dset_dims[2]=i+1;
-
-        BOOST_TEST_MESSAGE("Writing frame no: " << i << " rank: " << mpi_rank);
-        BOOST_REQUIRE_EQUAL( ndh.h5_write( ndarr[i]), 0);
-        test_offsets[2]=i;
-        wc = ndh.get_conf();
-        BOOST_CHECK( wc.get_offsets() == test_offsets );
-        BOOST_CHECK( wc.get_dset_dims() == test_dset_dims );
-
-    }
-
-    BOOST_TEST_MESSAGE("Closing file");
-    BOOST_CHECK_EQUAL( ndh.h5_close(), 0);
-
-}
-
-BOOST_AUTO_TEST_SUITE_END()
 
 BOOST_FIXTURE_TEST_SUITE(FrameSet, FrameSetFixture)
 
