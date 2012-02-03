@@ -51,10 +51,46 @@ int NDArrayToHDF5::h5_open(const char *filename)
 
     herr_t hdfcode;
     hid_t file_access_plist = H5Pcreate(H5P_FILE_ACCESS);
+#ifdef H5_HAVE_PARALLEL
+    msg("--------- HURRAH! WE ARE PARALLEL! ---------");
+    int flag = 0;
+    MPI_Initialized(&flag);
+    if (flag != true) {
+        msg("---- but sadly MPI has *not* been initialized!");
+
+    } else {
+        msg("---- and MPI has been initialized!");
+
+        // Configure the file access property list to use MPI communicator
+        hdfcode = H5Pset_fapl_mpio( file_access_plist, this->mpi_comm, this->mpi_info );
+        if (hdfcode < 0) {
+            msg("ERROR: failed to set MPI communicator", true);
+            H5Pclose(file_access_plist);
+            return -1;
+        }
+    }
+#endif
+
+
     hdfcode = H5Pset_alignment( file_access_plist, this->conf.alignment, this->conf.alignment);
+    if (hdfcode < 0) {
+        msg("Warning: failed to set alignement");
+    }
     hid_t create_plist = H5Pcreate(H5P_FILE_CREATE);
     hdfcode = H5Pset_istore_k(create_plist, this->conf.istorek());
+    if (hdfcode < 0) {
+        msg("Warning: failed to set i_store_k");
+    }
+
     this->h5file = H5Fcreate( filename, H5F_ACC_TRUNC, create_plist, file_access_plist);
+    if (this->h5file == H5I_INVALID_HID) {
+        msg("ERROR: unable to open/create file", true);
+        H5Pclose(file_access_plist);
+        H5Pclose(create_plist);
+        return -1;
+    }
+    H5Pclose(file_access_plist);
+    H5Pclose(create_plist);
 
     // create the HDF5 file structure: groups and datasets
     retcode = this->create_file_layout();
@@ -65,6 +101,7 @@ int NDArrayToHDF5::h5_open(const char *filename)
 int NDArrayToHDF5::h5_write(NDArray& ndarray)
 {
     int retcode = 0;
+    herr_t hdferr = 0;
     msg("h5_write()");
 
     this->conf.next_frame(ndarray);
@@ -77,8 +114,17 @@ int NDArrayToHDF5::h5_write(NDArray& ndarray)
         return -1;
     }
 
-    hid_t dataspace = H5Dget_space(dataset);
-    if (dataspace < 0) {
+    vec_ds_t dset_vec = this->conf.get_dset_dims();
+    const hsize_t *dset_ptr = WriteConfig::get_vec_ptr(dset_vec);
+    hdferr = H5Dset_extent( dataset, dset_ptr );
+    if (hdferr < 0) {
+        msg("ERROR: unable to extend dataset", true);
+        H5Dclose(dataset);
+        return -1;
+    }
+
+    hid_t file_dataspace = H5Dget_space(dataset);
+    if (file_dataspace < 0) {
         msg("ERROR: unable to get dataspace", true);
         H5Dclose(dataset);
         return -1;
@@ -87,7 +133,7 @@ int NDArrayToHDF5::h5_write(NDArray& ndarray)
     hid_t datatype = H5Dget_type(dataset);
     if (datatype < 0) {
         msg("ERROR: unable to get datatype", true);
-        H5Dclose(dataspace);
+        H5Sclose(file_dataspace);
         H5Dclose(dataset);
         return -1;
     }
@@ -100,29 +146,41 @@ int NDArrayToHDF5::h5_write(NDArray& ndarray)
     roi_fr_vec.push_back(1);
     const hsize_t *roi_fr_ptr = WriteConfig::get_vec_ptr( roi_fr_vec );
     print_arr("ROI: ", roi_fr_ptr, roi_fr_vec.size());
-    herr_t hdferr = H5Sselect_hyperslab( dataspace, H5S_SELECT_SET,
+    hdferr = H5Sselect_hyperslab( file_dataspace, H5S_SELECT_SET,
                                          offset_ptr, NULL,
                                          roi_fr_ptr, NULL);
     if (hdferr < 0) {
         msg("ERROR: unable to select hyperslab", true);
-        H5Dclose(dataspace);
+        H5Sclose(file_dataspace);
+        H5Tclose(datatype);
+        H5Dclose(dataset);
+        return -1;
+    }
+
+    // Memory data_space
+    hid_t mem_dataspace = H5Screate_simple(roi_fr_vec.size(), roi_fr_ptr, NULL);
+    if (mem_dataspace < 0) {
+        msg("ERROR: unable to create memory dataspace", true);
+        H5Sclose(file_dataspace);
         H5Tclose(datatype);
         H5Dclose(dataset);
         return -1;
     }
 
     // The dataset, datatype and dataspace is not correct here...
-    hdferr = H5Dwrite( dataset, datatype, dataspace,
-                       this->h5file, H5P_DEFAULT, ndarray.pData);
+    hdferr = H5Dwrite( dataset, datatype, mem_dataspace,
+                       file_dataspace, H5P_DEFAULT, ndarray.pData);
     if (hdferr < 0) {
         msg("ERROR: unable to write to dataset", true);
-        H5Dclose(dataspace);
+        H5Sclose(mem_dataspace);
+        H5Sclose(file_dataspace);
         H5Tclose(datatype);
         H5Dclose(dataset);
         return -1;
     }
 
-    H5Dclose(dataspace);
+    H5Sclose(mem_dataspace);
+    H5Sclose(file_dataspace);
     H5Tclose(datatype);
     H5Dclose(dataset);
     return retcode;
@@ -133,9 +191,10 @@ int NDArrayToHDF5::h5_close()
     msg("h5_close()");
     int retcode = 0;
     herr_t hdferr = 0;
-    if (this->h5file > 0) {
+    if (this->h5file != H5I_INVALID_HID) {
+        msg("Closing file");
         hdferr = H5Fclose(this->h5file);
-        this->h5file = -1;
+        this->h5file = H5I_INVALID_HID;
         if (hdferr < 0) {
             cerr << "ERROR: Failed to close file" << endl;
             retcode = -1;

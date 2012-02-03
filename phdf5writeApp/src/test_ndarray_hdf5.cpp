@@ -19,11 +19,17 @@
 
 void util_fill_ndarr_dims(NDArray &ndarr, unsigned long int *sizes, int ndims)
 {
+    static short counter = 3;
     int i=0;
     ndarr.ndims = ndims;
-    for (i=0; i<ndims; i++)
+    int num_elements = 1;
+    for (i=0; i<ndims; i++) {
         ndarr.initDimension(&(ndarr.dims[i]), sizes[i]);
-
+        num_elements *= sizes[i];
+    }
+    ndarr.pData = calloc(num_elements, sizeof(short));
+    short *ptrdata = (short*)ndarr.pData;
+    ptrdata[0] = counter++; ptrdata[1] = counter++;
 }
 
 //============================================================================
@@ -107,7 +113,17 @@ struct FrameSetFixture{
     ~FrameSetFixture()
     {
         BOOST_TEST_MESSAGE("teardown DynamicFixture");
-
+        for (int i=0; i<8; i++)
+        {
+            if (hiframe[i].pData !=NULL ) {
+                free( hiframe[i].pData );
+                hiframe[i].pData=NULL;
+            }
+            if (lowframe[i].pData != NULL) {
+                free( lowframe[i].pData );
+                lowframe[i].pData = NULL;
+            }
+        }
     }
 };
 
