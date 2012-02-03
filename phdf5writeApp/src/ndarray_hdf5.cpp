@@ -20,6 +20,14 @@ NDArrayToHDF5::NDArrayToHDF5() {
     this->load_layout_xml();
 }
 
+#ifdef H5_HAVE_PARALLEL
+NDArrayToHDF5::NDArrayToHDF5( MPI_Comm comm, MPI_Info info)
+: mpi_comm(comm),mpi_info(info)
+{
+    this->load_layout_xml();
+}
+#endif
+
 /** Load the default XML layout configuration
  * as defined in the 'layout.xml' file
  * TODO: currently the file must be present in current dir which is not good.

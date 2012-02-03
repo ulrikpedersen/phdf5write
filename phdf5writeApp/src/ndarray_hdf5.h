@@ -29,8 +29,7 @@ class NDArrayToHDF5 {
 
 #ifdef H5_HAVE_PARALLEL
 public:
-    NDArrayToHDF5(MPI_Comm comm, MPI_Info info):
-        mpi_comm(comm),mpi_info(info){}; // parallel constructor
+    NDArrayToHDF5(MPI_Comm comm, MPI_Info info); // parallel constructor
 private:
     MPI_Comm mpi_comm;
     MPI_Info mpi_info;

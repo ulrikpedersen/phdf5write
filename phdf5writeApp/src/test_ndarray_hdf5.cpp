@@ -229,9 +229,17 @@ BOOST_AUTO_TEST_CASE(frames_attr_offset_loop)
     WriteConfig wc;
     add_attr_origin();
 
-    NDArray* ndarr;
-    if (mpi_rank == 0) ndarr = hiframe;
-    else ndarr = lowframe;
+    NDArray *ndarr;
+    if (mpi_rank == 0) {
+        ndarr = hiframe;
+        test_offsets[1] = 0;
+    }
+    else {
+        ndarr = lowframe;
+        test_offsets[1] = 2;
+    }
+
+    ndarr->report(11);
 
     BOOST_CHECK_NO_THROW( ndh.h5_configure(ndarr[0]));
 
@@ -244,7 +252,7 @@ BOOST_AUTO_TEST_CASE(frames_attr_offset_loop)
 
         BOOST_TEST_MESSAGE("Writing frame no: " << i << " rank: " << mpi_rank);
         BOOST_REQUIRE_EQUAL( ndh.h5_write( ndarr[i]), 0);
-        test_offsets[1]=0; test_offsets[2]=i;
+        test_offsets[2]=i;
         wc = ndh.get_conf();
         BOOST_CHECK( wc.get_offsets() == test_offsets );
         BOOST_CHECK( wc.get_dset_dims() == test_dset_dims );
