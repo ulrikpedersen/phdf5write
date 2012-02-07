@@ -134,7 +134,7 @@ string DimensionDesc::DimensionDesc::_str_()
     return out.str();
 }
 
-int DimensionDesc::set_dimension_size(int dimension, dimsize_t size)
+int DimensionDesc::set_dimension_size(unsigned int dimension, dimsize_t size)
 {
     if (dimension >= this->dims.size()) return -1;
     this->dims[dimension] = size;

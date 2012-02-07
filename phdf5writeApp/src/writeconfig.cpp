@@ -62,7 +62,12 @@ WriteConfig::~WriteConfig()
 
 WriteConfig& WriteConfig::operator =(const WriteConfig& src)
 {
+    // Check for self-assignment
+    if (this == &src)
+        return *this;
+    // perform the copy
     this->_copy(src);
+    return *this;
 }
 
 

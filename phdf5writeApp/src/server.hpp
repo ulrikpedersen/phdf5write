@@ -16,12 +16,12 @@ public:
     virtual ~Server(){};
 
     // signals
-    //virtual void signal_socket_open(int status);
-    //virtual void signal_client_connect(int status);
-    //virtual void signal_waiting_for_frame();
-    //virtual void signal_got_frame(NDArray *frame);
-    //virtual void signal_sending_response();
-    //virtual void signal_completed_response(int status);
+    virtual void signal_socket_open(int status);
+    virtual void signal_client_connect(int status);
+    virtual void signal_waiting_for_frame();
+    virtual void signal_got_frame(NDArray *frame);
+    virtual void signal_sending_response();
+    virtual void signal_completed_response(int status);
 
 private:
     int port;

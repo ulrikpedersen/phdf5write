@@ -45,7 +45,7 @@ public:
     }
     std::string _str_();  /** Return a string representation of the object */
 
-    int set_dimension_size(int dimension, dimsize_t size);
+    int set_dimension_size(unsigned int dimension, dimsize_t size);
 
     int grow_by_block(DimensionDesc& block); /** Grow the dimensions in multiple of the input block */
     const dimsize_t * dim_sizes();   /** return an array of the size of each dimension */
