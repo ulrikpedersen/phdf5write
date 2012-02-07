@@ -100,7 +100,7 @@ BOOST_AUTO_TEST_CASE(simple)
     BOOST_CHECK_EQUAL( wc.file_name(fname.c_str()), fname );
     BOOST_TEST_MESSAGE( wc._str_() );
     BOOST_CHECK_EQUAL( wc.file_name(), fname );
-    BOOST_CHECK_EQUAL( wc.alignment, H5_DEFAULT_ALIGN );
+    BOOST_CHECK_EQUAL( wc.alignment, (HSIZE_T)H5_DEFAULT_ALIGN );
 
     wc.get_fill_value( ptrfillvalue, &nbytes);
     BOOST_CHECK_EQUAL( fillvalue, intfillvalue );
@@ -116,7 +116,6 @@ BOOST_AUTO_TEST_CASE(cache_num_slots)
 {
     WriteConfig wc(ndarr_2d);
     BOOST_CHECK_EQUAL( wc.file_name(fname.c_str()), fname );
-    HSIZE_T cachebytes=0;
     DimensionDesc cache_block = wc.min_chunk_cache();
     unsigned long int num_slots = wc.cache_num_slots( cache_block );
     BOOST_CHECK_MESSAGE( is_prime(num_slots), "not a prime: " << num_slots );
@@ -126,7 +125,6 @@ BOOST_AUTO_TEST_CASE(istorek_1)
 {
     WriteConfig wc(ndarr_2d);
     BOOST_CHECK_EQUAL( wc.file_name(fname.c_str()), fname );
-    HSIZE_T cachebytes=0;
     BOOST_TEST_MESSAGE( wc.istorek() );
     BOOST_CHECK( wc.istorek() == 160);
 }
@@ -135,7 +133,6 @@ BOOST_AUTO_TEST_CASE(istorek_2)
 {
     WriteConfig wc(ndarr_3d);
     BOOST_CHECK_EQUAL( wc.file_name(fname.c_str()), fname );
-    HSIZE_T cachebytes=0;
     long int istorek = 0;
     BOOST_CHECK_MESSAGE( istorek=wc.istorek(), "Calling istorek failed");
     BOOST_CHECK_MESSAGE( istorek == 960, "istorek: " << istorek<< " != " << 960);
@@ -191,7 +188,7 @@ BOOST_AUTO_TEST_CASE(frames_attr_offset)
 
     WriteConfig wc(frames[0]);
     BOOST_CHECK_EQUAL( wc.file_name(fname.c_str()), fname );
-    HSIZE_T cachebytes=0;
+
     BOOST_TEST_MESSAGE( "WC created: \n" << wc._str_() );
     BOOST_CHECK( wc.get_offsets().size() == 0);
     BOOST_CHECK( wc.get_dset_dims()[0] == dsetdims[0]);
@@ -218,7 +215,7 @@ BOOST_AUTO_TEST_CASE(frames_auto_offset)
 {
     WriteConfig wc( frames[0]);
     BOOST_CHECK_EQUAL( wc.file_name(fname.c_str()), fname );
-    HSIZE_T cachebytes=0;
+
     BOOST_TEST_MESSAGE( "WC created: \n" << wc._str_() );
     BOOST_CHECK( wc.get_offsets().size() == 0);
     BOOST_CHECK( wc.get_dset_dims()[0] == dsetdims[0]);
