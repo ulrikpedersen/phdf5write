@@ -102,13 +102,12 @@ void WriteConfig::inc_position(NDArray& ndarray)
             // By default all origins are set to 0
             this->origin = vec_ds_t(this->dim_full_dataset.num_dimensions(), 0);
         } else {
-            // Iterator for the origen vector, which starts at the first extra dimension.
-            // (i.e. after the image width, height dimensions...)
             vec_ds_t full_dset_dims = this->dim_full_dataset.dim_size_vec();
             idim = this->dim_roi_frame.num_dimensions();
 
-            // Loop through extra dimensions to increment one frame
-            // in origin/offset and the active dataset
+            // Loop through extra dimensions to increment one frame in origin/offset
+            // Iterator for the origen vector starts at the first extra dimension.
+            // (i.e. after the image width, height dimensions...)
             for (it_origen = this->origin.begin()+idim;
                     it_origen != this->origin.end();
                     ++it_origen, idim++)
@@ -117,8 +116,16 @@ void WriteConfig::inc_position(NDArray& ndarray)
 
                 // check if the end of this dimension has been reached
                 if (*it_origen == full_dset_dims.at(idim)) {
-                    // reset if it has and next iteration will increment next dim
-                    *it_origen=0;
+                    // Normally we will reset the origin here and next iteration will
+                    // increment the next dim -except if this is the last dimension, in
+                    // which case we dont reset because we could end up overwriting data.
+                    cout << "    --set full dimsize: " << idim << " " << this->dim_full_dataset << endl;
+                    if (it_origen == this->origin.end() -1) {
+                        this->dim_full_dataset.set_dimension_size(idim, full_dset_dims.at(idim) + 1);
+                        cout << " set full dimsize: " << idim << " " << this->dim_full_dataset << endl;
+                        break;
+                    }
+                    else *it_origen=0;
                 } else {
                     // else we are done: just incremented one dim and finish
                     break;
@@ -349,6 +356,9 @@ void WriteConfig::parse_ndarray_attributes(NDArray& ndarray)
     // if this information is available in the ndarray attributes.
     this->dim_roi_frame = DimensionDesc(ndarray);
     this->dim_chunk = this->dim_roi_frame;
+    this->dim_full_dataset = this->dim_roi_frame;
+    this->dim_chunk += 1;
+    this->dim_full_dataset += 1;
 
     // Get the chunking size from the NDArray attributes
     attr_name = ATTR_CHUNK_SIZE;
@@ -356,7 +366,9 @@ void WriteConfig::parse_ndarray_attributes(NDArray& ndarray)
     ret = this->get_attr_array(attr_name, list, tmpdims);
     if (ret > 0) {
         this->dim_chunk = DimensionDesc(tmpdims, this->dim_roi_frame.element_size);
+
     }
+    cout << "Chunk size: " << this->dim_chunk << endl;
 
     // Get the full dataset size from the NDArray attributes
     attr_name = ATTR_DSET_SIZE;
@@ -364,22 +376,24 @@ void WriteConfig::parse_ndarray_attributes(NDArray& ndarray)
     ret = this->get_attr_array(attr_name, list, tmpdims);
     if (ret > 0) {
         this->dim_full_dataset = DimensionDesc(tmpdims, this->dim_roi_frame.element_size);
-        cout << "full dataset: " << this->dim_full_dataset << endl;
     }
+    cout << "full dataset: " << this->dim_full_dataset << endl;
 
     // Configure the current active dataset with the frame dimensions and the
     // additional dimensions all set to 1
     this->dim_active_dataset = this->get_detector_dims();
     vec_ds_t vec_act_dset = this->dim_active_dataset.dim_size_vec();
     int nextradims = this->dim_full_dataset.num_dimensions() - this->dim_roi_frame.num_dimensions();
-    vec_act_dset.insert(vec_act_dset.end(), nextradims, 1);
-    this->dim_active_dataset = DimensionDesc(vec_act_dset, this->dim_roi_frame.element_size);
+    if (nextradims > 0) {
+        vec_act_dset.insert(vec_act_dset.end(), nextradims, 1);
+        this->dim_active_dataset = DimensionDesc(vec_act_dset, this->dim_roi_frame.element_size);
+    }
     cout << this->dim_active_dataset << endl;
 
     /* Collect the fill value from the ndarray attributes */
     ret = this->get_attr_fill_val(list);
 
-    //cout << *this << endl;
+    cout << *this << endl;
 }
 
 int WriteConfig::get_attr_value(const string& attr_name, NDAttributeList *ptr_attr_list, int *attr_value)

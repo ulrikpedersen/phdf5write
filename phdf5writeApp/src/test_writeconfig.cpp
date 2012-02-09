@@ -238,7 +238,78 @@ BOOST_AUTO_TEST_CASE(frames_auto_offset)
     BOOST_CHECK( wc.get_dset_dims()[2] == 3);
 }
 
+BOOST_AUTO_TEST_SUITE_END()
 
 
+struct NoNDAttrFixture{
+    std::string fname;
+    NDArray frames[3];
+    unsigned long int sizes[3], chunks[3], dsetdims[3];
+    unsigned long int zero;
+
+    NoNDAttrFixture()
+    {
+        BOOST_TEST_MESSAGE("setup NoNDAttrFixture");
+        zero = 0;
+        fname = "NoNDAttrFixture.h5";
+        sizes[0]=2; sizes[1]=4;
+        for (int i=0; i<3; i++)
+        {
+            util_fill_ndarr_dims( frames[i], sizes, 2);
+            //frames[i].report(11);
+        }
+    }
+    ~NoNDAttrFixture()
+    {
+        BOOST_TEST_MESSAGE("teardown NoNDAttrFixture");
+
+    }
+};
+
+BOOST_FIXTURE_TEST_SUITE(NoNDAttr, NoNDAttrFixture)
+
+BOOST_AUTO_TEST_CASE(frames_all_auto)
+{
+    WriteConfig wc( frames[0]);
+    BOOST_CHECK_EQUAL( wc.file_name(fname.c_str()), fname );
+
+    BOOST_TEST_MESSAGE( "WC initialized: \n" << wc._str_() );
+    BOOST_CHECK_EQUAL( wc.get_offsets().size(), (size_t)0);
+    BOOST_REQUIRE_EQUAL( wc.get_dset_dims().size(), (size_t)3);
+    BOOST_CHECK_EQUAL( wc.get_dset_dims()[0], (size_t)2);
+    BOOST_CHECK_EQUAL( wc.get_dset_dims()[1], (size_t)4);
+    BOOST_CHECK_EQUAL( wc.get_dset_dims()[2], (size_t)1);
+
+    wc.next_frame( frames[0] );
+    BOOST_TEST_MESSAGE( "  ADDED FRAME 0\n" << wc._str_() );
+    BOOST_REQUIRE_EQUAL( wc.get_offsets().size(), (size_t)3);
+    BOOST_CHECK_EQUAL( wc.get_offsets()[0], (size_t)0);
+    BOOST_CHECK_EQUAL( wc.get_offsets()[1], (size_t)0);
+    BOOST_CHECK_EQUAL( wc.get_offsets()[2], (size_t)0);
+    BOOST_CHECK_EQUAL( wc.get_dset_dims()[0], (size_t)2);
+    BOOST_CHECK_EQUAL( wc.get_dset_dims()[1], (size_t)4);
+    BOOST_CHECK_EQUAL( wc.get_dset_dims()[2], (size_t)1);
+
+    wc.next_frame( frames[1] );
+    BOOST_TEST_MESSAGE( "  ADDED FRAME 1\n" << wc._str_() );
+    BOOST_REQUIRE_EQUAL( wc.get_offsets().size(), (size_t)3);
+    BOOST_CHECK_EQUAL( wc.get_offsets()[0], (size_t)0);
+    BOOST_CHECK_EQUAL( wc.get_offsets()[1], (size_t)0);
+    BOOST_CHECK_EQUAL( wc.get_offsets()[2], (size_t)1);
+    BOOST_CHECK_EQUAL( wc.get_dset_dims()[0], (size_t)2);
+    BOOST_CHECK_EQUAL( wc.get_dset_dims()[1], (size_t)4);
+    BOOST_CHECK_EQUAL( wc.get_dset_dims()[2], (size_t)2);
+
+    wc.next_frame( frames[2] );
+    BOOST_TEST_MESSAGE( "  ADDED FRAME 2\n" << wc._str_() );
+    BOOST_REQUIRE_EQUAL( wc.get_offsets().size(), (size_t)3);
+    BOOST_CHECK_EQUAL( wc.get_offsets()[0], (size_t)0);
+    BOOST_CHECK_EQUAL( wc.get_offsets()[1], (size_t)0);
+    BOOST_CHECK_EQUAL( wc.get_offsets()[2], (size_t)2);
+    BOOST_CHECK_EQUAL( wc.get_dset_dims()[0], (size_t)2);
+    BOOST_CHECK_EQUAL( wc.get_dset_dims()[1], (size_t)4);
+    BOOST_CHECK_EQUAL( wc.get_dset_dims()[2], (size_t)3);
+
+}
 
 BOOST_AUTO_TEST_SUITE_END()

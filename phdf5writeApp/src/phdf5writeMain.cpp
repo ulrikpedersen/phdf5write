@@ -37,9 +37,13 @@ void test_mpi_simple()
     NDArrayToHDF5 h5writer(comm,info);
 #else
     cout << "Sadly, we are not parallel" << endl;
-    NDArrayToHDF5 h5writer();
+    NDArrayToHDF5 h5writer;
 #endif
 
+    Server server(8001);
+    server.register_hdf_writer( &h5writer );
+
+    server.run();
 
 #ifdef H5_HAVE_PARALLEL
     cout << "Waiting at MPI barrier" << endl;
@@ -52,10 +56,11 @@ void test_mpi_simple()
 
 int main(int argc,char *argv[])
 {
-    cout << "==== Parallel HDF5 writer ====" << endl; // prints !!!Parallel HDF5 writer!!!
+    cout << "==== Parallel HDF5 writer ====" << endl;
     //Server server(8001);
     //server.run();
-    test_dimensiondesc_simple();
+    //test_dimensiondesc_simple();
+    test_mpi_simple();
 
     return 0;
 }
