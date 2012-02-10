@@ -33,10 +33,11 @@ WriteConfig::WriteConfig()
 }
 
 
-WriteConfig::WriteConfig(NDArray& ndarray)
+WriteConfig::WriteConfig(NDArray& ndarray, int mpi_rank, int mpi_proc)
 :alignment(H5_DEFAULT_ALIGN)
 {
     this->_default_init();
+    this->proc_rank_size(mpi_rank, mpi_proc);
     this->parse_ndarray_attributes(ndarray);
 }
 
@@ -76,6 +77,16 @@ string WriteConfig::file_name()
     return this->str_file_name;
 }
 
+void WriteConfig::proc_rank_size(int rank, int size)
+{
+    //cout << "WriteConfig: setting rank=" << rank << " proc_size=" << size << endl;
+    if (rank < size) this->proc_rank = rank;
+    else this->proc_rank = size-1;
+
+    if (size < 1) this->proc_size = 1;
+    else this->proc_size = size;
+}
+
 void WriteConfig::inc_position(NDArray& ndarray)
 {
     NDAttributeList * list = ndarray.pAttributeList;
@@ -84,6 +95,8 @@ void WriteConfig::inc_position(NDArray& ndarray)
     vec_ds_t::iterator it_origen;
     int idim = 0;
     int ret = 0;
+    vec_ds_t full_dset_dims = this->dim_full_dataset.dim_size_vec();
+    vec_ds_t roi_frame_dims = this->dim_roi_frame.dim_size_vec();
 
     attr_name = ATTR_ROI_ORIGIN;
     ret = this->get_attr_array(attr_name, list, attr_origins);
@@ -92,17 +105,23 @@ void WriteConfig::inc_position(NDArray& ndarray)
         this->origin = attr_origins;
     } else {
         // if origin not available as NDAttr for every dimension then
-        // we increment manually.
+        // we increment manually based on some assumptions (see comments below)
 
         // If this is the first frame to write then we need to create the origin
-        // vector and initialise it to zero
+        // vector and initialise it.
         if (this->origin.size() <= 0) {
             // Get the position/origin of the ROI within the full detector frame or
             // the full dataset.
-            // By default all origins are set to 0
-            this->origin = vec_ds_t(this->dim_full_dataset.num_dimensions(), 0);
+
+            // Most origins are set to 0 to begin with
+            this->origin = vec_ds_t(full_dset_dims.size(), 0);
+            // .. except if we are running multiple processes
+            // in which case we assume an even split in the ROI frame slowest changing
+            // dimension (for instance a 2D image is split in horizontal stripes)
+            size_t split_dim = this->dim_roi_frame.num_dimensions() - 1;
+            this->origin[split_dim] = roi_frame_dims[split_dim] * this->proc_rank;
         } else {
-            vec_ds_t full_dset_dims = this->dim_full_dataset.dim_size_vec();
+
             idim = this->dim_roi_frame.num_dimensions();
 
             // Loop through extra dimensions to increment one frame in origin/offset
@@ -240,7 +259,8 @@ string WriteConfig::_str_()
 {
     stringstream out(stringstream::out);
     out << "<WriteConfig:";
-    out << " filename=  " << this->file_name();
+    //out << " filename=  " << this->file_name();
+    out << " rank=" << this->proc_rank << " nproc=" << this->proc_size;
     out << "\n\tROI:    " << this->dim_roi_frame;
     out << "\n\tchunk:  " << this->dim_chunk;
     out << "\n\tdset:   " << this->dim_full_dataset;
@@ -258,6 +278,8 @@ string WriteConfig::_str_()
 void WriteConfig::_default_init()
 {
     this->ptr_fill_value = (void*)calloc(FILL_VALUE_SIZE, sizeof(char));
+    this->proc_rank = 0;
+    this->proc_size = 1;
 }
 
 void WriteConfig::_copy(const WriteConfig& src)
@@ -270,6 +292,8 @@ void WriteConfig::_copy(const WriteConfig& src)
     this->dim_active_dataset = src.dim_active_dataset;
     this->origin = src.origin;
     this->str_file_name = src.str_file_name;
+    this->proc_rank = src.proc_rank;
+    this->proc_size = src.proc_size;
 }
 
 DimensionDesc WriteConfig::get_detector_dims()
@@ -296,6 +320,7 @@ vec_ds_t WriteConfig::get_dset_maxdims()
     maxdims.insert( maxdims.end(), num_extra_dims, -1);
     return maxdims;
 }
+
 
 int WriteConfig::get_attr_fill_val(NDAttributeList *ptr_attr_list)
 {
@@ -359,6 +384,16 @@ void WriteConfig::parse_ndarray_attributes(NDArray& ndarray)
     this->dim_full_dataset = this->dim_roi_frame;
     this->dim_chunk += 1;
     this->dim_full_dataset += 1;
+    // In case we are running on multiple processes the received frame is only
+    // an ROI subset of a larger frame. The assumption (if NDAttributes don't hint
+    // otherwise) is that the split is done in the slowest changing dimension.
+    // So for example a 2D image is split in horizontal stripes.
+    int split_dim = this->dim_roi_frame.num_dimensions() -1;
+    dimsize_t split_dim_full_size = 0;
+    if (split_dim >= 0) {
+        split_dim_full_size = *(this->dim_roi_frame.dim_sizes()+split_dim) * this->proc_size;
+        this->dim_full_dataset.set_dimension_size( split_dim, split_dim_full_size);
+    }
 
     // Get the chunking size from the NDArray attributes
     attr_name = ATTR_CHUNK_SIZE;
@@ -368,7 +403,7 @@ void WriteConfig::parse_ndarray_attributes(NDArray& ndarray)
         this->dim_chunk = DimensionDesc(tmpdims, this->dim_roi_frame.element_size);
 
     }
-    cout << "Chunk size: " << this->dim_chunk << endl;
+    //cout << "Chunk size: " << this->dim_chunk << endl;
 
     // Get the full dataset size from the NDArray attributes
     attr_name = ATTR_DSET_SIZE;
@@ -377,7 +412,7 @@ void WriteConfig::parse_ndarray_attributes(NDArray& ndarray)
     if (ret > 0) {
         this->dim_full_dataset = DimensionDesc(tmpdims, this->dim_roi_frame.element_size);
     }
-    cout << "full dataset: " << this->dim_full_dataset << endl;
+    //cout << "full dataset: " << this->dim_full_dataset << endl;
 
     // Configure the current active dataset with the frame dimensions and the
     // additional dimensions all set to 1
@@ -388,7 +423,7 @@ void WriteConfig::parse_ndarray_attributes(NDArray& ndarray)
         vec_act_dset.insert(vec_act_dset.end(), nextradims, 1);
         this->dim_active_dataset = DimensionDesc(vec_act_dset, this->dim_roi_frame.element_size);
     }
-    cout << this->dim_active_dataset << endl;
+    //cout << this->dim_active_dataset << endl;
 
     /* Collect the fill value from the ndarray attributes */
     ret = this->get_attr_fill_val(list);

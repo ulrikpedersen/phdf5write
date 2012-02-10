@@ -48,7 +48,13 @@ int NDArrayToHDF5::load_layout_xml(const char *xmlfile) {
 void NDArrayToHDF5::h5_configure(NDArray& ndarray)
 {
     msg("h5_configure()");
-    this->conf = WriteConfig(ndarray);
+
+    int mpi_rank = 0, mpi_size=0;
+#ifdef H5_HAVE_PARALLEL
+    MPI_Comm_rank(this->mpi_comm,&mpi_rank);
+    MPI_Comm_size(this->mpi_comm,&mpi_size);
+#endif
+    this->conf = WriteConfig(ndarray, mpi_rank, mpi_size);
 }
 
 int NDArrayToHDF5::h5_open(const char *filename)

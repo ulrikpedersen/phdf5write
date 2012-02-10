@@ -31,7 +31,7 @@ class WriteConfig {
 public:
     // Constructors
     WriteConfig();
-    WriteConfig(NDArray& ndarray);
+    WriteConfig(NDArray& ndarray, int mpi_rank=0, int mpi_proc=1);
     WriteConfig(const WriteConfig& src); /** Copy constructor */
     ~WriteConfig();
 
@@ -45,6 +45,7 @@ public:
     vec_ds_t get_offsets(){return this->origin;};
     vec_ds_t get_roi_frame(){return this->dim_roi_frame.dim_size_vec();};
     vec_ds_t get_dset_maxdims();
+    void proc_rank_size(int rank, int size);
 
     long int istorek();
     const HSIZE_T alignment;
@@ -77,6 +78,8 @@ private:
     int get_attr_value(const std::string& attr_name, NDAttributeList *ptr_attr_list, int *attr_value);
 
 
+    int proc_rank;
+    int proc_size;
     DimensionDesc dim_chunk;
     DimensionDesc dim_roi_frame;
     DimensionDesc dim_full_dataset;
