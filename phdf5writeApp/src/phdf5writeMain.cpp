@@ -2,6 +2,7 @@
 
 #include <cstdlib>
 #include <iostream>
+#include <vector>
 
 #include <hdf5.h>
 
@@ -15,12 +16,13 @@ using namespace std;
 
 void test_mpi_simple()
 {
+    int mpi_rank    = 0;
+    int mpi_size    = 0;
+
 #ifdef H5_HAVE_PARALLEL
     cout << "Hurrah! We are parallel!" << endl;
     int mpi_namelen = 0;
-    int mpi_size    = 0;
     char mpi_name[MPI_MAX_PROCESSOR_NAME];
-    int mpi_rank    = 0;
     MPI_Comm comm = MPI_COMM_WORLD;
     MPI_Info info = MPI_INFO_NULL;
 
@@ -39,8 +41,11 @@ void test_mpi_simple()
     cout << "Sadly, we are not parallel" << endl;
     NDArrayToHDF5 h5writer;
 #endif
+    int baseport = 8001;
+    int port = baseport + mpi_rank;
 
-    Server server(8001);
+    cout << "=== Starting server on port: " << port << endl;
+    Server server(port);
     server.register_hdf_writer( &h5writer );
 
     server.run();
