@@ -18,6 +18,7 @@
 #include "layoutxml.h"
 #include "layout.h"
 #include "writeconfig.hpp"
+#include "profiling.h"
 #include <NDArray.h>
 
 class NDArray; //forward declaration
@@ -82,6 +83,8 @@ private:
 
     // Write the HDF5 dataset attributes that makes the file NeXuS compatible
     //int write_h5attr_nxs(){};
+
+    Profiling pf;
 
     //===== properties and attributes regarding file and dataset access =======
     WriteConfig conf;

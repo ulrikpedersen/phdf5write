@@ -47,6 +47,7 @@ USR_INCLUDES += -I$(MPIDIR)/include -I/usr/include/libxml2
 ifdef BOOSTDIR
 boost_unit_test_framework_DIR=$(BOOSTDIR)/lib
 
+
 PROD_IOC += test_dimension
 test_dimension_INCLUDES = -I$(BOOSTDIR)/include
 test_dimension_SRCS_DEFAULT += test_dimension.cpp
@@ -68,7 +69,7 @@ test_writeconfig_LDFLAGS += -L$(BOOSTDIR)/lib
 PROD_IOC += test_ndarray_hdf5
 test_ndarray_hdf5_INCLUDES = -I$(BOOSTDIR)/include
 test_ndarray_hdf5_SRCS_DEFAULT += test_ndarray_hdf5.cpp
-test_ndarray_hdf5_OBJS += ndarray_hdf5 dimension writeconfig layout layoutxml
+test_ndarray_hdf5_OBJS += ndarray_hdf5 dimension writeconfig layout layoutxml profiling
 test_ndarray_hdf5_LIBS += adtransferPlugin asyn ADBase NDPlugin Com
 test_ndarray_hdf5_LIBS += boost_unit_test_framework
 #boost_unit_test_framework_DIR=$(BOOSTDIR)/lib
@@ -80,7 +81,7 @@ test_ndarray_hdf5_LIBS += hdf5 sz
 PROD_IOC += test_mpi_ndarray_hdf5
 test_mpi_ndarray_hdf5_INCLUDES = -I$(BOOSTDIR)/include
 test_mpi_ndarray_hdf5_SRCS_DEFAULT += test_mpi_ndarray_hdf5.cpp
-test_mpi_ndarray_hdf5_OBJS += ndarray_hdf5 dimension writeconfig layout layoutxml
+test_mpi_ndarray_hdf5_OBJS += ndarray_hdf5 dimension writeconfig layout layoutxml profiling
 test_mpi_ndarray_hdf5_LIBS += adtransferPlugin asyn ADBase NDPlugin Com
 test_mpi_ndarray_hdf5_LIBS += boost_unit_test_framework
 test_mpi_ndarray_hdf5_LDFLAGS += -L$(BOOSTDIR)/lib
@@ -105,6 +106,13 @@ test_layoutxml_SYS_LIBS += xml2 m z
 #boost_unit_test_framework_DIR=$(BOOSTDIR)/lib
 test_layoutxml_LDFLAGS += -L$(BOOSTDIR)/lib
 
+PROD_IOC += test_profiling
+test_profiling_INCLUDES = -I$(BOOSTDIR)/include
+test_profiling_SRCS_DEFAULT += test_profiling.cpp
+test_profiling_OBJS += profiling
+test_profiling_LIBS += boost_unit_test_framework
+test_profiling_LDFLAGS += -L$(BOOSTDIR)/lib
+
 endif
 
 # ------------------------
@@ -123,6 +131,7 @@ phdf5write_SRCS += writeconfig.cpp
 phdf5write_SRCS += ndarray_hdf5.cpp
 phdf5write_SRCS += layout.cpp
 phdf5write_SRCS += layoutxml.cpp
+phdf5write_SRCS += profiling.cpp
 
 # The following adds object code from base/src/vxWorks
 phdf5write_OBJS_vxWorks += $(EPICS_BASE_BIN)/vxComLibrary

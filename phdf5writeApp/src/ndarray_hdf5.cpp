@@ -55,6 +55,10 @@ void NDArrayToHDF5::h5_configure(NDArray& ndarray)
     MPI_Comm_size(this->mpi_comm,&mpi_size);
 #endif
     this->conf = WriteConfig(ndarray, mpi_rank, mpi_size);
+
+    NDArrayInfo_t ndarrinfo;
+    ndarray.getInfo(&ndarrinfo);
+    this->pf.reset(ndarrinfo.totalBytes);
 }
 
 int NDArrayToHDF5::h5_open(const char *filename)
@@ -65,6 +69,7 @@ int NDArrayToHDF5::h5_open(const char *filename)
 
     herr_t hdfcode;
     hid_t file_access_plist = H5Pcreate(H5P_FILE_ACCESS);
+
 #ifdef H5_HAVE_PARALLEL
     msg("--------- HURRAH! WE ARE PARALLEL! ---------");
     int flag = 0;
@@ -96,6 +101,7 @@ int NDArrayToHDF5::h5_open(const char *filename)
         msg("Warning: failed to set i_store_k");
     }
 
+    Profiling opentime;
     this->h5file = H5Fcreate( filename, H5F_ACC_TRUNC, create_plist, file_access_plist);
     if (this->h5file == H5I_INVALID_HID) {
         msg("ERROR: unable to open/create file", true);
@@ -105,6 +111,8 @@ int NDArrayToHDF5::h5_open(const char *filename)
     }
     H5Pclose(file_access_plist);
     H5Pclose(create_plist);
+    opentime.stamp_now();
+    msg(opentime._str().c_str());
 
     // create the HDF5 file structure: groups and datasets
     retcode = this->create_file_layout();
@@ -117,6 +125,8 @@ int NDArrayToHDF5::h5_write(NDArray& ndarray)
     int retcode = 0;
     herr_t hdferr = 0;
     msg("h5_write()");
+
+    this->pf.stamp_now();
 
     this->conf.next_frame(ndarray);
     msg(this->conf._str_());
@@ -207,7 +217,10 @@ int NDArrayToHDF5::h5_close()
     herr_t hdferr = 0;
     if (this->h5file != H5I_INVALID_HID) {
         msg("Closing file");
+        this->pf.stamp_now();
         hdferr = H5Fclose(this->h5file);
+        this->pf.stamp_now();
+        msg(this->pf._str().c_str());
         this->h5file = H5I_INVALID_HID;
         if (hdferr < 0) {
             cerr << "ERROR: Failed to close file" << endl;
