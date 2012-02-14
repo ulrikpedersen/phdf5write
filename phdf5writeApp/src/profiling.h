@@ -27,6 +27,8 @@ public:
 
     void reset(int frame_bytes = -1);
     double stamp_now();
+    void dt_start(); /* to start measure a certain code section */
+    double dt_end(); /* end of code section measure */
     int count();
 
     std::vector<double> vec_timestamps();

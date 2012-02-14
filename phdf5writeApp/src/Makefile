@@ -89,6 +89,17 @@ test_mpi_ndarray_hdf5_LIBS += mpi_cxx mpi open-rte open-pal
 test_mpi_ndarray_hdf5_SYS_LIBS += xml2 dl nsl util m dl z
 test_mpi_ndarray_hdf5_LIBS += hdf5 sz
 
+PROD_IOC += test_real_lustre
+test_real_lustre_INCLUDES = -I$(BOOSTDIR)/include
+test_real_lustre_SRCS_DEFAULT += test_real_lustre.cpp
+test_real_lustre_OBJS += ndarray_hdf5 dimension writeconfig layout layoutxml profiling
+test_real_lustre_LIBS += adtransferPlugin asyn ADBase NDPlugin Com
+test_real_lustre_LIBS += boost_unit_test_framework
+test_real_lustre_LDFLAGS += -L$(BOOSTDIR)/lib
+test_real_lustre_LIBS += mpi_cxx mpi open-rte open-pal 
+test_real_lustre_SYS_LIBS += xml2 dl nsl util m dl z
+test_real_lustre_LIBS += hdf5 sz
+
 PROD_IOC += test_layout
 test_layout_INCLUDES = -I$(BOOSTDIR)/include
 test_layout_SRCS_DEFAULT += test_layout.cpp

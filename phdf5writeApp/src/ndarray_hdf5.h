@@ -84,7 +84,8 @@ private:
     // Write the HDF5 dataset attributes that makes the file NeXuS compatible
     //int write_h5attr_nxs(){};
 
-    Profiling pf;
+    Profiling timestamp;
+    Profiling dt_write;
 
     //===== properties and attributes regarding file and dataset access =======
     WriteConfig conf;

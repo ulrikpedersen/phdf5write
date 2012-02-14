@@ -76,6 +76,16 @@ double Profiling::stamp_now()
     return stampdiff;
 }
 
+void Profiling::dt_start()
+{
+    clock_gettime( CLOCK_REALTIME, &this->start);
+}
+
+double Profiling::dt_end()
+{
+    return this->stamp_now();
+}
+
 int Profiling::count()
 {
     return (int)this->timestamps.size();

@@ -58,7 +58,7 @@ void NDArrayToHDF5::h5_configure(NDArray& ndarray)
 
     NDArrayInfo_t ndarrinfo;
     ndarray.getInfo(&ndarrinfo);
-    this->pf.reset(ndarrinfo.totalBytes);
+    this->timestamp.reset(ndarrinfo.totalBytes);
 }
 
 int NDArrayToHDF5::h5_open(const char *filename)
@@ -126,7 +126,7 @@ int NDArrayToHDF5::h5_write(NDArray& ndarray)
     herr_t hdferr = 0;
     msg("h5_write()");
 
-    this->pf.stamp_now();
+    this->timestamp.stamp_now();
 
     this->conf.next_frame(ndarray);
     msg(this->conf._str_());
@@ -192,6 +192,7 @@ int NDArrayToHDF5::h5_write(NDArray& ndarray)
     }
 
     // The dataset, datatype and dataspace is not correct here...
+    this->dt_write.dt_start();
     hdferr = H5Dwrite( dataset, datatype, mem_dataspace,
                        file_dataspace, H5P_DEFAULT, ndarray.pData);
     if (hdferr < 0) {
@@ -200,8 +201,10 @@ int NDArrayToHDF5::h5_write(NDArray& ndarray)
         H5Sclose(file_dataspace);
         H5Tclose(datatype);
         H5Dclose(dataset);
+        this->dt_write.dt_end();
         return -1;
     }
+    this->dt_write.dt_end();
 
     H5Sclose(mem_dataspace);
     H5Sclose(file_dataspace);
@@ -217,10 +220,11 @@ int NDArrayToHDF5::h5_close()
     herr_t hdferr = 0;
     if (this->h5file != H5I_INVALID_HID) {
         msg("Closing file");
-        this->pf.stamp_now();
+        this->timestamp.stamp_now();
         hdferr = H5Fclose(this->h5file);
-        this->pf.stamp_now();
-        msg(this->pf._str().c_str());
+        this->timestamp.stamp_now();
+        msg(this->timestamp._str().c_str());
+        msg(this->dt_write._str().c_str());
         this->h5file = H5I_INVALID_HID;
         if (hdferr < 0) {
             cerr << "ERROR: Failed to close file" << endl;
