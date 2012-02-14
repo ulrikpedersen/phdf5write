@@ -129,7 +129,7 @@ int NDArrayToHDF5::h5_write(NDArray& ndarray)
     this->timestamp.stamp_now();
 
     this->conf.next_frame(ndarray);
-    msg(this->conf._str_());
+    //msg(this->conf._str_());
 
     const char *dset_name = "/mydset";
     hid_t dataset = H5Dopen2(this->h5file, dset_name, H5P_DEFAULT);

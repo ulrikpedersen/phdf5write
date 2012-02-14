@@ -138,10 +138,10 @@ void WriteConfig::inc_position(NDArray& ndarray)
                     // Normally we will reset the origin here and next iteration will
                     // increment the next dim -except if this is the last dimension, in
                     // which case we dont reset because we could end up overwriting data.
-                    cout << "    --set full dimsize: " << idim << " " << this->dim_full_dataset << endl;
+                    //cout << "    --set full dimsize: " << idim << " " << this->dim_full_dataset << endl;
                     if (it_origen == this->origin.end() -1) {
                         this->dim_full_dataset.set_dimension_size(idim, full_dset_dims.at(idim) + 1);
-                        cout << " set full dimsize: " << idim << " " << this->dim_full_dataset << endl;
+                        //cout << " set full dimsize: " << idim << " " << this->dim_full_dataset << endl;
                         break;
                     }
                     else *it_origen=0;

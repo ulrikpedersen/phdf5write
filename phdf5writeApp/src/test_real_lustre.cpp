@@ -16,14 +16,26 @@
 #include <NDArray.h>
 #include "ndarray_hdf5.h"
 
+//#define PCO_EDGE_TEST
+//#define PCO_4000_TEST
+#define EVEN_CHUNKS_TEST
+//#define TINY_TEST
+
+#ifdef EVEN_CHUNKS_TEST
 #define NUM_FRAMES 6
-//#define CHUNK_X 4096
-//#define CHUNK_Y 256
-//#define CHUNK_Z 1
+#define CHUNK_X 4096
+#define CHUNK_Y 256
+#define CHUNK_Z 4
+#define NUM_CHUNKS 2
+#endif
+
+#ifdef TINY_TEST
+#define NUM_FRAMES 6
 #define CHUNK_X 10
 #define CHUNK_Y 2
 #define CHUNK_Z 2
 #define NUM_CHUNKS 3
+#endif
 
 void util_fill_ndarr_dims(NDArray &ndarr, unsigned long int *sizes, int ndims, int rank)
 {
