@@ -2,9 +2,20 @@ TOP=../..
 
 include $(TOP)/configure/CONFIG
 
+# Set some base paths to MPI, HDF5 and Boost
+ifeq ($(EPICS_HOST_ARCH),linux-x86)
 MPIDIR=/dls_sw/apps/openmpi/1.4.3/32
+# parallel version of hdf5 -can be replaced with non parallel but why would you???
 HDF5DIR=/dls_sw/apps/hdf5/1.8.7/openMPI/32
 BOOSTDIR=/scratch/boost/1_48_0
+#BOOSTDIR=/dls_sw/work/common/boost/1.48.0/32
+else
+ifeq ($(EPICS_HOST_ARCH),linux-x86_64)
+MPIDIR=/dls_sw/apps/openmpi/1.4.3/64
+HDF5DIR=/dls_sw/apps/hdf5/1.8.7/openMPI/64
+BOOSTDIR=/dls_sw/work/common/boost/1.48.0/64
+endif
+endif
 
 # C++ compiler flags found by running the command: h5pcc -show
 USR_CXXFLAGS += -D_FILE_OFFSET_BITS=64 -D_LARGEFILE_SOURCE -D_LARGEFILE64_SOURCE
@@ -127,7 +138,7 @@ test_profiling_LDFLAGS += -L$(BOOSTDIR)/lib
 endif
 
 # ------------------------
-# Build an Application
+# Build The Application
 # ------------------------
 
 PROD_IOC += phdf5write
