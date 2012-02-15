@@ -22,11 +22,11 @@
 //#define TINY_TEST
 
 #ifdef EVEN_CHUNKS_TEST
-#define NUM_FRAMES 6
+#define NUM_FRAMES 600
 #define CHUNK_X 4096
-#define CHUNK_Y 256
-#define CHUNK_Z 4
-#define NUM_CHUNKS 2
+#define CHUNK_Y 64
+#define CHUNK_Z 8
+#define NUM_CHUNKS 20
 #endif
 
 #ifdef TINY_TEST
@@ -161,8 +161,8 @@ BOOST_AUTO_TEST_CASE(mpi_parallel_run)
 
     BOOST_CHECK_NO_THROW( ndh.h5_configure(*frames[0]));
 
-    BOOST_TEST_MESSAGE("Open file: test_real_lustre.h5");
-    BOOST_REQUIRE_EQUAL( ndh.h5_open("test_real_lustre.h5"), 0);
+    BOOST_TEST_MESSAGE("Open file: test_real_lustre2.h5");
+    BOOST_REQUIRE_EQUAL( ndh.h5_open("test_real_lustre2.h5"), 0);
 
     test_dset_dims[0]=dsetdims[0]; test_dset_dims[1]=dsetdims[1];
     int cacheframe = 0;

@@ -34,13 +34,16 @@ public:
     std::vector<double> vec_timestamps();
     const double* ptr_timestamps(size_t& nelements);
     std::vector<double> vec_deltatime();
+    std::vector<double> vec_datarate();
     double tsdiff (timespec& start, timespec& end);
 
 private:
     void _copy(const Profiling& src);
     timespec start;
     double framesize;
+    double datasize;
     std::vector<double> timestamps;
+    std::vector<double> datarate;
 };
 
 #endif /* PROFILING_H_ */

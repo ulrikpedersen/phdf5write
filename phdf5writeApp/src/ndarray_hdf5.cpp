@@ -17,6 +17,8 @@ void print_arr (const char * msg, const hsize_t* sizes, size_t n);
 
 NDArrayToHDF5::NDArrayToHDF5() {
     // load the default HDF5 layout
+    this->mpi_rank = 0;
+    this->mpi_size = 1;
     this->load_layout_xml();
 }
 
@@ -25,6 +27,9 @@ NDArrayToHDF5::NDArrayToHDF5( MPI_Comm comm, MPI_Info info)
 : mpi_comm(comm),mpi_info(info)
 {
     this->load_layout_xml();
+    MPI_Comm_size(comm,&this->mpi_size);
+    MPI_Comm_rank(comm,&this->mpi_rank);
+
 }
 #endif
 
@@ -59,6 +64,7 @@ void NDArrayToHDF5::h5_configure(NDArray& ndarray)
     NDArrayInfo_t ndarrinfo;
     ndarray.getInfo(&ndarrinfo);
     this->timestamp.reset(ndarrinfo.totalBytes);
+    this->dt_write.reset(ndarrinfo.totalBytes);
 }
 
 int NDArrayToHDF5::h5_open(const char *filename)
@@ -101,7 +107,7 @@ int NDArrayToHDF5::h5_open(const char *filename)
         msg("Warning: failed to set i_store_k");
     }
 
-    Profiling opentime;
+    opentime.reset();
     this->h5file = H5Fcreate( filename, H5F_ACC_TRUNC, create_plist, file_access_plist);
     if (this->h5file == H5I_INVALID_HID) {
         msg("ERROR: unable to open/create file", true);
@@ -125,8 +131,6 @@ int NDArrayToHDF5::h5_write(NDArray& ndarray)
     int retcode = 0;
     herr_t hdferr = 0;
     msg("h5_write()");
-
-    this->timestamp.stamp_now();
 
     this->conf.next_frame(ndarray);
     //msg(this->conf._str_());
@@ -210,6 +214,7 @@ int NDArrayToHDF5::h5_write(NDArray& ndarray)
     H5Sclose(file_dataspace);
     H5Tclose(datatype);
     H5Dclose(dataset);
+    this->timestamp.stamp_now();
     return retcode;
 }
 
@@ -219,12 +224,12 @@ int NDArrayToHDF5::h5_close()
     int retcode = 0;
     herr_t hdferr = 0;
     if (this->h5file != H5I_INVALID_HID) {
+        msg("Writing profile data");
+        this->store_profiling();
         msg("Closing file");
-        this->timestamp.stamp_now();
+        closetime.reset();
         hdferr = H5Fclose(this->h5file);
-        this->timestamp.stamp_now();
-        msg(this->timestamp._str().c_str());
-        msg(this->dt_write._str().c_str());
+        closetime.stamp_now();
         this->h5file = H5I_INVALID_HID;
         if (hdferr < 0) {
             cerr << "ERROR: Failed to close file" << endl;
@@ -408,10 +413,96 @@ hid_t NDArrayToHDF5::type_nd2hdf(NDDataType_t& datatype)
   return result;
 }
 
+/** Store the profile data in a separate dataset
+ *
+ */
+int NDArrayToHDF5::store_profiling()
+{
+    int retcode = 0;
+    hid_t dataspace;
+    hid_t dataset;
+    herr_t hdferr;
+    const int ndims = 3;
+
+    // For each profiling object, write to the correct column...
+    vector< vector<double> > profs;
+    profs.push_back(this->timestamp.vec_timestamps());
+    profs.push_back(this->timestamp.vec_deltatime());
+    profs.push_back(this->dt_write.vec_timestamps());
+    profs.push_back(this->timestamp.vec_datarate());
+    profs.push_back(this->dt_write.vec_datarate());
+    // Find the longest profiling dataset (they should all be same length)
+    vector< vector<double> >::const_iterator it;
+    hsize_t maxlen = 0;
+    for (it = profs.begin(); it != profs.end(); ++it)
+    {
+        if ((*it).size() > maxlen) maxlen = (*it).size();
+    }
+
+    hsize_t profiling_dims[ndims] = {this->mpi_size, profs.size(), maxlen};
+
+    dataspace = H5Screate_simple( ndims, profiling_dims, NULL);
+    if (dataspace < 0) {
+        cerr << "ERROR: failed to create profiling dataspace" << endl;
+        return -1;
+    }
+
+    /* todo: fix hardcoded profiling dataset name */
+    const char * dsetname = "profiling";
+    cout << "Creating dataset: " << dsetname << endl;
+    dataset = H5Dcreate2( this->h5file, dsetname,
+                          H5T_NATIVE_DOUBLE, dataspace,
+                          H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+    if (dataset < 0) {
+        cerr << "ERROR: Profiling: Failed to create dataset: " << dsetname << endl;
+        if (dataspace > 0) H5Sclose(dataspace);
+        return -1;
+    }
+
+    hid_t file_dataspace = H5Dget_space(dataset);
+
+    int i = 0;
+    for (it = profs.begin(); it != profs.end(); ++it, i++)
+    {
+        vector<double> pf = *it;
+        hsize_t start[ndims] = { this->mpi_rank, i, 0 };
+        hsize_t count[ndims] = { 1, 1, pf.size() };
+        hdferr = H5Sselect_hyperslab( file_dataspace, H5S_SELECT_SET,
+                                      start, NULL,
+                                      count, NULL);
+        hid_t mem_dataspace = H5Screate_simple(ndims, count, NULL);
+        if (mem_dataspace < 0) {
+            msg("ERROR: Profiling: unable to create memory dataspace", true);
+            H5Sclose(file_dataspace);
+            H5Dclose(dataset);
+            return -1;
+        }
+        hdferr = H5Dwrite( dataset, H5T_NATIVE_DOUBLE, mem_dataspace,
+                           file_dataspace, H5P_DEFAULT, &pf.front() );
+        if (hdferr < 0) {
+            msg("ERROR: Profiling: unable to write to dataset", true);
+            H5Sclose(mem_dataspace);
+            H5Sclose(file_dataspace);
+            H5Dclose(dataset);
+            return -1;
+        }
+        H5Sclose(mem_dataspace);
+    }
+
+
+    if (dataspace > 0) H5Sclose(dataspace);
+    H5Sclose(file_dataspace);
+    H5Dclose(dataset);
+
+    return retcode;
+}
+
 // TODO: write attributes to dataset
 int NDArrayToHDF5::write_h5dataset_attributes( hid_t h5dataset, HdfDataset* dset)
 {
     int retcode = -1;
+
+
 
     return retcode;
 }

@@ -59,6 +59,8 @@ protected:
         { std::cout << "NDArrayToHDF5: " << text << std::endl;};
 
 private:
+    int mpi_rank;
+    int mpi_size;
     hid_t type_nd2hdf(NDDataType_t& datatype);
     int create_file_layout();
     int create_dataset(HdfDataset* dset);
@@ -69,9 +71,7 @@ private:
     //int attr_close(){};
 
     // performance dataset operations
-    //int perf_create(){};
-    //int perf_write(){};
-    //int perf_close(){};
+    int store_profiling();
 
     int write_h5dataset_attributes( hid_t h5dataset, HdfDataset* dset);
     // convenience function to write a HDF5 attribute as a string
@@ -86,6 +86,8 @@ private:
 
     Profiling timestamp;
     Profiling dt_write;
+    Profiling opentime;
+    Profiling closetime;
 
     //===== properties and attributes regarding file and dataset access =======
     WriteConfig conf;
