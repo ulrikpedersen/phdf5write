@@ -127,12 +127,12 @@ BOOST_AUTO_TEST_CASE(hdf_group_2_mix_ptr)
 
     const char * name1 = "grp1_1";
     std::string name1_str(name1);
-    BOOST_CHECK_NE( (int)grp.new_group(name1_str), 0);
+    BOOST_CHECK_NE( (long int)grp.new_group(name1_str), 0);
     BOOST_CHECK_EQUAL( grp.num_groups(), 1);
 
     const char * name2 = "grp1_1_1";
     std::string name2_str(name2);
-    BOOST_CHECK_NE( (int)grp.new_group(name2_str), 0);
+    BOOST_CHECK_NE( (long int)grp.new_group(name2_str), 0);
     BOOST_CHECK_EQUAL( grp.num_groups(), 2);
 
     BOOST_CHECK(true);
@@ -157,7 +157,7 @@ BOOST_AUTO_TEST_CASE(insert_dset_in_group)
     std::string dsetname ("mydset");
     HdfDataset *dset = NULL;
     BOOST_CHECK_NO_THROW(dset = grp->new_dset( dsetname ));
-    BOOST_CHECK_NE((int)dset, 0);
+    BOOST_CHECK_NE((long int)dset, 0);
     BOOST_CHECK_EQUAL( dset->get_name(), dsetname);
     BOOST_CHECK_EQUAL(grp->num_datasets(), 1);
     BOOST_CHECK_EQUAL(grp->num_groups(), 0);
@@ -298,7 +298,7 @@ BOOST_AUTO_TEST_CASE( retrieve_dset_tree )
     HdfDataset *result = NULL;
     BOOST_CHECK_EQUAL( root.find_dset_ndattr(attr_name, &result), 0);
     // and check that the dataset is the very same instance
-    BOOST_CHECK_EQUAL( (int)result, (int)dset);
+    BOOST_CHECK_EQUAL( (long int)result, (long int)dset);
     BOOST_CHECK_EQUAL( result->get_full_name(), dset->get_full_name());
     BOOST_TEST_MESSAGE( "root: " << root._str_() );
     BOOST_TEST_MESSAGE( "dset: " << dset->_str_() );
