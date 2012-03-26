@@ -7,8 +7,9 @@ ifeq ($(EPICS_HOST_ARCH),linux-x86)
 MPIDIR=/dls_sw/apps/openmpi/1.4.3/32
 # parallel version of hdf5 -can be replaced with non parallel but why would you???
 HDF5DIR=/dls_sw/apps/hdf5/1.8.7/openMPI/32
-BOOSTDIR=/scratch/boost/1_48_0
-#BOOSTDIR=/dls_sw/work/common/boost/1.48.0/32
+#BOOSTDIR=/scratch/boost/1_48_0
+BOOSTDIR=/dls_sw/work/tools/RHEL5
+
 else
 ifeq ($(EPICS_HOST_ARCH),linux-x86_64)
 MPIDIR=/dls_sw/apps/openmpi/1.4.3/64

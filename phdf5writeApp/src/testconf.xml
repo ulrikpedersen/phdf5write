@@ -1,0 +1,17 @@
+<phdftest>
+<!--     <filename>/mnt/lustre03/up45-tmp-to-be-deleted-02-08-2011/stripe8/phdftest_19.h5</filename> -->
+     <filename>/mnt/lustre03/up45-tmp-to-be-deleted-02-08-2011/largestripe8/phdftest_21.h5</filename> 
+<!--    <filename>/mnt/play01/up45/phdf/stripe4/phdftest_17.h5</filename>-->
+<!--    <filename>/mnt/play01/up45/phdf/largestripe4/phdftest_20.h5</filename>-->
+    <chunking>
+        <x>4096</x>
+        <y>1024</y>
+        <z>1</z>
+    </chunking>
+    <subframe>
+        <x>4096</x>
+        <y>1024</y>
+    </subframe>
+    <numframes>50</numframes>
+    <fillvalue>0</fillvalue>
+</phdftest>

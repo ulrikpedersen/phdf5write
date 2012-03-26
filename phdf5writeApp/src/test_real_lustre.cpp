@@ -8,18 +8,73 @@
 #define BOOST_TEST_DYN_LINK
 #define BOOST_TEST_MODULE MPI_NDArrayToHDF5
 #include <boost/test/unit_test.hpp>
-//#include <boost/test/included/unit_test_framework.hpp> // for a static build use this and comment out BOOST_TEST_DYN_LINK
+#include <boost/property_tree/ptree.hpp>
+#include <boost/property_tree/xml_parser.hpp>
+#include <boost/property_tree/ini_parser.hpp>
+#include <boost/foreach.hpp>
 
 #include <iostream>
 #include <vector>
 #include <string>
+#include <set>
+#include <exception>
 #include <NDArray.h>
 #include "ndarray_hdf5.h"
 
+typedef struct dims_t{
+    int x;
+    int y;
+    int z;
+} dims_t;
+
+struct sim_config
+{
+    std::string filename;
+    dims_t chunking;
+    dims_t subframe;
+    int num_frames;
+    int num_chunks;
+    int fill_value;
+    void loadxml(const std::string &xmlfile);
+};
+
+void sim_config::loadxml(const std::string &xmlfile)
+{
+
+    // Create empty property tree object
+    using boost::property_tree::ptree;
+    ptree pt;
+
+    // Load XML file and put its contents in property tree.
+    read_xml(xmlfile, pt);
+
+    // Get the output filename and store it.
+    filename = pt.get<std::string>("phdftest.filename");
+
+    // Get chunking settings
+    chunking.x = pt.get("phdftest.chunking.x", 1);
+    chunking.y = pt.get("phdftest.chunking.y", 1);
+    chunking.z = pt.get("phdftest.chunking.z", 1);
+
+    // get the subframe dimensions -i.e. the size of the stripe that the current process will write.
+    // Each process will write with an offset in the Y dimension, depending on their mpi-rank (process ID)
+    subframe.x = pt.get("phdftest.subframe.x", 1);
+    subframe.y = pt.get("phdftest.subframe.y", 1);
+    subframe.z = pt.get("phdftest.subframe.z", 1);
+
+    // Get the number of frames to write
+    num_frames = pt.get("phdftest.numframes", 1);
+
+    // fill value
+    fill_value = pt.get("phdftest.fillvalue", 0);
+
+}
+
 //#define PCO_EDGE_TEST
 //#define PCO_4000_TEST
-#define EVEN_CHUNKS_TEST
+//#define EVEN_CHUNKS_TEST
 //#define TINY_TEST
+
 
 #ifdef EVEN_CHUNKS_TEST
 #define NUM_FRAMES 600
@@ -42,6 +97,7 @@ void util_fill_ndarr_dims(NDArray &ndarr, unsigned long int *sizes, int ndims, i
     static short counter=0;
     int i=0;
     ndarr.ndims = ndims;
+    ndarr.dataType = NDUInt16;
     int num_elements = 1;
     for (i=0; i<ndims; i++) {
         ndarr.initDimension(&(ndarr.dims[i]), sizes[i]);
@@ -65,12 +121,14 @@ struct WriteFrameFixture{
     int mpi_name_len;
     int mpi_size;
     int mpi_rank;
+    sim_config config;
 
 
     WriteFrameFixture()
     {
         BOOST_TEST_MESSAGE("setup WriteFrameFixture");
-        fname = "smallframes.h5";
+        //fname = "smallframes.h5";
+        config.loadxml("testconf.xml");
 
         mpi_size = 1;
         mpi_rank = 0;
@@ -91,19 +149,43 @@ struct WriteFrameFixture{
 
 #endif
 
-        // Define the dimensions and number of frames to run here
-        numframes = NUM_FRAMES;
-        sizes[0]=CHUNK_X; sizes[1]=CHUNK_Y * NUM_CHUNKS;
-        chunks[0]=CHUNK_X; chunks[1]=CHUNK_Y; chunks[2]=CHUNK_Z;
-        dsetdims[0]=sizes[0], dsetdims[1]=sizes[1]*mpi_size, dsetdims[2]=numframes;
-        BOOST_TEST_MESSAGE("dataset: " << dsetdims[0] << " " << dsetdims[1] << " " << dsetdims[2]);
-        fill_value = 4;
+        // output filename
+        fname = config.filename;
 
-        for (int i=0; i<CHUNK_Z; i++)
+        // Define the dimensions and number of frames to run here
+        //numframes = NUM_FRAMES;
+        numframes = config.num_frames;
+        BOOST_TEST_MESSAGE("num_frames: " << numframes);
+
+        //sizes[0]=CHUNK_X; sizes[1]=CHUNK_Y * NUM_CHUNKS;
+        sizes[0] = config.subframe.x; sizes[1] = config.subframe.y;
+
+        //chunks[0]=CHUNK_X; chunks[1]=CHUNK_Y; chunks[2]=CHUNK_Z;
+        chunks[0] = config.chunking.x; chunks[1] = config.chunking.y; chunks[2] = config.chunking.z;
+
+        dsetdims[0]=sizes[0], dsetdims[1]=sizes[1]*mpi_size, dsetdims[2]=numframes;
+
+        BOOST_TEST_MESSAGE("dataset: " << dsetdims[0] << " " << dsetdims[1] << " " << dsetdims[2]);
+        fill_value = config.fill_value;
+
+        BOOST_TEST_MESSAGE("chunks: " << chunks[0] << " " << chunks[1] << " " << chunks[2]);
+        BOOST_TEST_MESSAGE("fill value: " << fill_value);
+
+        for (int i=0; i<chunks[2]; i++)
         {
             NDArray *pnd = new NDArray();
+            pnd->pAttributeList->add("h5_chunk_size_0", "dimension 0", NDAttrUInt32, (void*)(chunks) );
+            pnd->pAttributeList->add("h5_chunk_size_1", "dimension 1", NDAttrUInt32, (void*)(chunks+1) );
+            pnd->pAttributeList->add("h5_chunk_size_2", "dimension 2", NDAttrUInt32, (void*)(chunks+2) );
+
+            pnd->pAttributeList->add("h5_dset_size_0", "dset 0", NDAttrUInt32, (void*)(dsetdims) );
+            pnd->pAttributeList->add("h5_dset_size_1", "dset 1", NDAttrUInt32, (void*)(dsetdims+1) );
+            pnd->pAttributeList->add("h5_dset_size_2", "dset 2", NDAttrUInt32, (void*)(dsetdims+2) );
+
+            pnd->pAttributeList->add("h5_fill_val", "fill value", NDAttrUInt32, (void*)(&fill_value) );
             frames.push_back( pnd );
             util_fill_ndarr_dims( *frames[i], sizes, 2, mpi_rank);
+
             pnd->report(11);
         }
     }
@@ -117,11 +199,12 @@ struct WriteFrameFixture{
         {
             pnd = *it;
             if (pnd->pData !=NULL ) {
+                BOOST_TEST_MESSAGE("Freeing address: " << pnd->pData << " from: " << &pnd);
                 free(pnd->pData );
                 pnd->pData=NULL;
             }
         }
-        //delete frames;
+        frames.clear();
 
 #ifdef H5_HAVE_PARALLEL
         BOOST_TEST_MESSAGE("==== MPI_Finalize  rank: " << mpi_rank << "=====");
@@ -161,8 +244,8 @@ BOOST_AUTO_TEST_CASE(mpi_parallel_run)
 
     BOOST_CHECK_NO_THROW( ndh.h5_configure(*frames[0]));
 
-    BOOST_TEST_MESSAGE("Open file: test_real_lustre2.h5");
-    BOOST_REQUIRE_EQUAL( ndh.h5_open("test_real_lustre2.h5"), 0);
+    BOOST_TEST_MESSAGE("Open file: " << fname);
+    BOOST_REQUIRE_EQUAL( ndh.h5_open(fname.c_str()), 0);
 
     test_dset_dims[0]=dsetdims[0]; test_dset_dims[1]=dsetdims[1];
     int cacheframe = 0;

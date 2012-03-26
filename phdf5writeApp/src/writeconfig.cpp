@@ -427,6 +427,7 @@ void WriteConfig::parse_ndarray_attributes(NDArray& ndarray)
 
     /* Collect the fill value from the ndarray attributes */
     ret = this->get_attr_fill_val(list);
+    cout << "get_attr_fill_val returns: " << ret << " value: " << *((unsigned long*)this->ptr_fill_value) << endl;
 
     cout << *this << endl;
 }

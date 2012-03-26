@@ -95,6 +95,8 @@ private:
 
     //===== HDF5 library handles ===============================================
     hid_t h5file;
+    size_t rdcc_nslots;
+    size_t rdcc_nbytes;
 };
 
 #endif /* NDARRAY_HDF5_H_ */
