@@ -21,6 +21,8 @@
 #include "profiling.h"
 #include <NDArray.h>
 
+#define NUM_WRITE_STEPS 2
+
 class NDArray; //forward declaration
 //class NDDataType_t;
 struct NDDatatType_t;
@@ -88,6 +90,7 @@ private:
     Profiling dt_write;
     Profiling opentime;
     Profiling closetime;
+    Profiling writestep[NUM_WRITE_STEPS];
 
     //===== properties and attributes regarding file and dataset access =======
     WriteConfig conf;

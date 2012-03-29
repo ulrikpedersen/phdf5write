@@ -158,12 +158,12 @@ struct WriteFrameFixture{
         BOOST_TEST_MESSAGE("num_frames: " << numframes);
 
         //sizes[0]=CHUNK_X; sizes[1]=CHUNK_Y * NUM_CHUNKS;
-        sizes[0] = config.subframe.x; sizes[1] = config.subframe.y;
+        sizes[1] = config.subframe.x; sizes[0] = config.subframe.y;
 
         //chunks[0]=CHUNK_X; chunks[1]=CHUNK_Y; chunks[2]=CHUNK_Z;
-        chunks[0] = config.chunking.x; chunks[1] = config.chunking.y; chunks[2] = config.chunking.z;
+        chunks[2] = config.chunking.x; chunks[1] = config.chunking.y; chunks[0] = config.chunking.z;
 
-        dsetdims[0]=sizes[0], dsetdims[1]=sizes[1]*mpi_size, dsetdims[2]=numframes;
+        dsetdims[2]=sizes[1], dsetdims[1]=sizes[0]*mpi_size, dsetdims[0]=numframes;
 
         BOOST_TEST_MESSAGE("dataset: " << dsetdims[0] << " " << dsetdims[1] << " " << dsetdims[2]);
         fill_value = config.fill_value;
@@ -171,7 +171,7 @@ struct WriteFrameFixture{
         BOOST_TEST_MESSAGE("chunks: " << chunks[0] << " " << chunks[1] << " " << chunks[2]);
         BOOST_TEST_MESSAGE("fill value: " << fill_value);
 
-        for (int i=0; i<chunks[2]; i++)
+        for (int i=0; i<chunks[0]; i++)
         {
             NDArray *pnd = new NDArray();
             pnd->pAttributeList->add("h5_chunk_size_0", "dimension 0", NDAttrUInt32, (void*)(chunks) );
@@ -240,19 +240,19 @@ BOOST_AUTO_TEST_CASE(mpi_parallel_run)
 
     WriteConfig wc;
 
-    test_offsets[1] = mpi_rank * sizes[1];
+    test_offsets[1] = mpi_rank * sizes[0];
 
     BOOST_CHECK_NO_THROW( ndh.h5_configure(*frames[0]));
 
     BOOST_TEST_MESSAGE("Open file: " << fname);
     BOOST_REQUIRE_EQUAL( ndh.h5_open(fname.c_str()), 0);
 
-    test_dset_dims[0]=dsetdims[0]; test_dset_dims[1]=dsetdims[1];
+    test_dset_dims[2]=dsetdims[2]; test_dset_dims[1]=dsetdims[1];
     int cacheframe = 0;
 
     for (int i = 0; i < numframes; i++) {
-        test_dset_dims[2]=i+1;
-        test_offsets[2]=i;
+        test_dset_dims[0]=i+1;
+        test_offsets[0]=i;
 
         cacheframe = i%frames.size();
         BOOST_TEST_MESSAGE("===== Writing frame[" << cacheframe << "] no: " << i << " rank: " << mpi_rank);

@@ -75,13 +75,13 @@ DimensionDesc& DimensionDesc::operator =(const DimensionDesc& src)
 
 DimensionDesc& DimensionDesc::operator +=(const dimsize_t dimsize)
 {
-    this->dims.push_back(dimsize);
+    this->dims.insert(this->dims.begin(), dimsize);
     return *this;
 }
 DimensionDesc& DimensionDesc::operator +=(const DimensionDesc& src)
 {
     vec_ds_t srcdims = src.dims;
-    this->dims.insert(this->dims.end(), srcdims.begin(), srcdims.end());
+    this->dims.insert(this->dims.begin(), srcdims.begin(), srcdims.end());
     return *this;
 }
 

@@ -28,9 +28,11 @@ public:
     void reset(int frame_bytes = -1);
     double stamp_now();
     void dt_start(); /* to start measure a certain code section */
+    void dt_set_startstamp(timespec& startstamp);
     double dt_end(); /* end of code section measure */
     int count();
 
+    timespec get_start() { return this->start; };
     std::vector<double> vec_timestamps();
     const double* ptr_timestamps(size_t& nelements);
     std::vector<double> vec_deltatime();

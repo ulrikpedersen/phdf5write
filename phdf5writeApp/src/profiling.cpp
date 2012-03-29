@@ -93,6 +93,12 @@ void Profiling::dt_start()
     this->datasize = 0.0;
 }
 
+void Profiling::dt_set_startstamp(timespec& startstamp)
+{
+    this->start = startstamp;
+    this->datasize = 0.0;
+}
+
 double Profiling::dt_end()
 {
     return this->stamp_now();

@@ -87,6 +87,14 @@ void WriteConfig::proc_rank_size(int rank, int size)
     else this->proc_size = size;
 }
 
+int WriteConfig::num_extra_dims()
+{
+    int num_img_dims = this->dim_roi_frame.num_dimensions();
+    int num_dset_dims = this->dim_full_dataset.num_dimensions();
+    int extra_dims = num_dset_dims - num_img_dims;
+    return extra_dims>0 ? extra_dims : 0;
+}
+
 void WriteConfig::inc_position(NDArray& ndarray)
 {
     NDAttributeList * list = ndarray.pAttributeList;
@@ -97,6 +105,7 @@ void WriteConfig::inc_position(NDArray& ndarray)
     int ret = 0;
     vec_ds_t full_dset_dims = this->dim_full_dataset.dim_size_vec();
     vec_ds_t roi_frame_dims = this->dim_roi_frame.dim_size_vec();
+    int num_img_dims = this->dim_roi_frame.num_dimensions();
 
     attr_name = ATTR_ROI_ORIGIN;
     ret = this->get_attr_array(attr_name, list, attr_origins);
@@ -118,17 +127,18 @@ void WriteConfig::inc_position(NDArray& ndarray)
             // .. except if we are running multiple processes
             // in which case we assume an even split in the ROI frame slowest changing
             // dimension (for instance a 2D image is split in horizontal stripes)
-            size_t split_dim = this->dim_roi_frame.num_dimensions() - 1;
-            this->origin[split_dim] = roi_frame_dims[split_dim] * this->proc_rank;
+            size_t split_dim = num_img_dims - 1;
+            this->origin[split_dim] = roi_frame_dims[0] * this->proc_rank;
         } else {
 
-            idim = this->dim_roi_frame.num_dimensions();
+            idim = 0;
 
             // Loop through extra dimensions to increment one frame in origin/offset
             // Iterator for the origen vector starts at the first extra dimension.
             // (i.e. after the image width, height dimensions...)
-            for (it_origen = this->origin.begin()+idim;
-                    it_origen != this->origin.end();
+            int num_extra_dims = this->num_extra_dims();
+            for (it_origen = this->origin.begin();
+                    it_origen != this->origin.begin()+num_extra_dims;
                     ++it_origen, idim++)
             {
                 (*it_origen)++;
@@ -138,10 +148,10 @@ void WriteConfig::inc_position(NDArray& ndarray)
                     // Normally we will reset the origin here and next iteration will
                     // increment the next dim -except if this is the last dimension, in
                     // which case we dont reset because we could end up overwriting data.
-                    //cout << "    --set full dimsize: " << idim << " " << this->dim_full_dataset << endl;
-                    if (it_origen == this->origin.end() -1) {
+                    cout << "    --set full dimsize: " << idim << " " << this->dim_full_dataset << endl;
+                    if (it_origen == this->origin.begin() + num_extra_dims) {
                         this->dim_full_dataset.set_dimension_size(idim, full_dset_dims.at(idim) + 1);
-                        //cout << " set full dimsize: " << idim << " " << this->dim_full_dataset << endl;
+                        cout << " set full dimsize: " << idim << " " << this->dim_full_dataset << endl;
                         break;
                     }
                     else *it_origen=0;
@@ -156,9 +166,9 @@ void WriteConfig::inc_position(NDArray& ndarray)
     // Loop through extra dimensions to extend the size of the active dataset
     // to fit the new frame. Note that the active dataset must never be made smaller
     // (just in case frames arrive out of expected order within the MPI job)
-    idim = this->dim_roi_frame.num_dimensions();
-    for (it_origen = this->origin.begin()+idim;
-         it_origen != this->origin.end();
+    idim = 0;
+    for (it_origen = this->origin.begin();
+         it_origen != this->origin.end()-num_img_dims;
          ++it_origen, idim++)
     {
         dimsize_t dimsize = this->dim_active_dataset.dim_size_vec().at(idim);
@@ -214,6 +224,7 @@ long int WriteConfig::istorek()
 DimensionDesc WriteConfig::min_chunk_cache()
 {
     DimensionDesc min_cache_block = this->dim_roi_frame;
+
     for (int i=this->dim_roi_frame.num_dimensions();
             i < this->dim_chunk.num_dimensions(); i++) {
         min_cache_block += 1;
@@ -301,10 +312,11 @@ DimensionDesc WriteConfig::get_detector_dims()
     vec_ds_t tmpdims;
     // Get the individual detector frame size from a combination of the ndarray (ROI)
     // and the full dataset size. The ROI will tell how many dimensions the detector produce
-    // and the actual size can be found from the first dimensions of the full dataset size.
+    // and the actual size can be found from the last dimensions of the full dataset size.
     int ndims = this->dim_roi_frame.num_dimensions();
     vec_ds_t vec_dset = this->dim_full_dataset.dim_size_vec();
-    tmpdims.assign(vec_dset.begin(), vec_dset.begin()+ndims);
+    int num_extra_dims = this->num_extra_dims();
+    tmpdims.assign(vec_dset.begin()+num_extra_dims, vec_dset.end());
     return DimensionDesc(tmpdims, this->dim_roi_frame.element_size);
 }
 
@@ -313,11 +325,15 @@ DimensionDesc WriteConfig::get_detector_dims()
  */
 vec_ds_t WriteConfig::get_dset_maxdims()
 {
-    vec_ds_t detector_dims = this->get_detector_dims().dim_size_vec();
-    vec_ds_t maxdims( detector_dims.begin(), detector_dims.end() );
-    int num_extra_dims = this->dim_full_dataset.num_dimensions() - maxdims.size();
+    vec_ds_t maxdims = this->dim_full_dataset.dim_size_vec();
+    int num_extra_dims = this->num_extra_dims();
 
-    maxdims.insert( maxdims.end(), num_extra_dims, -1);
+    for (int i = 0; i<num_extra_dims; i++)
+    {
+        maxdims[i] = -1;
+    }
+    //maxdims.insert( maxdims.end(), num_extra_dims, -1);
+    //maxdims.assign( num_extra_dims, -1);
     return maxdims;
 }
 
@@ -420,7 +436,7 @@ void WriteConfig::parse_ndarray_attributes(NDArray& ndarray)
     vec_ds_t vec_act_dset = this->dim_active_dataset.dim_size_vec();
     int nextradims = this->dim_full_dataset.num_dimensions() - this->dim_roi_frame.num_dimensions();
     if (nextradims > 0) {
-        vec_act_dset.insert(vec_act_dset.end(), nextradims, 1);
+        vec_act_dset.insert(vec_act_dset.begin(), nextradims, 1);
         this->dim_active_dataset = DimensionDesc(vec_act_dset, this->dim_roi_frame.element_size);
     }
     //cout << this->dim_active_dataset << endl;

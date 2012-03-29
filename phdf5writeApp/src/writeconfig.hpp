@@ -46,6 +46,7 @@ public:
     vec_ds_t get_roi_frame(){return this->dim_roi_frame.dim_size_vec();};
     vec_ds_t get_dset_maxdims();
     void proc_rank_size(int rank, int size);
+    int num_extra_dims();
 
     long int istorek();
     const HSIZE_T alignment;

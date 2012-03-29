@@ -107,12 +107,15 @@ int NDArrayToHDF5::h5_open(const char *filename)
 #endif
 
 
+    cout << "Setting file alignment: " << this->conf.alignment << endl;
     hdfcode = H5Pset_alignment( file_access_plist, this->conf.alignment, this->conf.alignment);
     if (hdfcode < 0) {
         msg("Warning: failed to set alignement");
     }
+    long int istorek = this->conf.istorek();
+    cout << "Setting istorek: " << istorek << endl;
     hid_t create_plist = H5Pcreate(H5P_FILE_CREATE);
-    hdfcode = H5Pset_istore_k(create_plist, this->conf.istorek());
+    hdfcode = H5Pset_istore_k(create_plist, istorek);
     if (hdfcode < 0) {
         msg("Warning: failed to set i_store_k");
     }
@@ -142,11 +145,24 @@ int NDArrayToHDF5::h5_write(NDArray& ndarray)
     herr_t hdferr = 0;
     //msg("h5_write()");
 
+    // Initialise performance measurements
+    this->writestep[0].dt_start();
+    timespec startstamp = this->writestep[0].get_start();
+    for (int i=1; i<NUM_WRITE_STEPS; i++)
+    {
+        this->writestep[i].dt_set_startstamp( startstamp );
+    }
+
     this->conf.next_frame(ndarray);
     //msg(this->conf._str_());
 
+    // Timing configuration step
+    //this->writestep[0].dt_end(); // takes no measurable time
+
     hid_t dset_access_plist = H5Pcreate(H5P_DATASET_ACCESS);
     hdferr = H5Pset_chunk_cache(dset_access_plist, this->rdcc_nslots, this->rdcc_nbytes, 1.0);
+    // Timing caching configuration
+    //this->writestep[1].dt_end(); // takes no measurable time
 
     const char *dset_name = "/mydset";
     hid_t dataset = H5Dopen2(this->h5file, dset_name, dset_access_plist);
@@ -154,22 +170,24 @@ int NDArrayToHDF5::h5_write(NDArray& ndarray)
         msg("ERROR: unable to open dataset", true);
         return -1;
     }
+    // Timing opening of dataset
+    //this->writestep[2].dt_end(); // takes no measurable time
 
     // ==== temporary for debugging info only ========
+    /*
     hid_t dapl_id = H5Dget_access_plist( dataset );
     size_t rdcc_nslots=0;
     size_t rdcc_nbytes=0;
     double rdcc_w0;
     hdferr = H5Pget_chunk_cache( dapl_id, &rdcc_nslots, &rdcc_nbytes, &rdcc_w0 );
     cout << "chunk cache ("<<hdferr<<") nslots:" << rdcc_nslots << " nbytes:" << rdcc_nbytes << " w0:" << rdcc_w0 << endl;
-
-
+    */
     // ==== end tmp ====
-
 
 
     vec_ds_t dset_vec = this->conf.get_dset_dims();
     const hsize_t *dset_ptr = WriteConfig::get_vec_ptr(dset_vec);
+    print_arr("Extending to: ", dset_ptr, dset_vec.size());
     hdferr = H5Dset_extent( dataset, dset_ptr );
     if (hdferr < 0) {
         msg("ERROR: unable to extend dataset", true);
@@ -177,6 +195,9 @@ int NDArrayToHDF5::h5_write(NDArray& ndarray)
         H5Dclose(dataset);
         return -1;
     }
+    // Timing extending dataset
+    this->writestep[0].dt_end();
+
 
     hid_t file_dataspace = H5Dget_space(dataset);
     if (file_dataspace < 0) {
@@ -185,6 +206,9 @@ int NDArrayToHDF5::h5_write(NDArray& ndarray)
         H5Dclose(dataset);
         return -1;
     }
+    // Timing getting the file dataspace description
+    //this->writestep[1].dt_end(); // takes no measurable time
+
 
     hid_t datatype = H5Dget_type(dataset);
     if (datatype < 0) {
@@ -194,15 +218,23 @@ int NDArrayToHDF5::h5_write(NDArray& ndarray)
         H5Dclose(dataset);
         return -1;
     }
+    // Timing getting the file dataspace datatype
+    //this->writestep[2].dt_end(); // takes no measurable time
 
     vec_ds_t offset_vec =  this->conf.get_offsets();
     const hsize_t *offset_ptr = WriteConfig::get_vec_ptr( offset_vec );
-    //print_arr("Offsets: ", offset_ptr, offset_vec.size());
+    print_arr("Offsets: ", offset_ptr, offset_vec.size());
+
     vec_ds_t roi_fr_vec =  this->conf.get_roi_frame();
     // TODO: This is a hack: We are forcing an extra dimension on the copy of the ROI.
-    roi_fr_vec.push_back(1);
+    roi_fr_vec.insert(roi_fr_vec.begin(), 1);
+
     const hsize_t *roi_fr_ptr = WriteConfig::get_vec_ptr( roi_fr_vec );
-    //print_arr("ROI: ", roi_fr_ptr, roi_fr_vec.size());
+    print_arr("ROI: ", roi_fr_ptr, roi_fr_vec.size());
+
+    // Timing getting the dimension sizes and offsets
+    //this->writestep[3].dt_end();// takes no measurable time
+
     hdferr = H5Sselect_hyperslab( file_dataspace, H5S_SELECT_SET,
                                          offset_ptr, NULL,
                                          roi_fr_ptr, NULL);
@@ -214,6 +246,9 @@ int NDArrayToHDF5::h5_write(NDArray& ndarray)
         H5Dclose(dataset);
         return -1;
     }
+    // Timing selecting hyperslab in file space
+    //this->writestep[4].dt_end();// takes no measurable time
+
 
     // Memory data_space
     hid_t mem_dataspace = H5Screate_simple(roi_fr_vec.size(), roi_fr_ptr, NULL);
@@ -225,6 +260,9 @@ int NDArrayToHDF5::h5_write(NDArray& ndarray)
         H5Dclose(dataset);
         return -1;
     }
+    // Timing creating a memory dataspace
+    //this->writestep[5].dt_end();// takes no measurable time
+
 
     // Transfer property list to select collective or independent transfer
     hid_t xfer_plist = H5P_DEFAULT;
@@ -240,6 +278,8 @@ int NDArrayToHDF5::h5_write(NDArray& ndarray)
         }
     }
 #endif
+    // Timing setting the MPIO transfer method
+    //this->writestep[6].dt_end();// takes no measurable time
 
     // The dataset, datatype and dataspace is not correct here...
     this->dt_write.dt_start();
@@ -256,14 +296,21 @@ int NDArrayToHDF5::h5_write(NDArray& ndarray)
         return -1;
     }
     this->dt_write.dt_end();
+    // Timing writing the data
+    this->writestep[1].dt_end();
 
     H5Sclose(mem_dataspace);
     H5Sclose(file_dataspace);
     H5Tclose(datatype);
-    H5Pclose(dapl_id);
+    //H5Pclose(dapl_id);
     H5Pclose(dset_access_plist);
     H5Dclose(dataset);
     this->timestamp.stamp_now();
+    // Timing closing the handles
+    //this->writestep[8].dt_end();// takes no measurable time
+    //cout << this->writestep[0] << endl;
+    //cout << this->writestep[11] << endl;
+
     return retcode;
 }
 
@@ -346,6 +393,7 @@ int NDArrayToHDF5::create_dataset(HdfDataset *dset)
     dset_create_plist = H5Pcreate(H5P_DATASET_CREATE);
     // Set the chunk size as defined in the configuration
     vec_ds_t chunk_dims = this->conf.get_chunk_dims();
+
     const hsize_t *chunk_dims_ptr = WriteConfig::get_vec_ptr(chunk_dims);
     print_arr("chunk dims ptr: ", chunk_dims_ptr, chunk_dims.size());
     hdfcode = H5Pset_chunk( dset_create_plist,
@@ -360,7 +408,7 @@ int NDArrayToHDF5::create_dataset(HdfDataset *dset)
     //hid_t datatype = H5T_NATIVE_UINT_FAST16;
     hid_t datatype = H5T_NATIVE_UINT16;
 
-    // TODO: configure compression if requred
+    // TODO: configure compression if requred (although not for phdf5 as this would not work)
 
     // Setting the fill value
     // TODO: fix hardcoded 16bit fill value
@@ -468,6 +516,8 @@ int NDArrayToHDF5::store_profiling()
     profs.push_back(this->dt_write.vec_timestamps());
     profs.push_back(this->timestamp.vec_datarate());
     profs.push_back(this->dt_write.vec_datarate());
+    for (int i = 0; i<NUM_WRITE_STEPS; i++) profs.push_back(this->writestep[i].vec_timestamps());
+
     // Find the longest profiling dataset (they should all be same length)
     vector< vector<double> >::const_iterator it;
     hsize_t maxlen = 0;
