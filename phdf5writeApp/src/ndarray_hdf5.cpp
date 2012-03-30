@@ -78,7 +78,7 @@ void NDArrayToHDF5::h5_configure(NDArray& ndarray)
 
 int NDArrayToHDF5::h5_open(const char *filename)
 {
-    msg("h5_open()");
+    //msg("h5_open()");
     int retcode = 0;
     this->conf.file_name(filename);
 
@@ -108,12 +108,35 @@ int NDArrayToHDF5::h5_open(const char *filename)
             H5Pclose(file_access_plist);
             return -1;
         }
+
     }
 #endif
 
+    // Disabling of the meta data cache is mentioned in various places as
+    // a performance tweak. However for our data-model it does not appear to
+    // have any significant impact.
+/*
+    cout << "Disabling meta data cache" <<endl;
+    H5AC_cache_config_t mdc_config;
+    mdc_config.version = H5AC__CURR_CACHE_CONFIG_VERSION;
+    hdfcode = H5Pget_mdc_config(file_access_plist, &mdc_config);
+    if (hdfcode < 0) {
+        msg("Warning: failed to get mdc_config for disabling metadata cache");
+    } else {
+        mdc_config.evictions_enabled = 0;
+        mdc_config.incr_mode = H5C_incr__off;
+        mdc_config.decr_mode = H5C_decr__off;
+        mdc_config.flash_incr_mode = H5C_flash_incr__off;
+        hdfcode = H5Pset_mdc_config(file_access_plist, &mdc_config);
+        if (hdfcode < 0) {
+            msg("Warning: failed to set mdc_config to disable metadata cache");
+        }
+    }
+    */
 
-    cout << "Setting file alignment: " << this->conf.alignment << endl;
-    hdfcode = H5Pset_alignment( file_access_plist, this->conf.alignment, this->conf.alignment);
+    HSIZE_T alignment = this->conf.get_alignment();
+    cout << "Setting file alignment: " << alignment << endl;
+    hdfcode = H5Pset_alignment( file_access_plist, alignment, alignment);
     if (hdfcode < 0) {
         msg("Warning: failed to set alignement");
     }
@@ -133,6 +156,8 @@ int NDArrayToHDF5::h5_open(const char *filename)
         H5Pclose(create_plist);
         return -1;
     }
+
+
     H5Pclose(file_access_plist);
     H5Pclose(create_plist);
     opentime.stamp_now();
@@ -178,17 +203,6 @@ int NDArrayToHDF5::h5_write(NDArray& ndarray)
     // Timing opening of dataset
     //this->writestep[2].dt_end(); // takes no measurable time
 
-    // ==== temporary for debugging info only ========
-    /*
-    hid_t dapl_id = H5Dget_access_plist( dataset );
-    size_t rdcc_nslots=0;
-    size_t rdcc_nbytes=0;
-    double rdcc_w0;
-    hdferr = H5Pget_chunk_cache( dapl_id, &rdcc_nslots, &rdcc_nbytes, &rdcc_w0 );
-    cout << "chunk cache ("<<hdferr<<") nslots:" << rdcc_nslots << " nbytes:" << rdcc_nbytes << " w0:" << rdcc_w0 << endl;
-    */
-    // ==== end tmp ====
-
     if (this->conf.is_dset_extendible()) {
         vec_ds_t dset_vec = this->conf.get_dset_dims();
         const hsize_t *dset_ptr = WriteConfig::get_vec_ptr(dset_vec);
@@ -229,14 +243,14 @@ int NDArrayToHDF5::h5_write(NDArray& ndarray)
 
     vec_ds_t offset_vec =  this->conf.get_offsets();
     const hsize_t *offset_ptr = WriteConfig::get_vec_ptr( offset_vec );
-    print_arr("Offsets: ", offset_ptr, offset_vec.size());
+    //print_arr("Offsets: ", offset_ptr, offset_vec.size());
 
     vec_ds_t roi_fr_vec =  this->conf.get_roi_frame();
     // TODO: This is a hack: We are forcing an extra dimension on the copy of the ROI.
     roi_fr_vec.insert(roi_fr_vec.begin(), 1);
 
     const hsize_t *roi_fr_ptr = WriteConfig::get_vec_ptr( roi_fr_vec );
-    print_arr("ROI: ", roi_fr_ptr, roi_fr_vec.size());
+    //print_arr("ROI: ", roi_fr_ptr, roi_fr_vec.size());
 
     // Timing getting the dimension sizes and offsets
     //this->writestep[3].dt_end();// takes no measurable time
@@ -324,17 +338,20 @@ int NDArrayToHDF5::h5_write(NDArray& ndarray)
 
 int NDArrayToHDF5::h5_close()
 {
-    msg("h5_close()");
+    //msg("h5_close()");
     int retcode = 0;
     herr_t hdferr = 0;
+    char *fname = new char(512);
 
     if (this->h5file != H5I_INVALID_HID) {
-        msg("Writing profile data");
+        //msg("Writing profile data");
         this->store_profiling();
-        msg("Closing file");
+        H5Fget_name(this->h5file, fname, 512-1 );
+        cout << "Closing file: " << fname << endl;
         closetime.reset();
         hdferr = H5Fclose(this->h5file);
         closetime.stamp_now();
+        cout << "File close time: " << closetime << endl;
         this->h5file = H5I_INVALID_HID;
         if (hdferr < 0) {
             cerr << "ERROR: Failed to close file" << endl;

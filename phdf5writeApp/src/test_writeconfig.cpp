@@ -100,7 +100,7 @@ BOOST_AUTO_TEST_CASE(simple)
     BOOST_CHECK_EQUAL( wc.file_name(fname.c_str()), fname );
     BOOST_TEST_MESSAGE( wc._str_() );
     BOOST_CHECK_EQUAL( wc.file_name(), fname );
-    BOOST_CHECK_EQUAL( wc.alignment, (HSIZE_T)H5_DEFAULT_ALIGN );
+    BOOST_CHECK_EQUAL( wc.get_alignment(), (HSIZE_T)H5_DEFAULT_ALIGN );
 
     wc.get_fill_value( ptrfillvalue, &nbytes);
     BOOST_CHECK_EQUAL( fillvalue, intfillvalue );

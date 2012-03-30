@@ -57,7 +57,8 @@ public:
     bool is_io_collective() {return this->iocollective; };
 
     long int istorek();
-    const HSIZE_T alignment;
+
+    HSIZE_T get_alignment();
     DimensionDesc min_chunk_cache();
     unsigned long int cache_num_slots( DimensionDesc& cache_block );
     void get_fill_value(void *fill_value, size_t *max_size_bytes);
@@ -89,6 +90,7 @@ private:
     bool extendible;
     bool mpiposix;
     bool iocollective;
+    const HSIZE_T alignment;
 
     int proc_rank;
     int proc_size;

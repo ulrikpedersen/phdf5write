@@ -183,18 +183,18 @@ struct Fixture{
     ~Fixture()
     {
         cout << "MAIN: teardown Fixture" << endl;
-        std::vector<NDArray*>::const_iterator it;
-        NDArray* pnd;
-        for (it = frames.begin(); it != frames.end(); ++it)
-        {
-            pnd = *it;
-            if (pnd->pData !=NULL ) {
-                cout << "MAIN: Freeing address: " << pnd->pData << " from: " << &pnd << endl;
-                free(pnd->pData );
-                pnd->pData=NULL;
-            }
-        }
-        frames.clear();
+        //std::vector<NDArray*>::const_iterator it;
+        //NDArray* pnd;
+        //for (it = frames.begin(); it != frames.end(); ++it)
+        //{
+        //    pnd = *it;
+        //    if (pnd->pData !=NULL ) {
+                //cout << "MAIN: Freeing address: " << pnd->pData << " from: " << &pnd << endl;
+                //free(pnd->pData );
+                //pnd->pData=NULL;
+         //   }
+        //}
+        //frames.clear();
 
 #ifdef H5_HAVE_PARALLEL
         cout << "MAIN: ==== MPI_Finalize  rank: " << mpi_rank << "=====" << endl;
@@ -215,7 +215,7 @@ int main(int argc, char *argv[])
 #ifdef H5_HAVE_PARALLEL
 
     cout << "MAIN: === TEST ParallelNoAttr is parallel ==="<<endl;
-    cout << "MAIN: Creating NDArrayToHDF5 object."<<endl;
+    //cout << "MAIN: Creating NDArrayToHDF5 object."<<endl;
     NDArrayToHDF5 ndh(fixt.mpi_comm, MPI_INFO_NULL);
 
 #else
@@ -230,8 +230,8 @@ int main(int argc, char *argv[])
     ndh.get_conf_ref().io_collective(fixt.config.collective);
     ndh.get_conf_ref().io_mpiposix(fixt.config.ioposix);
     ndh.get_conf_ref().dset_extendible(fixt.config.extendible);
-    cout << "MAIN: WC: " << ndh.get_conf_ref() << endl;
-    cout << "\n\tposix=" << fixt.config.ioposix << " collective=" << fixt.config.collective << " extendible=" << fixt.config.extendible << endl;
+    cout << "MAIN: WriteConfig: " << ndh.get_conf_ref() << endl;
+    //cout << "\n\tposix=" << fixt.config.ioposix << " collective=" << fixt.config.collective << " extendible=" << fixt.config.extendible << endl;
 
 
     cout << "MAIN: Open file: " << fixt.fname<<endl;
@@ -242,7 +242,7 @@ int main(int argc, char *argv[])
     for (int i = 0; i < fixt.numframes; i++) {
 
         cacheframe = i%fixt.frames.size();
-        cout << "MAIN: ===== Writing frame[" << cacheframe << "] no: " << i << " rank: " << fixt.mpi_rank<<endl;
+        cout << "MAIN: ===== Writing frame[" << cacheframe << "] no: " << i << endl;
 
         ndh.h5_write( *fixt.frames[cacheframe]);
 

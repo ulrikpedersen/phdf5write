@@ -235,6 +235,10 @@ DimensionDesc WriteConfig::min_chunk_cache()
     return min_cache_block;
 }
 
+HSIZE_T WriteConfig::get_alignment()
+{
+    return this->dim_chunk.data_num_bytes();
+}
 
 /** Calculate the number of 'slots' in the cache.
  * According to HDF5 documentation this is advised to be a prime number of
