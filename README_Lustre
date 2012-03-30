@@ -1,0 +1,31 @@
+
+How to build this module on 64bit Linux:
+
+ssh linux
+cd /dls_sw/work/R3.14.11/support/phdf5write/
+module swap epics/3.14.11_64
+make clean uninstall; make
+
+
+How to run the test_real_lustre benchmark application as an MPI job (64bit):
+Login to relevant machine.
+module load phdf5    # should load the 64bit build of openmpi and phdf5 from /dls_sw/apps/...
+Create a configuration XML file. Use the phdf5writeApp/src/testconf.xml as an example or template.
+In particular ensure to configure the output filename -where the data will be written to.
+Run the MPI job on the current machine (4 processes in this example):
+mpirun --mca btl sm,self,tcp --tag-output -np 4 bin/linux-x86_64/test_real_lustre yourconf.xml
+
+Finally parse the profiling data with the python script:
+dls-python2.6 phdf-perf-plot.py /path/to/your/datafile.h5
+
+
+To run the MPI job on multiple hosts it can be done using an MPI host file. The i12hostfile is an
+example that works with the i12-storage2 and i12-storage3 servers:
+
+mpirun  --prefix /dls_sw/apps/openmpi/1.4.3/64/ \
+        --hostfile i12hostfile -np 8 \
+        --mca btl sm,self,tcp \
+        --tag-output \
+        bin/linux-x86_64/test_real_lustre \
+        phdf5writeApp/src/testconf.xml
+
