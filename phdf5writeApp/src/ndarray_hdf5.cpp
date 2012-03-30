@@ -96,9 +96,14 @@ int NDArrayToHDF5::h5_open(const char *filename)
         msg("---- and MPI has been initialized!");
 
         // Configure the file access property list to use MPI communicator
-        hdfcode = H5Pset_fapl_mpio( file_access_plist, this->mpi_comm, this->mpi_info );
-        //hdfcode = H5Pset_fapl_mpiposix( file_access_plist, this->mpi_comm, 0 );
-        if (hdfcode < 0) {
+        if (this->conf.is_io_mpiposix()) {
+            msg(" Configuring I/O: MPI + posix");
+            hdfcode = H5Pset_fapl_mpiposix( file_access_plist, this->mpi_comm, 0 );
+        } else {
+            msg(" Configuring I/O: MPI-I/O");
+            hdfcode = H5Pset_fapl_mpio( file_access_plist, this->mpi_comm, this->mpi_info );
+        }
+         if (hdfcode < 0) {
             msg("ERROR: failed to set MPI communicator", true);
             H5Pclose(file_access_plist);
             return -1;
@@ -184,16 +189,17 @@ int NDArrayToHDF5::h5_write(NDArray& ndarray)
     */
     // ==== end tmp ====
 
-
-    vec_ds_t dset_vec = this->conf.get_dset_dims();
-    const hsize_t *dset_ptr = WriteConfig::get_vec_ptr(dset_vec);
-    print_arr("Extending to: ", dset_ptr, dset_vec.size());
-    hdferr = H5Dset_extent( dataset, dset_ptr );
-    if (hdferr < 0) {
-        msg("ERROR: unable to extend dataset", true);
-        if (dset_access_plist > 0) H5Pclose(dset_access_plist);
-        H5Dclose(dataset);
-        return -1;
+    if (this->conf.is_dset_extendible()) {
+        vec_ds_t dset_vec = this->conf.get_dset_dims();
+        const hsize_t *dset_ptr = WriteConfig::get_vec_ptr(dset_vec);
+        print_arr("Extending to: ", dset_ptr, dset_vec.size());
+        hdferr = H5Dset_extent( dataset, dset_ptr );
+        if (hdferr < 0) {
+            msg("ERROR: unable to extend dataset", true);
+            if (dset_access_plist > 0) H5Pclose(dset_access_plist);
+            H5Dclose(dataset);
+            return -1;
+        }
     }
     // Timing extending dataset
     this->writestep[0].dt_end();
@@ -270,8 +276,10 @@ int NDArrayToHDF5::h5_write(NDArray& ndarray)
     xfer_plist = H5Pcreate(H5P_DATASET_XFER);
     if (xfer_plist < 0) {
         msg("ERROR: unable to create transfer plist", true);
-    } else {
-        hdferr = H5Pset_dxpl_mpio(xfer_plist, H5FD_MPIO_COLLECTIVE);
+    } else if (not this->conf.is_io_mpiposix()){
+        H5FD_mpio_xfer_t xfermode;
+        xfermode = (this->conf.is_io_collective() ? H5FD_MPIO_COLLECTIVE : H5FD_MPIO_INDEPENDENT);
+        hdferr = H5Pset_dxpl_mpio(xfer_plist, xfermode);
         if (hdferr < 0)
         {
             msg("ERROR: unable to configure transfer with collective I/O", true);
@@ -338,6 +346,11 @@ int NDArrayToHDF5::h5_close()
 }
 
 WriteConfig NDArrayToHDF5::get_conf()
+{
+    return this->conf;
+}
+
+WriteConfig& NDArrayToHDF5::get_conf_ref()
 {
     return this->conf;
 }
@@ -424,12 +437,17 @@ int NDArrayToHDF5::create_dataset(HdfDataset *dset)
     }
 
 
-    vec_ds_t vec_dset = this->conf.get_dset_dims();
-    const hsize_t *ptr_dset_dim =  WriteConfig::get_vec_ptr(vec_dset);
-    print_arr("dataset ptr: ", ptr_dset_dim, vec_dset.size());
+    // Configure the dataset dimensions and max dimensions
     vec_ds_t vec_maxdim = this->conf.get_dset_maxdims();
     const hsize_t *ptr_maxdims = WriteConfig::get_vec_ptr(vec_maxdim);
     print_arr("max dim: ", ptr_maxdims, vec_maxdim.size());
+    vec_ds_t vec_dset = this->conf.get_dset_dims();
+    const hsize_t *ptr_dset_dim =  WriteConfig::get_vec_ptr(vec_dset);
+    if (not this->conf.is_dset_extendible())
+    {
+        ptr_dset_dim = ptr_maxdims;
+    }
+    print_arr("dataset ptr: ", ptr_dset_dim, vec_dset.size());
     dataspace = H5Screate_simple( (int)this->conf.get_dset_dims().size(),
                                   ptr_dset_dim, ptr_maxdims);
     if (dataspace < 0) {

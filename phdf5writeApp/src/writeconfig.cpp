@@ -168,8 +168,8 @@ void WriteConfig::inc_position(NDArray& ndarray)
     // (just in case frames arrive out of expected order within the MPI job)
     idim = 0;
     for (it_origen = this->origin.begin();
-         it_origen != this->origin.end()-num_img_dims;
-         ++it_origen, idim++)
+            it_origen != this->origin.end()-num_img_dims;
+            ++it_origen, idim++)
     {
         dimsize_t dimsize = this->dim_active_dataset.dim_size_vec().at(idim);
         if (dimsize < *it_origen + 1) {
@@ -277,6 +277,7 @@ string WriteConfig::_str_()
     out << "\n\tdset:   " << this->dim_full_dataset;
     out << "\n\tactive: " << this->dim_active_dataset;
     out << "\n\toffset: " << DimensionDesc(this->origin, this->dim_roi_frame.element_size)._str_();
+    out << "\n\tposix=" << this->mpiposix << " collective=" << this->iocollective << " extendible=" << this->extendible;
     out << "\n /WriteConfig>";
     return out.str();
 }
@@ -291,6 +292,9 @@ void WriteConfig::_default_init()
     this->ptr_fill_value = (void*)calloc(FILL_VALUE_SIZE, sizeof(char));
     this->proc_rank = 0;
     this->proc_size = 1;
+    this->iocollective = true;
+    this->mpiposix = false;
+    this->extendible = true;
 }
 
 void WriteConfig::_copy(const WriteConfig& src)
@@ -305,6 +309,9 @@ void WriteConfig::_copy(const WriteConfig& src)
     this->str_file_name = src.str_file_name;
     this->proc_rank = src.proc_rank;
     this->proc_size = src.proc_size;
+    this->iocollective = src.iocollective;
+    this->mpiposix = src.mpiposix;
+    this->extendible = src.extendible;
 }
 
 DimensionDesc WriteConfig::get_detector_dims()
@@ -328,9 +335,11 @@ vec_ds_t WriteConfig::get_dset_maxdims()
     vec_ds_t maxdims = this->dim_full_dataset.dim_size_vec();
     int num_extra_dims = this->num_extra_dims();
 
-    for (int i = 0; i<num_extra_dims; i++)
-    {
-        maxdims[i] = -1;
+    if (this->extendible) {
+        for (int i = 0; i<num_extra_dims; i++)
+        {
+            maxdims[i] = -1;
+        }
     }
     //maxdims.insert( maxdims.end(), num_extra_dims, -1);
     //maxdims.assign( num_extra_dims, -1);
@@ -443,9 +452,9 @@ void WriteConfig::parse_ndarray_attributes(NDArray& ndarray)
 
     /* Collect the fill value from the ndarray attributes */
     ret = this->get_attr_fill_val(list);
-    cout << "get_attr_fill_val returns: " << ret << " value: " << *((unsigned long*)this->ptr_fill_value) << endl;
+    //cout << "get_attr_fill_val returns: " << ret << " value: " << *((unsigned long*)this->ptr_fill_value) << endl;
 
-    cout << *this << endl;
+    //cout << *this << endl;
 }
 
 int WriteConfig::get_attr_value(const string& attr_name, NDAttributeList *ptr_attr_list, int *attr_value)

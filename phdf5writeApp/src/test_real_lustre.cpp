@@ -5,9 +5,6 @@
  *      Author: up45
  */
 
-#define BOOST_TEST_DYN_LINK
-#define BOOST_TEST_MODULE MPI_NDArrayToHDF5
-#include <boost/test/unit_test.hpp>
 #include <boost/property_tree/ptree.hpp>
 #include <boost/property_tree/xml_parser.hpp>
 #include <boost/property_tree/ini_parser.hpp>
@@ -20,6 +17,8 @@
 #include <exception>
 #include <NDArray.h>
 #include "ndarray_hdf5.h"
+
+using namespace std;
 
 typedef struct dims_t{
     int x;
@@ -35,6 +34,9 @@ struct sim_config
     int num_frames;
     int num_chunks;
     int fill_value;
+    bool extendible;
+    bool ioposix;
+    bool collective;
     void loadxml(const std::string &xmlfile);
 };
 
@@ -68,29 +70,17 @@ void sim_config::loadxml(const std::string &xmlfile)
     // fill value
     fill_value = pt.get("phdftest.fillvalue", 0);
 
+    // Do collective IO
+    collective = (bool)pt.get("phdftest.collective", 1);
+
+    // Do MPI + posix IO
+    ioposix = (bool)pt.get("phdftest.ioposix", 0);
+
+    // Use extendible dataset
+    extendible = (bool)pt.get("phdftest.extendible", 1);
+
 }
 
-//#define PCO_EDGE_TEST
-//#define PCO_4000_TEST
-//#define EVEN_CHUNKS_TEST
-//#define TINY_TEST
-
-
-#ifdef EVEN_CHUNKS_TEST
-#define NUM_FRAMES 600
-#define CHUNK_X 4096
-#define CHUNK_Y 64
-#define CHUNK_Z 8
-#define NUM_CHUNKS 20
-#endif
-
-#ifdef TINY_TEST
-#define NUM_FRAMES 6
-#define CHUNK_X 10
-#define CHUNK_Y 2
-#define CHUNK_Z 2
-#define NUM_CHUNKS 3
-#endif
 
 void util_fill_ndarr_dims(NDArray &ndarr, unsigned long int *sizes, int ndims, int rank)
 {
@@ -109,7 +99,7 @@ void util_fill_ndarr_dims(NDArray &ndarr, unsigned long int *sizes, int ndims, i
 }
 
 
-struct WriteFrameFixture{
+struct Fixture{
     std::string fname;
     std::vector<NDArray *> frames;
     unsigned long int sizes[2], chunks[3], dsetdims[3];
@@ -124,11 +114,11 @@ struct WriteFrameFixture{
     sim_config config;
 
 
-    WriteFrameFixture()
+    Fixture(char *configxml)
     {
-        BOOST_TEST_MESSAGE("setup WriteFrameFixture");
+        cout << "MAIN: Setup Fixture" << endl;
         //fname = "smallframes.h5";
-        config.loadxml("testconf.xml");
+        config.loadxml(configxml);
 
         mpi_size = 1;
         mpi_rank = 0;
@@ -143,8 +133,8 @@ struct WriteFrameFixture{
         MPI_Comm_rank(mpi_comm, &mpi_rank);
 
         MPI_Get_processor_name(mpi_name, &mpi_name_len);
-        BOOST_TEST_MESSAGE("=== TEST is parallel ===");
-        BOOST_TEST_MESSAGE("  MPI size: " << mpi_size << " MPI rank: " << mpi_rank << " host: " << mpi_name );
+        cout << "MAIN: === TEST is parallel ==="<<endl;
+        cout << "MAIN:   MPI size: " << mpi_size << " MPI rank: " << mpi_rank << " host: " << mpi_name <<endl;
 
 
 #endif
@@ -155,7 +145,7 @@ struct WriteFrameFixture{
         // Define the dimensions and number of frames to run here
         //numframes = NUM_FRAMES;
         numframes = config.num_frames;
-        BOOST_TEST_MESSAGE("num_frames: " << numframes);
+        cout << "MAIN: num_frames: " << numframes<<endl;
 
         //sizes[0]=CHUNK_X; sizes[1]=CHUNK_Y * NUM_CHUNKS;
         sizes[1] = config.subframe.x; sizes[0] = config.subframe.y;
@@ -165,11 +155,11 @@ struct WriteFrameFixture{
 
         dsetdims[2]=sizes[1], dsetdims[1]=sizes[0]*mpi_size, dsetdims[0]=numframes;
 
-        BOOST_TEST_MESSAGE("dataset: " << dsetdims[0] << " " << dsetdims[1] << " " << dsetdims[2]);
+        cout << "MAIN: dataset: " << dsetdims[0] << " " << dsetdims[1] << " " << dsetdims[2]<<endl;
         fill_value = config.fill_value;
 
-        BOOST_TEST_MESSAGE("chunks: " << chunks[0] << " " << chunks[1] << " " << chunks[2]);
-        BOOST_TEST_MESSAGE("fill value: " << fill_value);
+        cout << "MAIN: chunks: " << chunks[0] << " " << chunks[1] << " " << chunks[2]<<endl;
+        cout << "MAIN: fill value: " << fill_value<<endl;
 
         for (int i=0; i<chunks[0]; i++)
         {
@@ -186,20 +176,20 @@ struct WriteFrameFixture{
             frames.push_back( pnd );
             util_fill_ndarr_dims( *frames[i], sizes, 2, mpi_rank);
 
-            pnd->report(11);
+            //pnd->report(11);
         }
     }
 
-    ~WriteFrameFixture()
+    ~Fixture()
     {
-        BOOST_TEST_MESSAGE("teardown WriteFrameFixture");
+        cout << "MAIN: teardown Fixture" << endl;
         std::vector<NDArray*>::const_iterator it;
         NDArray* pnd;
         for (it = frames.begin(); it != frames.end(); ++it)
         {
             pnd = *it;
             if (pnd->pData !=NULL ) {
-                BOOST_TEST_MESSAGE("Freeing address: " << pnd->pData << " from: " << &pnd);
+                cout << "MAIN: Freeing address: " << pnd->pData << " from: " << &pnd << endl;
                 free(pnd->pData );
                 pnd->pData=NULL;
             }
@@ -207,7 +197,7 @@ struct WriteFrameFixture{
         frames.clear();
 
 #ifdef H5_HAVE_PARALLEL
-        BOOST_TEST_MESSAGE("==== MPI_Finalize  rank: " << mpi_rank << "=====");
+        cout << "MAIN: ==== MPI_Finalize  rank: " << mpi_rank << "=====" << endl;
         MPI_Finalize();
 #endif
 
@@ -215,64 +205,52 @@ struct WriteFrameFixture{
 };
 
 
-/* Single, parallel run with no NDAttributes to guide the WriteConfig
- * Work as an MPI job with RANK=2
- * First process will write the high frames and second process the low frames
- */
-BOOST_FIXTURE_TEST_SUITE(PerformanceTest, WriteFrameFixture)
-
-BOOST_AUTO_TEST_CASE(mpi_parallel_run)
+int main(int argc, char *argv[])
 {
-    vec_ds_t test_offsets = vec_ds_t(3,0);
-    vec_ds_t test_dset_dims = vec_ds_t(3,0);
+    char * configfile = argv[1];
+    cout << "MAIN: using config file: " << configfile << endl;
+    struct Fixture fixt(configfile);
+
 
 #ifdef H5_HAVE_PARALLEL
 
-    BOOST_TEST_MESSAGE("=== TEST ParallelNoAttr is parallel ===");
-    BOOST_TEST_MESSAGE("Creating NDArrayToHDF5 object.");
-    NDArrayToHDF5 ndh(mpi_comm, MPI_INFO_NULL);
+    cout << "MAIN: === TEST ParallelNoAttr is parallel ==="<<endl;
+    cout << "MAIN: Creating NDArrayToHDF5 object."<<endl;
+    NDArrayToHDF5 ndh(fixt.mpi_comm, MPI_INFO_NULL);
 
 #else
-    BOOST_TEST_MESSAGE("=== TEST ParallelNoAttr is *not* parallel ===");
-    BOOST_TEST_MESSAGE("Creating NDArrayToHDF5 object.");
+    cout << "MAIN: === TEST ParallelNoAttr is *not* parallel ==="<<endl;
+    cout << "MAIN: Creating NDArrayToHDF5 object."<<endl;
     NDArrayToHDF5 ndh;
 #endif
 
-    WriteConfig wc;
 
-    test_offsets[1] = mpi_rank * sizes[0];
+    ndh.h5_configure(*fixt.frames[0]);
 
-    BOOST_CHECK_NO_THROW( ndh.h5_configure(*frames[0]));
+    ndh.get_conf_ref().io_collective(fixt.config.collective);
+    ndh.get_conf_ref().io_mpiposix(fixt.config.ioposix);
+    ndh.get_conf_ref().dset_extendible(fixt.config.extendible);
+    cout << "MAIN: WC: " << ndh.get_conf_ref() << endl;
+    cout << "\n\tposix=" << fixt.config.ioposix << " collective=" << fixt.config.collective << " extendible=" << fixt.config.extendible << endl;
 
-    BOOST_TEST_MESSAGE("Open file: " << fname);
-    BOOST_REQUIRE_EQUAL( ndh.h5_open(fname.c_str()), 0);
 
-    test_dset_dims[2]=dsetdims[2]; test_dset_dims[1]=dsetdims[1];
+    cout << "MAIN: Open file: " << fixt.fname<<endl;
+    ndh.h5_open(fixt.fname.c_str());
+
     int cacheframe = 0;
 
-    for (int i = 0; i < numframes; i++) {
-        test_dset_dims[0]=i+1;
-        test_offsets[0]=i;
+    for (int i = 0; i < fixt.numframes; i++) {
 
-        cacheframe = i%frames.size();
-        BOOST_TEST_MESSAGE("===== Writing frame[" << cacheframe << "] no: " << i << " rank: " << mpi_rank);
+        cacheframe = i%fixt.frames.size();
+        cout << "MAIN: ===== Writing frame[" << cacheframe << "] no: " << i << " rank: " << fixt.mpi_rank<<endl;
 
-        BOOST_REQUIRE_EQUAL( ndh.h5_write( *frames[cacheframe]), 0);
+        ndh.h5_write( *fixt.frames[cacheframe]);
 
-        wc = ndh.get_conf();
-        BOOST_CHECK_EQUAL( wc.get_offsets()[0], test_offsets[0] );
-        BOOST_CHECK_EQUAL( wc.get_offsets()[1], test_offsets[1] );
-        BOOST_CHECK_EQUAL( wc.get_offsets()[2], test_offsets[2] );
-        BOOST_CHECK_EQUAL( wc.get_dset_dims()[0], test_dset_dims[0] );
-        BOOST_CHECK_EQUAL( wc.get_dset_dims()[1], test_dset_dims[1] );
-        BOOST_CHECK_EQUAL( wc.get_dset_dims()[2], test_dset_dims[2] );
+
 
     }
 
-    BOOST_TEST_MESSAGE("Closing file");
-    BOOST_CHECK_EQUAL( ndh.h5_close(), 0);
-
+    cout << "MAIN: Closing file" << endl;;
+    ndh.h5_close();
 }
-
-BOOST_AUTO_TEST_SUITE_END()
 

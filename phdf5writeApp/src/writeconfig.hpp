@@ -48,6 +48,14 @@ public:
     void proc_rank_size(int rank, int size);
     int num_extra_dims();
 
+    // a few flags to turn on/off various IO parameters
+    void dset_extendible(bool ext) {this->extendible = ext;};
+    void io_mpiposix(bool posix){this->mpiposix = posix;};
+    void io_collective(bool collective){this->iocollective = collective;};
+    bool is_dset_extendible(){return this->extendible; };
+    bool is_io_mpiposix() {return this->mpiposix; };
+    bool is_io_collective() {return this->iocollective; };
+
     long int istorek();
     const HSIZE_T alignment;
     DimensionDesc min_chunk_cache();
@@ -78,6 +86,9 @@ private:
     void parse_ndarray_attributes(NDArray& ndarray); // go through a list of attributes and turn them into dimensions
     int get_attr_value(const std::string& attr_name, NDAttributeList *ptr_attr_list, int *attr_value);
 
+    bool extendible;
+    bool mpiposix;
+    bool iocollective;
 
     int proc_rank;
     int proc_size;

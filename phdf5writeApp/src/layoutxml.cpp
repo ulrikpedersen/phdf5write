@@ -164,7 +164,7 @@ int LayoutXML::new_group()
     xmlChar * group_name = NULL;
     group_name = xmlTextReaderGetAttribute(this->xmlreader,
                                            (const xmlChar *)XML_ATTR_ELEMENT_NAME);
-    cout << "  new_group: " << group_name << endl;
+    //cout << "  new_group: " << group_name << endl;
     if (group_name == NULL) return -1;
 
     string str_group_name((char*)group_name);
@@ -173,7 +173,7 @@ int LayoutXML::new_group()
     // Initialise the tree if it has not already been done.
     if (this->ptr_tree == NULL) {
         this->ptr_tree = new HdfGroup(str_group_name);
-        cout << "  Initialised the root of the tree: " << *this->ptr_tree << endl;
+        //cout << "  Initialised the root of the tree: " << *this->ptr_tree << endl;
         this->ptr_curr_element = this->ptr_tree;
     } else {
         HdfGroup *parent = (HdfGroup *)this->ptr_curr_element;
@@ -195,7 +195,7 @@ int LayoutXML::new_dataset()
     xmlChar *dset_name = NULL;
     dset_name = xmlTextReaderGetAttribute(this->xmlreader,
                                           (const xmlChar *)XML_ATTR_ELEMENT_NAME);
-    cout << "  new_dataset: " << dset_name << endl;
+    //cout << "  new_dataset: " << dset_name << endl;
     if (dset_name == NULL) return -1;
 
     string str_dset_name((char*)dset_name);
@@ -226,7 +226,7 @@ int LayoutXML::new_ndattribute()
     xmlChar *ndattr_name = NULL;
     ndattr_name = xmlTextReaderGetAttribute(this->xmlreader,
                                             (const xmlChar*)XML_ATTR_ELEMENT_NAME);
-    cout << "  new_attribute: " << ndattr_name << " attached to: " << this->ptr_curr_element->get_full_name() << endl;
+    //cout << "  new_attribute: " << ndattr_name << " attached to: " << this->ptr_curr_element->get_full_name() << endl;
     if (ndattr_name == NULL) return -1;
 
     string str_ndattr_name((char*)ndattr_name);

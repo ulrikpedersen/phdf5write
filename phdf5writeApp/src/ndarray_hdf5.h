@@ -51,6 +51,7 @@ public:
     int h5_write(NDArray &ndarray);
     int h5_close();
     WriteConfig get_conf();
+    WriteConfig& get_conf_ref();
 
 protected:
     // print error and debug messages by default

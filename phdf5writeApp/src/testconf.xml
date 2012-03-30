@@ -2,16 +2,19 @@
 <!--     <filename>/mnt/lustre03/up45-tmp-to-be-deleted-02-08-2011/stripe8/phdftest_19.h5</filename> -->
 <!--     <filename>/mnt/lustre03/up45-tmp-to-be-deleted-02-08-2011/largestripe8/phdftest_32.h5</filename> -->
 <!--    <filename>/mnt/play01/up45/phdf/stripe4/phdftest_26.h5</filename>-->
-    <filename>/mnt/play01/up45/phdf/largestripe4/phdftest_33.h5</filename>
+    <filename>/mnt/play01/up45/phdf/largestripe4/phdftest_41.h5</filename>
     <chunking>
         <x>4096</x>
-        <y>1024</y>
-        <z>1</z>
+        <y>256</y>
+        <z>4</z>
     </chunking>
     <subframe>
         <x>4096</x>
-        <y>1024</y>
+        <y>512</y>
     </subframe>
-    <numframes>50</numframes>
+    <numframes>1000</numframes>
     <fillvalue>0</fillvalue>
+    <collective>0</collective>
+    <ioposix>0</ioposix>
+    <extendible>0</extendible>
 </phdftest>
