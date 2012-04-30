@@ -27,11 +27,14 @@ DimensionDesc::DimensionDesc()
 DimensionDesc::DimensionDesc(NDArray& ndarray)
 {
     int ndims = ndarray.ndims;
+    vec_ds_t tmpdims(ndims);
     this->dims = vec_ds_t(ndims);
     for (int i=0; i < ndims; i++)
     {
-        this->dims[i] = ndarray.dims[i].size;
+        tmpdims[i] = ndarray.dims[i].size;
     }
+    reverse_copy(tmpdims.begin(), tmpdims.end(), this->dims.begin());
+    //this->dims = tmpdims;
 
     NDArrayInfo_t arr_info;
     ndarray.getInfo(&arr_info);

@@ -25,7 +25,7 @@ SUPPORT=/dls_sw/prod/R3.14.11/support
 WORK=/dls_sw/work/R3.14.11/support
 
 ASYN=$(SUPPORT)/asyn/4-17
-AREADETECTOR=$(SUPPORT)/areaDetector/1-7-1beta3-dls1
+AREADETECTOR=$(SUPPORT)/areaDetector/1-7-1beta3-dls2
 ADTRANSFER=$(WORK)/adtransfer
 
 # If using the sequencer, point SNCSEQ at its top directory:

@@ -173,7 +173,7 @@ int NDArrayToHDF5::h5_write(NDArray& ndarray)
 {
     int retcode = 0;
     herr_t hdferr = 0;
-    //msg("h5_write()");
+    msg("h5_write()");
 
     // Initialise performance measurements
     this->writestep[0].dt_start();
@@ -184,7 +184,7 @@ int NDArrayToHDF5::h5_write(NDArray& ndarray)
     }
 
     this->conf.next_frame(ndarray);
-    //msg(this->conf._str_());
+    msg(this->conf._str_());
 
     // Timing configuration step
     //this->writestep[0].dt_end(); // takes no measurable time

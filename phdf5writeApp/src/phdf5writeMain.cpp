@@ -41,7 +41,7 @@ void test_mpi_simple()
     cout << "Sadly, we are not parallel" << endl;
     NDArrayToHDF5 h5writer;
 #endif
-    int baseport = 8001;
+    int baseport = 9101;
     int port = baseport + mpi_rank;
 
     cout << "=== Starting server on port: " << port << endl;

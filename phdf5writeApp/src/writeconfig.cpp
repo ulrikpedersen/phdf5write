@@ -112,7 +112,9 @@ void WriteConfig::inc_position(NDArray& ndarray)
     if (ret == this->dim_full_dataset.num_dimensions()) {
         // Origins/Offsets from the NDArray attribute if they are available for every dimension.
         this->origin = attr_origins;
+        cout << "GOT ROI offset from attributes!" << endl;
     } else {
+        cout << "ATTRIBUTES NOT LISTING ROI" << endl;
         // if origin not available as NDAttr for every dimension then
         // we increment manually based on some assumptions (see comments below)
 
@@ -417,10 +419,10 @@ void WriteConfig::parse_ndarray_attributes(NDArray& ndarray)
     // an ROI subset of a larger frame. The assumption (if NDAttributes don't hint
     // otherwise) is that the split is done in the slowest changing dimension.
     // So for example a 2D image is split in horizontal stripes.
-    int split_dim = this->dim_roi_frame.num_dimensions() -1;
+    int split_dim = this->dim_full_dataset.num_dimensions() -2;
     dimsize_t split_dim_full_size = 0;
     if (split_dim >= 0) {
-        split_dim_full_size = *(this->dim_roi_frame.dim_sizes()+split_dim) * this->proc_size;
+        split_dim_full_size = *(this->dim_roi_frame.dim_sizes()+0) * this->proc_size;
         this->dim_full_dataset.set_dimension_size( split_dim, split_dim_full_size);
     }
 
