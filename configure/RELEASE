@@ -26,7 +26,7 @@ WORK=/dls_sw/work/R3.14.11/support
 
 ASYN=$(SUPPORT)/asyn/4-17
 AREADETECTOR=$(SUPPORT)/areaDetector/1-7-1beta3-dls2
-ADTRANSFER=$(WORK)/adtransfer
+ADTRANSFER=$(SUPPORT)/adtransfer/1-1
 
 # If using the sequencer, point SNCSEQ at its top directory:
 #SNCSEQ=$(EPICS_BASE)/../modules/soft/seq
