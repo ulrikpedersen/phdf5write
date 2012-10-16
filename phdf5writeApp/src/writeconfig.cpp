@@ -7,8 +7,11 @@
 #include <iostream>
 #include <sstream>
 #include <algorithm>
-#include <stdio.h>
-#include <stdlib.h>
+#include <cstdio>
+#include <cstdlib>
+#include <cstring>
+//#include <stdio.h>
+//#include <stdlib.h>
 using namespace std;
 
 #include <NDArray.h>

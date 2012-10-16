@@ -13,7 +13,7 @@
 
 class Server: public AdTransferServer {
 public:
-    Server(int port):AdTransferServer(port),port(port){};
+    Server(int port):AdTransferServer(port),port(port),hdf(NULL){};
     virtual ~Server(){};
     void register_hdf_writer(NDArrayToHDF5 *hdf) {this->hdf = hdf;};
 

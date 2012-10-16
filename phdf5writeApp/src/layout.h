@@ -12,7 +12,7 @@
 #include <vector>
 #include <map>
 
-typedef enum HdfDataSrc_t { notset, detector, ndattribute, constant };
+enum HdfDataSrc_t { notset, detector, ndattribute, constant };
 
 class HdfAttrValue {
 public:
@@ -56,7 +56,7 @@ private:
 class HdfElement {
 public:
     HdfElement();
-    HdfElement(const HdfElement& src) {this->_copy(src);};
+    HdfElement(const HdfElement& src) : ptr_parent(NULL) {this->_copy(src);};
     HdfElement(const std::string& name);
     ~HdfElement(){};
     HdfElement& operator=(const HdfElement& src);

@@ -15,7 +15,12 @@ using namespace std;
 void print_arr (const char * msg, const hsize_t* sizes, size_t n);
 
 
-NDArrayToHDF5::NDArrayToHDF5() {
+NDArrayToHDF5::NDArrayToHDF5()
+: h5file(0),rdcc_nslots(0),rdcc_nbytes(0) {
+#ifdef H5_HAVE_PARALLEL
+	this->mpi_comm = 0;
+	this->mpi_info = 0;
+#endif
     // load the default HDF5 layout
     this->mpi_rank = 0;
     this->mpi_size = 1;
@@ -24,7 +29,7 @@ NDArrayToHDF5::NDArrayToHDF5() {
 
 #ifdef H5_HAVE_PARALLEL
 NDArrayToHDF5::NDArrayToHDF5( MPI_Comm comm, MPI_Info info)
-: mpi_comm(comm),mpi_info(info)
+: mpi_comm(comm),mpi_info(info),h5file(0),rdcc_nslots(0),rdcc_nbytes(0)
 {
     this->load_layout_xml();
     MPI_Comm_size(comm,&this->mpi_size);
@@ -341,7 +346,7 @@ int NDArrayToHDF5::h5_close()
     //msg("h5_close()");
     int retcode = 0;
     herr_t hdferr = 0;
-    char *fname = new char(512);
+    char fname[512] = "\0";
 
     if (this->h5file != H5I_INVALID_HID) {
         //msg("Writing profile data");
@@ -529,6 +534,7 @@ hid_t NDArrayToHDF5::type_nd2hdf(NDDataType_t& datatype)
     default:
       cerr << "HDArrayToHDF5: cannot convert NDArrayType: "<< datatype << " to HDF5 datatype" << endl;
       result = -1;
+      break;
   }
   return result;
 }
