@@ -16,11 +16,15 @@ enum HdfDataSrc_t { notset, detector, ndattribute, constant };
 
 class HdfAttrValue {
 public:
-    HdfAttrValue() : data_src_type(notset), val(""){};
-    HdfAttrValue( HdfDataSrc_t srctype, const std::string& val) : data_src_type(srctype), val(val){};
-    HdfAttrValue( HdfDataSrc_t srctype) : data_src_type(srctype), val(""){};
-    HdfAttrValue( const HdfAttrValue& src) { this->data_src_type = src.data_src_type; this->val = src.val;};
-    HdfAttrValue& operator=(const HdfAttrValue& src) { this->data_src_type = src.data_src_type; this->val = src.val; return *this;};
+	// Default constructor
+    HdfAttrValue();
+    // Initialising constructor
+    HdfAttrValue( HdfDataSrc_t srctype, const std::string& val);
+    HdfAttrValue( HdfDataSrc_t srctype);
+    // Copy constructor
+    HdfAttrValue( const HdfAttrValue& src);
+    // Assignment operator
+    HdfAttrValue& operator=(const HdfAttrValue& src);
     ~HdfAttrValue(){};
     bool is_src_detector();
     bool is_src_ndattribute();
@@ -37,11 +41,11 @@ private:
 class HdfAttribute {
 public:
     HdfAttribute(){};
-    HdfAttribute(const HdfAttribute& src) {this->_copy(src);};
-    HdfAttribute(std::string& name){this->name = name;};
+    HdfAttribute(const HdfAttribute& src); // Copy constructor
+    HdfAttribute(std::string& name);
     ~HdfAttribute(){};
-    HdfAttribute& operator=(const HdfAttribute& src) {this->_copy(src); return *this;};
-    std::string get_name() {return this->name;};
+    HdfAttribute& operator=(const HdfAttribute& src);
+    std::string get_name();
 
     HdfAttrValue value;
 private:

@@ -15,6 +15,41 @@ using namespace std;
 #include "layout.h"
 
 /* ================== HdfAttribute Class public methods ==================== */
+HdfAttribute::HdfAttribute(const HdfAttribute& src)
+{
+	this->_copy(src);
+}
+HdfAttribute::HdfAttribute(std::string& name)
+: name(name) {}
+
+/** Assignment operator */
+HdfAttribute& HdfAttribute::operator=(const HdfAttribute& src)
+{
+	this->_copy(src);
+	return *this;
+}
+string HdfAttribute::get_name() {return this->name;}
+
+
+// constructors
+HdfAttrValue::HdfAttrValue()
+: data_src_type(notset), val(""){}
+HdfAttrValue::HdfAttrValue( HdfDataSrc_t srctype, const std::string& val)
+: data_src_type(srctype), val(val){}
+HdfAttrValue::HdfAttrValue( HdfDataSrc_t srctype)
+: data_src_type(srctype), val(""){}
+HdfAttrValue::HdfAttrValue( const HdfAttrValue& src)
+: data_src_type(src.data_src_type), val(src.val){}
+
+/** Assignment operator
+ * Copies the sources private data members to this object.
+ */
+HdfAttrValue& HdfAttrValue::operator=(const HdfAttrValue& src)
+{
+	this->data_src_type = src.data_src_type;
+	this->val = src.val;
+	return *this;
+};
 
 bool HdfAttrValue::is_src_constant() {
     return this->data_src_type == constant ? true : false;

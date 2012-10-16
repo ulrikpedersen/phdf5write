@@ -88,7 +88,7 @@ BOOST_AUTO_TEST_CASE(hdf_group_2)
 
     // Delete the whole lot
     BOOST_CHECK(true);
-    delete grp;
+    BOOST_CHECK_NO_THROW( delete grp );
 }
 
 

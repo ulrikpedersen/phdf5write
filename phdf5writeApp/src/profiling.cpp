@@ -24,6 +24,7 @@ Profiling::Profiling(int frame_bytes)
 }
 
 Profiling::Profiling(const Profiling& src)
+: framesize(0.),datasize(0.)
 {
     this->_copy(src);
 }
