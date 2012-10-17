@@ -60,17 +60,17 @@ private:
 class HdfElement {
 public:
     HdfElement();
-    HdfElement(const HdfElement& src) : ptr_parent(NULL) {this->_copy(src);};
+    HdfElement(const HdfElement& src);
     HdfElement(const std::string& name);
     ~HdfElement(){};
     HdfElement& operator=(const HdfElement& src);
 
-    const std::string& get_name(){ return this->name; };
+    const std::string& get_name();
     std::string get_full_name();
     int add_attribute(HdfAttribute& attr);
     bool has_attribute(const std::string& attr_name);
     int tree_level();
-    HdfElement *get_parent() {return this->ptr_parent;};
+    HdfElement *get_parent();
 
 protected:
     void _copy(const HdfElement& src);
@@ -96,10 +96,8 @@ public:
     void is_detector_data();
 
     /** Stream operator: use to prints a string representation of this class */
-    inline friend std::ostream& operator<<(std::ostream& out, HdfDataset& dset) {
-        out << dset._str_();
-        return out;
-    }
+    inline friend std::ostream& operator<<(std::ostream& out, HdfDataset& dset)
+    { out << dset._str_(); return out; }
     std::string _str_();  /** Return a string representation of the object */
 
     int set_data_source(HdfAttrValue& src);
@@ -132,10 +130,8 @@ public:
     int num_datasets();
 
     /** Stream operator: use to prints a string representation of this class */
-    inline friend std::ostream& operator<<(std::ostream& out, HdfGroup& grp) {
-        out << grp._str_();
-        return out;
-    }
+    inline friend std::ostream& operator<<(std::ostream& out, HdfGroup& grp)
+    { out << grp._str_(); return out; }
     std::string _str_();  /** Return a string representation of the object */
 
 private:

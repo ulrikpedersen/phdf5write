@@ -75,6 +75,12 @@ HdfElement::HdfElement()
     this->ptr_parent = NULL;
 }
 
+HdfElement::HdfElement(const HdfElement& src)
+: ptr_parent(NULL)
+{
+	this->_copy(src);
+}
+
 HdfElement::HdfElement(const string& name)
 {
     this->name = name;
@@ -104,6 +110,16 @@ HdfElement& HdfElement::operator=(const HdfElement& src)
         return *this;
     this->_copy(src);
     return *this;
+}
+
+const string& HdfElement::get_name()
+{
+	return this->name;
+}
+
+HdfElement * HdfElement::get_parent()
+{
+	return this->ptr_parent;
 }
 
 int HdfElement::add_attribute(HdfAttribute& attr)
@@ -373,6 +389,8 @@ int HdfDataset::set_data_source(HdfAttrValue& src)
     }
     return retval;
 }
+
+
 
 /* ================== HdfDataset Class private methods ==================== */
 void HdfDataset::_copy(const HdfDataset& src)
