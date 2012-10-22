@@ -32,36 +32,36 @@ string HdfAttribute::get_name() {return this->name;}
 
 
 // constructors
-HdfAttrValue::HdfAttrValue()
+HdfAttrSource::HdfAttrSource()
 : data_src_type(notset), val(""){}
-HdfAttrValue::HdfAttrValue( HdfDataSrc_t srctype, const std::string& val)
+HdfAttrSource::HdfAttrSource( HdfDataSrc_t srctype, const std::string& val)
 : data_src_type(srctype), val(val){}
-HdfAttrValue::HdfAttrValue( HdfDataSrc_t srctype)
+HdfAttrSource::HdfAttrSource( HdfDataSrc_t srctype)
 : data_src_type(srctype), val(""){}
-HdfAttrValue::HdfAttrValue( const HdfAttrValue& src)
+HdfAttrSource::HdfAttrSource( const HdfAttrSource& src)
 : data_src_type(src.data_src_type), val(src.val){}
 
 /** Assignment operator
  * Copies the sources private data members to this object.
  */
-HdfAttrValue& HdfAttrValue::operator=(const HdfAttrValue& src)
+HdfAttrSource& HdfAttrSource::operator=(const HdfAttrSource& src)
 {
 	this->data_src_type = src.data_src_type;
 	this->val = src.val;
 	return *this;
 };
 
-bool HdfAttrValue::is_src_constant() {
+bool HdfAttrSource::is_src_constant() {
     return this->data_src_type == constant ? true : false;
 }
-bool HdfAttrValue::is_src_detector() {
+bool HdfAttrSource::is_src_detector() {
     return this->data_src_type == detector ? true : false;
 }
-bool HdfAttrValue::is_src_ndattribute() {
+bool HdfAttrSource::is_src_ndattribute() {
     return this->data_src_type == ndattribute ? true : false;
 }
 
-std::string HdfAttrValue::get_src_def()
+std::string HdfAttrSource::get_src_def()
 {
     return this->val;
 }
@@ -336,6 +336,15 @@ string HdfGroup::_str_()
     return out.str();
 }
 
+HdfGroup::MapDatasets_t& HdfGroup::get_datasets()
+{
+	return this->datasets;
+}
+HdfGroup::MapGroups_t& HdfGroup::get_groups()
+{
+	return this->groups;
+}
+
 /* ================== HdfGroup Class private methods ==================== */
 void HdfGroup::_copy(const HdfGroup& src)
 {
@@ -380,7 +389,7 @@ string HdfDataset::_str_()
     return out.str();
 }
 
-int HdfDataset::set_data_source(HdfAttrValue& src)
+int HdfDataset::set_data_source(HdfAttrSource& src)
 {
     int retval = -1;
     if (src.is_src_detector() || src.is_src_ndattribute()) {

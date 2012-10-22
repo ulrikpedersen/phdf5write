@@ -14,18 +14,18 @@
 
 enum HdfDataSrc_t { notset, detector, ndattribute, constant };
 
-class HdfAttrValue {
+class HdfAttrSource {
 public:
 	// Default constructor
-    HdfAttrValue();
+    HdfAttrSource();
     // Initialising constructor
-    HdfAttrValue( HdfDataSrc_t srctype, const std::string& val);
-    HdfAttrValue( HdfDataSrc_t srctype);
+    HdfAttrSource( HdfDataSrc_t srctype, const std::string& val);
+    HdfAttrSource( HdfDataSrc_t srctype);
     // Copy constructor
-    HdfAttrValue( const HdfAttrValue& src);
+    HdfAttrSource( const HdfAttrSource& src);
     // Assignment operator
-    HdfAttrValue& operator=(const HdfAttrValue& src);
-    ~HdfAttrValue(){};
+    HdfAttrSource& operator=(const HdfAttrSource& src);
+    ~HdfAttrSource(){};
     bool is_src_detector();
     bool is_src_ndattribute();
     bool is_src_constant();
@@ -47,9 +47,9 @@ public:
     HdfAttribute& operator=(const HdfAttribute& src);
     std::string get_name();
 
-    HdfAttrValue value;
+    HdfAttrSource source;
 private:
-    void _copy(const HdfAttribute& src){this->name = src.name; this->value = src.value;};
+    void _copy(const HdfAttribute& src){this->name = src.name; this->source = src.source;};
     std::string name;
 };
 
@@ -93,18 +93,18 @@ public:
     HdfDataset& operator=(const HdfDataset& src);
     ~HdfDataset(){};
 
-    void is_detector_data();
+    //void is_detector_data();
 
     /** Stream operator: use to prints a string representation of this class */
     inline friend std::ostream& operator<<(std::ostream& out, HdfDataset& dset)
     { out << dset._str_(); return out; }
     std::string _str_();  /** Return a string representation of the object */
 
-    int set_data_source(HdfAttrValue& src);
+    int set_data_source(HdfAttrSource& src);
 private:
     void _copy(const HdfDataset& src);
     std::string ndattr_name;
-    HdfAttrValue datasource;
+    HdfAttrSource datasource;
 };
 
 /** Describe a HDF5 group element.
@@ -133,6 +133,11 @@ public:
     inline friend std::ostream& operator<<(std::ostream& out, HdfGroup& grp)
     { out << grp._str_(); return out; }
     std::string _str_();  /** Return a string representation of the object */
+
+    typedef std::map<std::string, HdfGroup*> MapGroups_t;
+    typedef std::map<std::string, HdfDataset*> MapDatasets_t;
+    MapGroups_t& get_groups();
+    MapDatasets_t& get_datasets();
 
 private:
     void _copy(const HdfGroup& src);

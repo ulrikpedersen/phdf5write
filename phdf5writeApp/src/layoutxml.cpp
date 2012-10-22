@@ -128,7 +128,7 @@ void LayoutXML::process_node()
 /** Process the XML element's attributes
  * to work out the source of the attribute value: either detector data, NDAttribute or constant.
  */
-int LayoutXML::process_attribute(HdfAttrValue& out)
+int LayoutXML::process_attribute(HdfAttrSource& out)
 {
     int ret = -1;
     if (not xmlTextReaderHasAttributes(this->xmlreader) ) return ret;
@@ -141,15 +141,15 @@ int LayoutXML::process_attribute(HdfAttrValue& out)
     str_attr_src = (char*)attr_src;
 
     if (str_attr_src == XML_ATTR_SRC_DETECTOR) {
-        out = HdfAttrValue( detector );
+        out = HdfAttrSource( detector );
         ret = 0;
     }
     if (str_attr_src == XML_ATTR_SRC_NDATTR) {
-        out = HdfAttrValue( ndattribute );
+        out = HdfAttrSource( ndattribute );
         ret = 0;
     }
     if (str_attr_src == XML_ATTR_SRC_CONST) {
-        out = HdfAttrValue( constant );
+        out = HdfAttrSource( constant );
         ret = 0;
     }
 
@@ -207,7 +207,7 @@ int LayoutXML::new_dataset()
 
     this->ptr_curr_element = dset;
 
-    HdfAttrValue attrval;
+    HdfAttrSource attrval;
     this->process_attribute(attrval);
     if (dset->set_data_source(attrval) < 0)
     {
@@ -231,7 +231,7 @@ int LayoutXML::new_ndattribute()
 
     string str_ndattr_name((char*)ndattr_name);
     HdfAttribute ndattr(str_ndattr_name);
-    this->process_attribute(ndattr.value);
+    this->process_attribute(ndattr.source);
 
     ret = this->ptr_curr_element->add_attribute(ndattr);
     return ret;
