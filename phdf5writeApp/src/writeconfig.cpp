@@ -82,12 +82,12 @@ string WriteConfig::file_name()
 
 void WriteConfig::proc_rank_size(int rank, int size)
 {
-    //cout << "WriteConfig: setting rank=" << rank << " proc_size=" << size << endl;
     if (rank < size) this->proc_rank = rank;
     else this->proc_rank = size-1;
 
     if (size < 1) this->proc_size = 1;
     else this->proc_size = size;
+    //cout << "WriteConfig: setting rank=" << this->proc_rank << " proc_size=" << this->proc_size << endl;
 }
 
 int WriteConfig::num_extra_dims()
@@ -133,7 +133,8 @@ void WriteConfig::inc_position(NDArray& ndarray)
             // in which case we assume an even split in the ROI frame slowest changing
             // dimension (for instance a 2D image is split in horizontal stripes)
             size_t split_dim = num_img_dims - 1;
-            this->origin[split_dim] = roi_frame_dims[0] * this->proc_rank;
+            if (this->proc_rank > 0)
+            	this->origin[split_dim] = roi_frame_dims[0] * this->proc_rank;
         } else {
 
             idim = 0;

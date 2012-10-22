@@ -67,6 +67,7 @@ private:
     hid_t type_nd2hdf(NDDataType_t& datatype);
     int create_file_layout();
     int create_dataset(HdfDataset* dset);
+    int create_groups(HdfGroup *group, hid_t h5handle);
 
     // attribute dataset operations
     //int attr_create(){};

@@ -396,7 +396,9 @@ int NDArrayToHDF5::create_file_layout()
     if (retcode < 0) return retcode;
     if (dset == NULL) return -1;
 
-    retcode = this->create_dataset(dset);
+
+    retcode -= this->create_groups(tree, this->h5file);
+    retcode -= this->create_dataset(dset);
 
     return retcode;
 }
@@ -410,6 +412,42 @@ void print_arr (const char * msg, const hsize_t* sizes, size_t n)
         cout << *(sizes+i) << ", ";
     }
     cout << "]" << endl;
+}
+
+/** Create this group and recursively create all subgroups in the HDF5 file.
+ *
+ */
+int NDArrayToHDF5::create_groups(HdfGroup* group, hid_t h5handle)
+{
+    int retcode = 0;
+    if (group == NULL) return -1; // sanity check
+    herr_t hdfcode;
+
+    string name = group->get_name();
+    //First make the current group inside the given hdf handle.
+    hid_t new_group = H5Gcreate(h5handle, name.c_str(),
+    							H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+	if (new_group < 0)
+	{
+		cerr << "ERROR: failed to create group: " << name << endl;
+		return -1;
+	}
+
+    // Todo: set some attributes on the group
+
+
+    HdfGroup::MapGroups_t::const_iterator it;
+    HdfGroup::MapGroups_t& groups = group->get_groups();
+    for (it = groups.begin(); it != groups.end(); ++it)
+    {
+    	// recursively call this function to create all subgroups
+    	retcode = this->create_groups( it->second, new_group );
+    }
+    // close the handle to the group that we've created in this instance
+    // of the function. This is to ensure we're not leaving any hanging,
+    // unused, and unreferenced handles around.
+    H5Gclose(new_group);
+    return retcode;
 }
 
 /** Create a dataset in the HDF5 file with the details defined in the dset argument.

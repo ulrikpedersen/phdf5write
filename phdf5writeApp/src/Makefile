@@ -14,8 +14,17 @@ BOOSTDIR=/dls_sw/work/tools/RHEL5
 
 else
 ifeq ($(EPICS_HOST_ARCH),linux-x86_64)
-MPIDIR=/dls_sw/work/tools/RHEL6/prefixes/openmpi-1.4.5
-HDF5DIR=/dls_sw/work/tools/RHEL6/prefixes/hdf5p-1.8.9
+#MPIDIR=/dls_sw/work/tools/RHEL6/prefixes/openmpi-1.4.5
+ifdef $MPIDIR
+ HDF5DIR=/dls_sw/work/tools/RHEL6/prefixes/hdf5p-1.8.9
+ HDF5LIB=phdf5
+ phdf5_DIR=$(HDF5DIR)/lib
+ USR_INCLUDES += -I$(MPIDIR)/include
+else
+ HDF5DIR=/dls_sw/work/tools/RHEL6/prefixes/hdf5-1.8.9
+ HDF5LIB=hdf5
+ hdf5_DIR=$(HDF5DIR)/lib
+endif
 BOOSTDIR=/dls_sw/work/tools/RHEL6/prefixes/boost-1.48.0
 SZDIR=/dls_sw/work/tools/RHEL6/prefixes/szip-2.1
 endif
@@ -32,7 +41,6 @@ open-pal_DIR=$(MPIDIR)/lib
 # up the areaDetector (non-parallel) hdf5 libs. To work around this,
 # the parallel hdf5 libs are installed with a filename prefix of 'p':
 # libphdf5.a etc.
-phdf5_DIR=$(HDF5DIR)/lib
 sz_DIR=$(SZDIR)/lib
 
 # C++ compiler flags found by running the command: h5pcc -show
@@ -47,7 +55,7 @@ HOST_OPT=NO
 USR_CXXFLAGS += -I$(HDF5DIR)/include
 
 # Point to MPI header files
-USR_INCLUDES += -I$(MPIDIR)/include -I/usr/include/libxml2
+USR_INCLUDES += -I/usr/include/libxml2
 
 # Testing: this type of linker flag is defined *after* the support modules lib dirs.
 #USR_LDFLAGS += -D__________________BLAH___________
@@ -85,17 +93,18 @@ test_writeconfig_LIBS += boost_unit_test_framework
 test_writeconfig_LDFLAGS += -L$(BOOSTDIR)/lib
 
 PROD_IOC += test_ndarray_hdf5
-test_ndarray_hdf5_INCLUDES = -I$(BOOSTDIR)/include
+test_ndarray_hdf5_INCLUDES = -I$(BOOSTDIR)/include 
 test_ndarray_hdf5_SRCS_DEFAULT += test_ndarray_hdf5.cpp
 test_ndarray_hdf5_OBJS += ndarray_hdf5 dimension writeconfig layout layoutxml profiling
 test_ndarray_hdf5_LIBS += adtransferPlugin asyn ADBase NDPlugin Com
 test_ndarray_hdf5_LIBS += boost_unit_test_framework
 #test_ndarray_hdf5_LDFLAGS += -D__________BLUH____________
 test_ndarray_hdf5_LDFLAGS += -L$(BOOSTDIR)/lib
-test_ndarray_hdf5_LIBS += mpi_cxx mpi open-rte open-pal 
+#test_ndarray_hdf5_LIBS += mpi_cxx mpi open-rte open-pal 
 test_ndarray_hdf5_SYS_LIBS += xml2 dl nsl util m dl z
-test_ndarray_hdf5_LIBS += phdf5 sz
+test_ndarray_hdf5_LIBS += $(HDF5LIB) sz
 
+ifdef MPIDIR
 PROD_IOC += test_mpi_ndarray_hdf5
 test_mpi_ndarray_hdf5_INCLUDES = -I$(BOOSTDIR)/include
 test_mpi_ndarray_hdf5_SRCS_DEFAULT += test_mpi_ndarray_hdf5.cpp
@@ -105,7 +114,7 @@ test_mpi_ndarray_hdf5_LIBS += boost_unit_test_framework
 test_mpi_ndarray_hdf5_LDFLAGS += -L$(BOOSTDIR)/lib
 test_mpi_ndarray_hdf5_LIBS += mpi_cxx mpi open-rte open-pal 
 test_mpi_ndarray_hdf5_SYS_LIBS += xml2 dl nsl util m dl z
-test_mpi_ndarray_hdf5_LIBS += phdf5 sz
+test_mpi_ndarray_hdf5_LIBS +=  $(HDF5LIB) sz
 
 PROD_IOC += test_real_lustre
 test_real_lustre_INCLUDES = -I$(BOOSTDIR)/include
@@ -116,7 +125,8 @@ test_real_lustre_LIBS += adtransferPlugin asyn ADBase NDPlugin Com
 #test_real_lustre_LDFLAGS += -L$(BOOSTDIR)/lib
 test_real_lustre_LIBS += mpi_cxx mpi open-rte open-pal 
 test_real_lustre_SYS_LIBS += xml2 dl nsl util m dl z
-test_real_lustre_LIBS += phdf5 sz
+test_real_lustre_LIBS +=  $(HDF5LIB) sz
+endif
 
 PROD_IOC += test_layout
 test_layout_INCLUDES = -I$(BOOSTDIR)/include
@@ -163,13 +173,16 @@ phdf5write_SRCS += profiling.cpp
 # The following adds object code from base/src/vxWorks
 phdf5write_OBJS_vxWorks += $(EPICS_BASE_BIN)/vxComLibrary
 
+
 # Link against the MPI and HDF5 libraries. This combination of libraries was found by running
 # h5pcc -show
 # mpicc -showme:compile
 # mpicc -showme:link
-phdf5write_LIBS += mpi_cxx mpi open-rte open-pal 
+ifdef MPIDIR
+ phdf5write_LIBS += mpi_cxx mpi open-rte open-pal
+endif 
 phdf5write_SYS_LIBS += xml2 dl nsl util m dl z
-phdf5write_LIBS += phdf5 sz
+phdf5write_LIBS +=  $(HDF5LIB) sz
 
 
 # The adtransferPlugin has the ADTransferServer class
