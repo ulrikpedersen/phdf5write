@@ -161,7 +161,9 @@ BOOST_AUTO_TEST_CASE(frames_attr_offset_loop)
 
     BOOST_TEST_MESSAGE("Creating NDArrayToHDF5 object.");
     NDArrayToHDF5 ndh;
-    BOOST_CHECK_NO_THROW( ndh.h5_configure(hiframe[0]));
+    BOOST_REQUIRE_NO_THROW( ndh.h5_configure(hiframe[0]));
+    BOOST_REQUIRE_NO_THROW( wc = ndh.get_conf() );
+    BOOST_TEST_MESSAGE( "WriteConfig: " << wc._str_() );
 
     BOOST_TEST_MESSAGE("Open file: test_frames_attr_offset_loop.h5");
     BOOST_REQUIRE_EQUAL( ndh.h5_open("test_frames_attr_offset_loop.h5"), 0);
@@ -173,16 +175,17 @@ BOOST_AUTO_TEST_CASE(frames_attr_offset_loop)
         BOOST_TEST_MESSAGE("Writing frame high " << i);
         BOOST_REQUIRE_EQUAL( ndh.h5_write( hiframe[i]), 0);
         test_offsets[1]=0; test_offsets[DIMFRAME]=i;
-        wc = ndh.get_conf();
-        BOOST_CHECK( wc.get_offsets() == test_offsets );
-        BOOST_CHECK( wc.get_dset_dims() == test_dset_dims );
+        BOOST_REQUIRE_NO_THROW( wc = ndh.get_conf() );
+        BOOST_TEST_MESSAGE( "WriteConfig: " << wc._str_() );
+        BOOST_REQUIRE( wc.get_offsets() == test_offsets );
+        BOOST_REQUIRE( wc.get_dset_dims() == test_dset_dims );
 
         BOOST_TEST_MESSAGE("Writing frame low " << i);
         BOOST_REQUIRE_EQUAL( ndh.h5_write( lowframe[i]), 0);
         test_offsets[1]=2; test_offsets[DIMFRAME]=i;
-        wc = ndh.get_conf();
-        BOOST_CHECK( wc.get_offsets() == test_offsets );
-        BOOST_CHECK( wc.get_dset_dims() == test_dset_dims );
+        BOOST_REQUIRE_NO_THROW( wc = ndh.get_conf() );
+        BOOST_REQUIRE( wc.get_offsets() == test_offsets );
+        BOOST_REQUIRE( wc.get_dset_dims() == test_dset_dims );
     }
 
     BOOST_TEST_MESSAGE("Closing file");
@@ -209,71 +212,72 @@ BOOST_AUTO_TEST_CASE(frames_attr_offset)
     BOOST_TEST_MESSAGE("Creating NDArrayToHDF5 object.");
     NDArrayToHDF5 ndh;
 
-    BOOST_CHECK_NO_THROW( ndh.h5_configure(lowframe[0]) );
+    BOOST_REQUIRE_NO_THROW( ndh.h5_configure(lowframe[0]) );
 
     BOOST_TEST_MESSAGE("Open file: test_frames_attr_offset.h5");
-    BOOST_CHECK( ndh.h5_open("test_frames_attr_offset.h5") == 0);
+    BOOST_REQUIRE_EQUAL( ndh.h5_open("test_frames_attr_offset.h5"), 0);
 
     //-------------  First frame -------------------------------
     BOOST_TEST_MESSAGE("Writing frame high 0");
-    BOOST_CHECK( ndh.h5_write( hiframe[0]) == 0);
+    BOOST_REQUIRE_EQUAL( ndh.h5_write( hiframe[0]), 0);
     dimsize_t hi_offsets_0[] = {0,0,0};
     test_offsets = vec_ds_t(hi_offsets_0, hi_offsets_0+3);
-    wc = ndh.get_conf();
-    BOOST_CHECK( wc.get_offsets() == test_offsets );
+    BOOST_REQUIRE_NO_THROW( wc = ndh.get_conf() );
+    BOOST_TEST_MESSAGE( "WriteConfig: " << wc._str_() );
+    BOOST_REQUIRE( wc.get_offsets() == test_offsets );
     test_dset_dims[DIMFRAME]=1;
-    BOOST_CHECK( wc.get_dset_dims() == test_dset_dims );
+    BOOST_REQUIRE( wc.get_dset_dims() == test_dset_dims );
 
     BOOST_TEST_MESSAGE("Writing frame low 0");
-    BOOST_CHECK( ndh.h5_write( lowframe[0]) == 0);
+    BOOST_REQUIRE_EQUAL( ndh.h5_write( lowframe[0]), 0);
     dimsize_t lo_offsets_0[] = {0,2,0};
     test_offsets = vec_ds_t(lo_offsets_0, lo_offsets_0+3);
     wc = ndh.get_conf();
-    BOOST_CHECK( wc.get_offsets() == test_offsets );
+    BOOST_REQUIRE( wc.get_offsets() == test_offsets );
     test_dset_dims[DIMFRAME]=1;
-    BOOST_CHECK( wc.get_dset_dims() == test_dset_dims );
+    BOOST_REQUIRE( wc.get_dset_dims() ==  test_dset_dims );
 
     //-------------  Second frame -------------------------------
     BOOST_TEST_MESSAGE("Writing frame high 1");
-    BOOST_CHECK( ndh.h5_write( hiframe[1]) == 0);
+    BOOST_REQUIRE_EQUAL( ndh.h5_write( hiframe[1]), 0);
     dimsize_t hi_offsets_1[] = {1,0,0};
     test_offsets = vec_ds_t(hi_offsets_1, hi_offsets_1+3);
     wc = ndh.get_conf();
-    BOOST_CHECK( wc.get_offsets() == test_offsets );
+    BOOST_REQUIRE( wc.get_offsets() == test_offsets );
     test_dset_dims[DIMFRAME]=2;
-    BOOST_CHECK( wc.get_dset_dims() == test_dset_dims );
+    BOOST_REQUIRE( wc.get_dset_dims() == test_dset_dims );
 
     BOOST_TEST_MESSAGE("Writing frame low 1");
-    BOOST_CHECK( ndh.h5_write( lowframe[1]) == 0);
+    BOOST_REQUIRE_EQUAL( ndh.h5_write( lowframe[1]), 0);
     dimsize_t lo_offsets_1[] = {1,2,0};
     test_offsets = vec_ds_t(lo_offsets_1, lo_offsets_1+3);
     wc = ndh.get_conf();
-    BOOST_CHECK( wc.get_offsets() == test_offsets );
+    BOOST_REQUIRE( wc.get_offsets() == test_offsets );
     test_dset_dims[DIMFRAME]=2;
-    BOOST_CHECK( wc.get_dset_dims() == test_dset_dims );
+    BOOST_REQUIRE( wc.get_dset_dims() == test_dset_dims );
 
     //-------------  Third frame -------------------------------
     BOOST_TEST_MESSAGE("Writing frame high 2");
-    BOOST_CHECK( ndh.h5_write( hiframe[2]) == 0);
+    BOOST_REQUIRE_EQUAL( ndh.h5_write( hiframe[2]), 0);
     dimsize_t hi_offsets_2[] = {2,0,0};
     test_offsets = vec_ds_t(hi_offsets_2, hi_offsets_2+3);
     wc = ndh.get_conf();
-    BOOST_CHECK( wc.get_offsets() == test_offsets );
+    BOOST_REQUIRE( wc.get_offsets() == test_offsets );
     test_dset_dims[DIMFRAME]=3;
-    BOOST_CHECK( wc.get_dset_dims() == test_dset_dims );
+    BOOST_REQUIRE( wc.get_dset_dims() == test_dset_dims );
 
     BOOST_TEST_MESSAGE("Writing frame low 2");
-    BOOST_CHECK( ndh.h5_write( lowframe[2]) == 0);
+    BOOST_REQUIRE_EQUAL( ndh.h5_write( lowframe[2]), 0);
     dimsize_t lo_offsets_2[] = {2,2,0};
     test_offsets = vec_ds_t(lo_offsets_2, lo_offsets_2+3);
     wc = ndh.get_conf();
-    BOOST_CHECK( wc.get_offsets() == test_offsets );
+    BOOST_REQUIRE( wc.get_offsets() == test_offsets );
     test_dset_dims[DIMFRAME]=3;
-    BOOST_CHECK( wc.get_dset_dims() == test_dset_dims );
+    BOOST_REQUIRE( wc.get_dset_dims() == test_dset_dims );
 
 
     BOOST_TEST_MESSAGE("Closing file");
-    BOOST_CHECK( ndh.h5_close() == 0);
+    BOOST_REQUIRE_EQUAL( ndh.h5_close(), 0);
 
 }
 
@@ -293,29 +297,29 @@ BOOST_AUTO_TEST_CASE(frames_attr_offset_loop)
     BOOST_CHECK_NO_THROW( ndh.h5_configure(hiframe[0]));
 
     BOOST_TEST_MESSAGE("Open file: test_frames_attr_offset_loop.h5");
-    BOOST_CHECK( ndh.h5_open("test_frames_attr_offset_loop.h5") == 0);
+    BOOST_REQUIRE_EQUAL( ndh.h5_open("test_frames_attr_offset_loop.h5"), 0);
 
     test_dset_dims[DIMY]=YSIZE; test_dset_dims[DIMX]=XSIZE;
     for (int i = 0; i < NFRAMES; i++) {
         test_dset_dims[DIMFRAME]=i+1;
 
         BOOST_TEST_MESSAGE("Writing frame high " << i);
-        BOOST_CHECK( ndh.h5_write( hiframe[i]) == 0);
+        BOOST_REQUIRE_EQUAL( ndh.h5_write( hiframe[i]), 0);
         test_offsets[DIMY]=0; test_offsets[DIMFRAME]=i;
         wc = ndh.get_conf();
-        BOOST_CHECK( wc.get_offsets() == test_offsets );
-        BOOST_CHECK( wc.get_dset_dims() == test_dset_dims );
+        BOOST_REQUIRE( wc.get_offsets() == test_offsets );
+        BOOST_REQUIRE( wc.get_dset_dims() == test_dset_dims );
 
         BOOST_TEST_MESSAGE("Writing frame low " << i);
-        BOOST_CHECK( ndh.h5_write( lowframe[i]) == 0);
+        BOOST_REQUIRE_EQUAL( ndh.h5_write( lowframe[i]), 0);
         test_offsets[DIMY]=2; test_offsets[DIMFRAME]=i;
         wc = ndh.get_conf();
-        BOOST_CHECK( wc.get_offsets() == test_offsets );
-        BOOST_CHECK( wc.get_dset_dims() == test_dset_dims );
+        BOOST_REQUIRE( wc.get_offsets() == test_offsets );
+        BOOST_REQUIRE( wc.get_dset_dims() == test_dset_dims );
     }
 
     BOOST_TEST_MESSAGE("Closing file");
-    BOOST_CHECK( ndh.h5_close() == 0);
+    BOOST_REQUIRE_EQUAL( ndh.h5_close(), 0);
 
 }
 
@@ -335,70 +339,70 @@ BOOST_AUTO_TEST_CASE(frames_attr_offset_unordered)
 
     BOOST_TEST_MESSAGE("Creating NDArrayToHDF5 object.");
     NDArrayToHDF5 ndh;
-    BOOST_CHECK_NO_THROW( ndh.h5_configure(hiframe[0]));
+    BOOST_REQUIRE_NO_THROW( ndh.h5_configure(hiframe[0]));
 
     BOOST_TEST_MESSAGE("Open file: test_frames_attr_offset_unordered.h5");
-    BOOST_CHECK( ndh.h5_open("test_frames_attr_offset_unordered.h5") == 0);
+    BOOST_REQUIRE_EQUAL( ndh.h5_open("test_frames_attr_offset_unordered.h5"), 0);
 
     //-------------  First frame -------------------------------
     BOOST_TEST_MESSAGE("Writing frame high 0");
-    BOOST_CHECK( ndh.h5_write( hiframe[0]) == 0);
+    BOOST_REQUIRE_EQUAL( ndh.h5_write( hiframe[0]), 0);
     dimsize_t hi_offsets_0[] = {0,0,0};
     test_offsets = vec_ds_t(hi_offsets_0, hi_offsets_0+3);
     wc = ndh.get_conf();
-    BOOST_CHECK( wc.get_offsets() == test_offsets );
+    BOOST_REQUIRE( wc.get_offsets() == test_offsets );
     test_dset_dims[DIMFRAME]=1;
-    BOOST_CHECK( wc.get_dset_dims() == test_dset_dims );
+    BOOST_REQUIRE( wc.get_dset_dims() == test_dset_dims );
 
     BOOST_TEST_MESSAGE("Writing frame low 0");
-    BOOST_CHECK( ndh.h5_write( lowframe[0]) == 0);
+    BOOST_REQUIRE_EQUAL( ndh.h5_write( lowframe[0]), 0);
     dimsize_t lo_offsets_0[] = {0,2,0};
     test_offsets = vec_ds_t(lo_offsets_0, lo_offsets_0+3);
     wc = ndh.get_conf();
-    BOOST_CHECK( wc.get_offsets() == test_offsets );
+    BOOST_REQUIRE( wc.get_offsets() == test_offsets );
     test_dset_dims[DIMFRAME]=1;
-    BOOST_CHECK( wc.get_dset_dims() == test_dset_dims );
+    BOOST_REQUIRE( wc.get_dset_dims() == test_dset_dims );
 
     //-------------  Third frame -------------------------------
     BOOST_TEST_MESSAGE("Writing frame high 2");
-    BOOST_CHECK( ndh.h5_write( hiframe[2]) == 0);
+    BOOST_REQUIRE_EQUAL( ndh.h5_write( hiframe[2]), 0);
     dimsize_t hi_offsets_2[] = {2,0,0};
     test_offsets = vec_ds_t(hi_offsets_2, hi_offsets_2+3);
     wc = ndh.get_conf();
-    BOOST_CHECK( wc.get_offsets() == test_offsets );
+    BOOST_REQUIRE( wc.get_offsets() == test_offsets );
     test_dset_dims[DIMFRAME]=3;
-    BOOST_CHECK( wc.get_dset_dims() == test_dset_dims );
+    BOOST_REQUIRE( wc.get_dset_dims() == test_dset_dims );
 
     BOOST_TEST_MESSAGE("Writing frame low 2");
-    BOOST_CHECK( ndh.h5_write( lowframe[2]) == 0);
+    BOOST_REQUIRE_EQUAL( ndh.h5_write( lowframe[2]) , 0);
     dimsize_t lo_offsets_2[] = {2,2,0};
     test_offsets = vec_ds_t(lo_offsets_2, lo_offsets_2+3);
     wc = ndh.get_conf();
-    BOOST_CHECK( wc.get_offsets() == test_offsets );
+    BOOST_REQUIRE( wc.get_offsets() == test_offsets );
     test_dset_dims[DIMFRAME]=3;
-    BOOST_CHECK( wc.get_dset_dims() == test_dset_dims );
+    BOOST_REQUIRE( wc.get_dset_dims() == test_dset_dims );
 
     //-------------  Second frame -------------------------------
     BOOST_TEST_MESSAGE("Writing frame high 1");
-    BOOST_CHECK( ndh.h5_write( hiframe[1]) == 0);
+    BOOST_REQUIRE_EQUAL( ndh.h5_write( hiframe[1]) , 0);
     dimsize_t hi_offsets_1[] = {1,0,0};
     test_offsets = vec_ds_t(hi_offsets_1, hi_offsets_1+3);
     wc = ndh.get_conf();
-    BOOST_CHECK( wc.get_offsets() == test_offsets );
+    BOOST_REQUIRE( wc.get_offsets() == test_offsets );
     test_dset_dims[DIMFRAME]=3;
-    BOOST_CHECK( wc.get_dset_dims() == test_dset_dims );
+    BOOST_REQUIRE( wc.get_dset_dims() == test_dset_dims );
 
     BOOST_TEST_MESSAGE("Writing frame low 1");
-    BOOST_CHECK( ndh.h5_write( lowframe[1]) == 0);
+    BOOST_REQUIRE_EQUAL( ndh.h5_write( lowframe[1]), 0);
     dimsize_t lo_offsets_1[] = {1,2,0};
     test_offsets = vec_ds_t(lo_offsets_1, lo_offsets_1+3);
     wc = ndh.get_conf();
-    BOOST_CHECK( wc.get_offsets() == test_offsets );
+    BOOST_REQUIRE( wc.get_offsets() == test_offsets );
     test_dset_dims[DIMFRAME]=3;
-    BOOST_CHECK( wc.get_dset_dims() == test_dset_dims );
+    BOOST_REQUIRE( wc.get_dset_dims() == test_dset_dims );
 
     BOOST_TEST_MESSAGE("Closing file");
-    BOOST_CHECK( ndh.h5_close() == 0);
+    BOOST_REQUIRE_EQUAL( ndh.h5_close(), 0);
 
 }
 
@@ -415,10 +419,10 @@ BOOST_AUTO_TEST_CASE(frames_auto_offset_loop)
 
     BOOST_TEST_MESSAGE("Creating NDArrayToHDF5 object.");
     NDArrayToHDF5 ndh;
-    BOOST_CHECK_NO_THROW( ndh.h5_configure(hiframe[0]));
+    BOOST_REQUIRE_NO_THROW( ndh.h5_configure(hiframe[0]));
 
     BOOST_TEST_MESSAGE("Open file: test_frames_auto_offset.h5");
-    BOOST_CHECK( ndh.h5_open("test_frames_auto_offset.h5") == 0);
+    BOOST_REQUIRE_EQUAL( ndh.h5_open("test_frames_auto_offset.h5"), 0);
 
     //test_dset_dims[DIMX]=XSIZE; test_dset_dims[DIMY]=YSIZE;
     for (int i = 0; i < NFRAMES; i++) {
@@ -428,12 +432,12 @@ BOOST_AUTO_TEST_CASE(frames_auto_offset_loop)
         BOOST_REQUIRE_EQUAL( ndh.h5_write( hiframe[i]), 0);
         //test_offsets[DIMFRAME]=i;
         wc = ndh.get_conf();
-        BOOST_REQUIRE_EQUAL( wc.get_offsets()[DIMFRAME], i );
-        BOOST_REQUIRE_EQUAL( wc.get_dset_dims()[DIMFRAME], i+1 );
+        BOOST_REQUIRE_EQUAL( wc.get_offsets()[DIMFRAME], (long long unsigned int)i );
+        BOOST_REQUIRE_EQUAL( wc.get_dset_dims()[DIMFRAME], (long long unsigned int)i+1 );
     }
 
     BOOST_TEST_MESSAGE("Closing file");
-    BOOST_CHECK( ndh.h5_close() == 0);
+    BOOST_REQUIRE_EQUAL( ndh.h5_close(), 0);
 }
 
 BOOST_AUTO_TEST_SUITE_END()
