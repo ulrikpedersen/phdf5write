@@ -70,13 +70,11 @@ std::string HdfAttrSource::get_src_def()
 HdfElement::HdfElement()
 {
     this->name = "entry";
-    if (this->path.empty())
-        this->path = "/";
-    this->ptr_parent = NULL;
+    this->parent = NULL;
 }
 
 HdfElement::HdfElement(const HdfElement& src)
-: ptr_parent(NULL)
+: parent(NULL)
 {
 	this->_copy(src);
 }
@@ -84,23 +82,26 @@ HdfElement::HdfElement(const HdfElement& src)
 HdfElement::HdfElement(const string& name)
 {
     this->name = name;
-    if (this->path.empty())
-        this->path = "/";
-    this->ptr_parent = NULL;
+    this->parent = NULL;
 }
 
 string HdfElement::get_full_name()
 {
-    //cout << "get_full_name: " << this->path << " name: " << this->name << endl;
-    string fname;
-    if (this->path.empty() or this->name.empty())
-    {
-        cerr << "Warning: missing path or name" << endl;
-    } else {
-        fname = this->path;
-        fname += this->name;
-    }
+	string fname = this->get_path(true);
+	fname += this->name;
     return fname;
+}
+
+string HdfElement::get_path(bool trailing_slash)
+{
+	string path;
+	path.append("/");
+	if (this->parent != NULL) {
+		path.insert(0, this->parent->get_name());
+		path.insert(0, this->parent->get_path(true));
+		if (not trailing_slash) path.erase(path.end() - 1);
+	}
+	return path;
 }
 
 HdfElement& HdfElement::operator=(const HdfElement& src)
@@ -119,7 +120,7 @@ const string& HdfElement::get_name()
 
 HdfElement * HdfElement::get_parent()
 {
-	return this->ptr_parent;
+	return this->parent;
 }
 
 int HdfElement::add_attribute(HdfAttribute& attr)
@@ -142,7 +143,7 @@ int HdfElement::tree_level()
     int level = 0;
     size_t pos = 0;
     while( pos != string::npos ){
-        pos = this->path.find('/', pos+1);
+        pos = this->get_full_name().find('/', pos+1);
         level++;
     }
     return level;
@@ -152,15 +153,8 @@ int HdfElement::tree_level()
 void HdfElement::_copy(const HdfElement& src)
 {
     this->name = src.name;
-    this->path = src.path;
     this->attributes = src.attributes;
-    this->ptr_parent = src.ptr_parent;
-}
-
-void HdfElement::build_full_path(HdfElement* new_child)
-{
-    new_child->path = this->get_full_name();
-    new_child->path += "/";
+    this->parent = src.parent;
 }
 
 
@@ -203,7 +197,7 @@ HdfDataset* HdfGroup::new_dset(const std::string& name)
 
     // Create the object
     ds = new HdfDataset(name);
-    ds->ptr_parent = this;
+    ds->parent = this;
 
     // Insert the string, HdfDataset pointer pair in the datasets map.
     pair<map<string,HdfDataset*>::iterator,bool> ret;
@@ -211,7 +205,6 @@ HdfDataset* HdfGroup::new_dset(const std::string& name)
 
     // Check for successful insertion.
     if (ret.second == false) return NULL;
-    this->build_full_path(ds);
     return ds;
 }
 
@@ -235,14 +228,13 @@ HdfGroup* HdfGroup::new_group(const std::string& name)
 
     // Create the new group
     grp = new HdfGroup(name);
-    grp->ptr_parent = this;
+    grp->parent = this;
 
     // Insert the string, HdfDataset pointer pair in the datasets map.
     pair<map<string,HdfGroup*>::iterator,bool> ret;
     ret = this->groups.insert( pair<string, HdfGroup*>(name, grp) );
     // Check for successful insertion.
     if (ret.second == false) return NULL;
-    this->build_full_path(grp);
     return grp;
 }
 

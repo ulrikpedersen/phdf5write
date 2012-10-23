@@ -67,6 +67,7 @@ public:
 
     const std::string& get_name();
     std::string get_full_name();
+    std::string get_path(bool trailing_slash=false);
     int add_attribute(HdfAttribute& attr);
     bool has_attribute(const std::string& attr_name);
     int tree_level();
@@ -74,14 +75,12 @@ public:
 
 protected:
     void _copy(const HdfElement& src);
-    void build_full_path(HdfElement* new_child);
     std::map<std::string, HdfAttribute> attributes;
-    std::string path;
     std::string name;
 public:
     friend class HdfGroup;
 private:
-    HdfElement *ptr_parent;
+    HdfElement *parent;
 };
 
 

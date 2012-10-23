@@ -214,92 +214,98 @@ BOOST_FIXTURE_TEST_SUITE(hdf_element, hdf_element_fixture)
 BOOST_AUTO_TEST_CASE(simple)
 {
     HdfGroup root;
-    BOOST_CHECK(root.get_name().compare("entry") == 0);
+    BOOST_REQUIRE_EQUAL(root.get_name(), "entry");
+    BOOST_REQUIRE_EQUAL(root.get_path(), "/");
 
     HdfGroup *inst_ptr = NULL;
-    BOOST_CHECK_NO_THROW(inst_ptr=root.new_group( "instrument" ));
-    BOOST_CHECK( inst_ptr!=NULL );
-    BOOST_CHECK_EQUAL( inst_ptr->get_full_name(), "/entry/instrument");
+    BOOST_REQUIRE_NO_THROW(inst_ptr=root.new_group( "instrument" ));
+    BOOST_REQUIRE( inst_ptr != NULL );
+    BOOST_REQUIRE_EQUAL( inst_ptr->get_path(false), "/entry");
+    BOOST_REQUIRE_EQUAL( inst_ptr->get_path(true), "/entry/");
+    BOOST_REQUIRE_EQUAL( inst_ptr->get_full_name(), "/entry/instrument");
+    BOOST_REQUIRE_EQUAL( inst_ptr->tree_level(), 2);
+
 
     std::string dsetname = "mydata";
     // Create and insert a new dataset by name, get the name back and
     // compare it with the input name.
-    BOOST_CHECK_NO_THROW( inst_ptr->new_dset( dsetname ) );
+    BOOST_REQUIRE_NO_THROW( inst_ptr->new_dset( dsetname ) );
     HdfDataset *dset;
-    BOOST_CHECK( inst_ptr->find_dset(dsetname, &dset) == 0);
-    BOOST_CHECK_EQUAL( dset->get_name(), dsetname);
+    BOOST_REQUIRE_EQUAL( inst_ptr->find_dset(dsetname, &dset), 0);
+    BOOST_REQUIRE_EQUAL( dset->get_name(), dsetname);
 
     std::string dsetfullname = "/entry/instrument/mydata";
     std::string fn = dset->get_full_name();
-    BOOST_CHECK_EQUAL( fn, dsetfullname);
+    BOOST_REQUIRE_EQUAL( fn, dsetfullname);
+    BOOST_REQUIRE_EQUAL( dset->tree_level(), 3);
     BOOST_CHECK( true ); // check whether destructors work
 }
 
 BOOST_AUTO_TEST_CASE( retrieve_modify_dset )
 {
     HdfGroup root("root");
-    BOOST_CHECK_EQUAL(root.num_datasets(), 0);
-    BOOST_CHECK_EQUAL( root.num_groups(), 0);
+    BOOST_REQUIRE_EQUAL(root.num_datasets(), 0);
+    BOOST_REQUIRE_EQUAL( root.num_groups(), 0);
 
     // create and insert a dataset
     HdfDataset *dset_ptr = NULL;
-    BOOST_CHECK_NO_THROW( dset_ptr = root.new_dset("mydset") );
-    BOOST_CHECK( dset_ptr != NULL );
+    BOOST_REQUIRE_NO_THROW( dset_ptr = root.new_dset("mydset") );
+    BOOST_REQUIRE( dset_ptr != NULL );
 
     // Create a dset instance to be filled in by reference
     HdfDataset *dset;
     std::string dset_str("mydset");
-    BOOST_CHECK_EQUAL( root.find_dset(dset_str, &dset), 0);
-    BOOST_CHECK_EQUAL( dset->get_name(), dset_str);
-    BOOST_CHECK_EQUAL( dset->get_name(), dset_ptr->get_name());
+    BOOST_REQUIRE_EQUAL( root.find_dset(dset_str, &dset), 0);
+    BOOST_REQUIRE_EQUAL( dset->get_name(), dset_str);
+    BOOST_REQUIRE_EQUAL( dset->get_name(), dset_ptr->get_name());
 
     std::string attr_name("myattr");
     HdfAttribute attr(attr_name);
-    BOOST_CHECK_EQUAL( dset->add_attribute(attr), 0);
+    BOOST_REQUIRE_EQUAL( dset->add_attribute(attr), 0);
 
-    BOOST_CHECK( dset->has_attribute(attr_name));
-    BOOST_CHECK( dset_ptr->has_attribute(attr_name));
+    BOOST_REQUIRE( dset->has_attribute(attr_name));
+    BOOST_REQUIRE( dset_ptr->has_attribute(attr_name));
 
     dset = NULL;
-    BOOST_CHECK_EQUAL( root.find_dset_ndattr(attr_name, &dset), 0);
+    BOOST_REQUIRE_EQUAL( root.find_dset_ndattr(attr_name, &dset), 0);
     BOOST_CHECK( dset != NULL );
 }
 
 BOOST_AUTO_TEST_CASE( retrieve_dset_tree )
 {
     HdfGroup root("root");
-    BOOST_CHECK_EQUAL(root.num_datasets(), 0);
-    BOOST_CHECK_EQUAL( root.num_groups(), 0);
+    BOOST_REQUIRE_EQUAL(root.num_datasets(), 0);
+    BOOST_REQUIRE_EQUAL( root.num_groups(), 0);
 
     HdfGroup *grp1 = NULL;
-    BOOST_CHECK_NO_THROW( grp1 = root.new_group("group1") );
+    BOOST_REQUIRE_NO_THROW( grp1 = root.new_group("group1") );
     BOOST_CHECK( grp1 != NULL );
-    BOOST_CHECK_NO_THROW( grp1->new_dset("blah1")); // insert some dummy datasets
-    BOOST_CHECK_NO_THROW( grp1->new_dset("nnnn1"));
+    BOOST_REQUIRE_NO_THROW( grp1->new_dset("blah1")); // insert some dummy datasets
+    BOOST_REQUIRE_NO_THROW( grp1->new_dset("nnnn1"));
 
     HdfGroup *grp2 = NULL;
-    BOOST_CHECK_NO_THROW( grp2 = grp1->new_group("group2") );
-    BOOST_CHECK( grp2 != NULL );
-    BOOST_CHECK_NO_THROW( grp2->new_dset("blah2"));
-    BOOST_CHECK_NO_THROW( grp2->new_dset("bbbb2"));
+    BOOST_REQUIRE_NO_THROW( grp2 = grp1->new_group("group2") );
+    BOOST_REQUIRE( grp2 != NULL );
+    BOOST_REQUIRE_NO_THROW( grp2->new_dset("blah2"));
+    BOOST_REQUIRE_NO_THROW( grp2->new_dset("bbbb2"));
 
     // Create a dset instance to be filled in by reference
     HdfDataset *dset = NULL;
     std::string dset_str("mydset");
-    BOOST_CHECK_NO_THROW( dset=grp2->new_dset(dset_str) );
+    BOOST_REQUIRE_NO_THROW( dset=grp2->new_dset(dset_str) );
     BOOST_CHECK( dset != NULL );
 
     //  Create an attribute and attach to the dataset
     std::string attr_name("myattr");
     HdfAttribute attr(attr_name);
-    BOOST_CHECK_EQUAL( dset->add_attribute(attr), 0);
+    BOOST_REQUIRE_EQUAL( dset->add_attribute(attr), 0);
 
     // Finally search the root for the dataset with the named attribute
     HdfDataset *result = NULL;
-    BOOST_CHECK_EQUAL( root.find_dset_ndattr(attr_name, &result), 0);
+    BOOST_REQUIRE_EQUAL( root.find_dset_ndattr(attr_name, &result), 0);
     // and check that the dataset is the very same instance
-    BOOST_CHECK_EQUAL( (long int)result, (long int)dset);
-    BOOST_CHECK_EQUAL( result->get_full_name(), dset->get_full_name());
+    BOOST_REQUIRE_EQUAL( (long int)result, (long int)dset);
+    BOOST_REQUIRE_EQUAL( result->get_full_name(), dset->get_full_name());
     BOOST_TEST_MESSAGE( "root: " << root._str_() );
     BOOST_TEST_MESSAGE( "dset: " << dset->_str_() );
 }
@@ -311,12 +317,12 @@ BOOST_AUTO_TEST_CASE( hdfdataset_not_present )
     // Search for a non-existing dataset
     std::string dset_str("neverland");
     HdfDataset *dset_ptr = NULL;
-    BOOST_CHECK_NE( root.find_dset(dset_str, &dset_ptr), 0);
-    BOOST_CHECK( dset_ptr == NULL );
+    BOOST_REQUIRE_NE( root.find_dset(dset_str, &dset_ptr), 0);
+    BOOST_REQUIRE( dset_ptr == NULL );
 
     dset_ptr = NULL;
-    BOOST_CHECK_NE( root.find_dset_ndattr(dset_str, &dset_ptr), 0);
-    BOOST_CHECK( dset_ptr == NULL );
+    BOOST_REQUIRE_NE( root.find_dset_ndattr(dset_str, &dset_ptr), 0);
+    BOOST_REQUIRE( dset_ptr == NULL );
 }
 
 BOOST_AUTO_TEST_SUITE_END()

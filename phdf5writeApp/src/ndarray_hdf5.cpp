@@ -199,7 +199,12 @@ int NDArrayToHDF5::h5_write(NDArray& ndarray)
     // Timing caching configuration
     //this->writestep[1].dt_end(); // takes no measurable time
 
-    const char *dset_name = "/mydset";
+    //const char *dset_name = "/mydset";
+    //const char *dset_name = "/entry/detector/data";
+    HdfDataset *dset;
+    string name = "data";
+    this->layout.get_hdftree()->find_dset(name, &dset);
+    const char *dset_name = dset->get_full_name().c_str();
     hid_t dataset = H5Dopen2(this->h5file, dset_name, dset_access_plist);
     if (dataset < 0) {
         msg("ERROR: unable to open dataset", true);
@@ -388,6 +393,7 @@ int NDArrayToHDF5::create_file_layout()
     int retcode = 0;
 
     HdfGroup *tree = this->layout.get_hdftree();
+    cout << "Root tree: " << *tree << endl;
 
     // for the moment we just create the main dataset (with the attribute 'signal')
     string signal("signal");
@@ -517,8 +523,8 @@ int NDArrayToHDF5::create_dataset(HdfDataset *dset)
     }
 
     //const char * dsetname = dset->get_full_name().c_str();
-    const char * dsetname = "mydset";
-    cout << "Creating dataset: " << dsetname << endl;
+    const char * dsetname = "/entry/detector/data";
+    cout << "===== Creating dataset: " << dsetname << endl;
     dataset = H5Dcreate2( this->h5file, dsetname,
                                 datatype, dataspace,
                                 H5P_DEFAULT, dset_create_plist, H5P_DEFAULT);
