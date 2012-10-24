@@ -27,6 +27,7 @@ using namespace std;
 #define XML_ATTR_SRC_CONST "constant"
 #define XML_ATTR_SRC_CONST_VALUE "value"
 #define XML_ATTR_SRC_CONST_TYPE "type"
+#define XML_ATTR_GRP_NDATTR_DEFAULT "ndattr_default"
 
 LayoutXML::LayoutXML() :
 ptr_tree(NULL), ptr_curr_element(NULL)
@@ -128,7 +129,7 @@ void LayoutXML::process_node()
 /** Process the XML element's attributes
  * to work out the source of the attribute value: either detector data, NDAttribute or constant.
  */
-int LayoutXML::process_attribute(HdfAttrSource& out)
+int LayoutXML::process_attribute(HdfDataSource& out)
 {
     int ret = -1;
     if (not xmlTextReaderHasAttributes(this->xmlreader) ) return ret;
@@ -141,15 +142,15 @@ int LayoutXML::process_attribute(HdfAttrSource& out)
     str_attr_src = (char*)attr_src;
 
     if (str_attr_src == XML_ATTR_SRC_DETECTOR) {
-        out = HdfAttrSource( detector );
+        out = HdfDataSource( phdf_detector );
         ret = 0;
     }
     if (str_attr_src == XML_ATTR_SRC_NDATTR) {
-        out = HdfAttrSource( ndattribute );
+        out = HdfDataSource( phdf_ndattribute );
         ret = 0;
     }
     if (str_attr_src == XML_ATTR_SRC_CONST) {
-        out = HdfAttrSource( constant );
+        out = HdfDataSource( phdf_constant );
         ret = 0;
     }
 
@@ -176,13 +177,33 @@ int LayoutXML::new_group()
         //cout << "  Initialised the root of the tree: " << *this->ptr_tree << endl;
         this->ptr_curr_element = this->ptr_tree;
     } else {
-        HdfGroup *parent = (HdfGroup *)this->ptr_curr_element;
+        HdfGroup *parent = static_cast<HdfGroup *>(this->ptr_curr_element);
         HdfGroup *new_group = NULL;
         new_group = parent->new_group(str_group_name);
         if (new_group == NULL) return -1;
         this->ptr_curr_element = new_group;
     }
 
+    if (this->ptr_curr_element != NULL)
+    {
+    	// check whether this group is tagged as the default group to place
+    	// NDAttribute meta-data in
+    	xmlChar * ndattr_default;
+    	ndattr_default = xmlTextReaderGetAttribute(this->xmlreader,
+                                                  (const xmlChar *)XML_ATTR_GRP_NDATTR_DEFAULT);
+    	if (ndattr_default != NULL)
+    	{
+        	string str_ndattr_default((char*)ndattr_default);
+        	free(ndattr_default);
+        	// if the group has tag: ndattr_default="true" (true in lower case)
+        	// then set the group as the default container for NDAttributes.
+        	if (str_ndattr_default == "true")
+        	{
+        		HdfGroup * new_group = static_cast<HdfGroup*>(this->ptr_curr_element);
+        		new_group->set_default_ndattr_group();
+        	}
+    	}
+    }
     return 0;
 }
 
@@ -207,7 +228,7 @@ int LayoutXML::new_dataset()
 
     this->ptr_curr_element = dset;
 
-    HdfAttrSource attrval;
+    HdfDataSource attrval;
     this->process_attribute(attrval);
     if (dset->set_data_source(attrval) < 0)
     {

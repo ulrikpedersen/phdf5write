@@ -21,6 +21,8 @@ HdfAttribute::HdfAttribute(const HdfAttribute& src)
 }
 HdfAttribute::HdfAttribute(std::string& name)
 : name(name) {}
+HdfAttribute::HdfAttribute(const char* name)
+: name(name){}
 
 /** Assignment operator */
 HdfAttribute& HdfAttribute::operator=(const HdfAttribute& src)
@@ -32,38 +34,51 @@ string HdfAttribute::get_name() {return this->name;}
 
 
 // constructors
-HdfAttrSource::HdfAttrSource()
-: data_src_type(notset), val(""){}
-HdfAttrSource::HdfAttrSource( HdfDataSrc_t srctype, const std::string& val)
-: data_src_type(srctype), val(val){}
-HdfAttrSource::HdfAttrSource( HdfDataSrc_t srctype)
-: data_src_type(srctype), val(""){}
-HdfAttrSource::HdfAttrSource( const HdfAttrSource& src)
-: data_src_type(src.data_src_type), val(src.val){}
+HdfDataSource::HdfDataSource()
+: data_src(phdf_notset), val(""), datatype(phdf_int8){}
+HdfDataSource::HdfDataSource( HdfDataSrc_t srctype, const std::string& val)
+: data_src(srctype), val(val), datatype(phdf_string){}
+HdfDataSource::HdfDataSource( HdfDataSrc_t src, PHDF_DataType_t type)
+: data_src(src), val(""), datatype(type){}
+HdfDataSource::HdfDataSource( HdfDataSrc_t src)
+: data_src(src), val(""), datatype(phdf_string){}
+HdfDataSource::HdfDataSource( const HdfDataSource& src)
+: data_src(src.data_src), val(src.val), datatype(src.datatype){}
 
 /** Assignment operator
  * Copies the sources private data members to this object.
  */
-HdfAttrSource& HdfAttrSource::operator=(const HdfAttrSource& src)
+HdfDataSource& HdfDataSource::operator=(const HdfDataSource& src)
 {
-	this->data_src_type = src.data_src_type;
+	this->data_src = src.data_src;
 	this->val = src.val;
+	this->datatype = src.datatype;
 	return *this;
 };
 
-bool HdfAttrSource::is_src_constant() {
-    return this->data_src_type == constant ? true : false;
-}
-bool HdfAttrSource::is_src_detector() {
-    return this->data_src_type == detector ? true : false;
-}
-bool HdfAttrSource::is_src_ndattribute() {
-    return this->data_src_type == ndattribute ? true : false;
+void HdfDataSource::set_datatype(PHDF_DataType_t type)
+{
+	this->datatype = type;
 }
 
-std::string HdfAttrSource::get_src_def()
+bool HdfDataSource::is_src_constant() {
+    return this->data_src == phdf_constant ? true : false;
+}
+bool HdfDataSource::is_src_detector() {
+    return this->data_src == phdf_detector ? true : false;
+}
+bool HdfDataSource::is_src_ndattribute() {
+    return this->data_src == phdf_ndattribute ? true : false;
+}
+
+std::string HdfDataSource::get_src_def()
 {
     return this->val;
+}
+
+PHDF_DataType_t HdfDataSource::get_datatype()
+{
+	return this->datatype;
 }
 
 /* ================== HdfElement Class public methods ==================== */
@@ -159,8 +174,15 @@ void HdfElement::_copy(const HdfElement& src)
 
 
 /* ================== HdfGroup Class public methods ==================== */
+HdfGroup::HdfGroup()
+: HdfElement(), ndattr_default_container(false){}
+HdfGroup::HdfGroup(const std::string& name)
+: HdfElement(name), ndattr_default_container(false){}
+HdfGroup::HdfGroup(const char * name)
+: HdfElement( std::string(name)), ndattr_default_container(false) {}
 
 HdfGroup::HdfGroup(const HdfGroup& src)
+: ndattr_default_container(false)
 {
     this->_copy(src);
 }
@@ -244,6 +266,13 @@ HdfGroup* HdfGroup::new_group(const char * name)
     return this->new_group(str_name);
 }
 
+int HdfGroup::find_dset_ndattr(const char * ndattr_name, HdfDataset** dset)
+{
+	string str_name(ndattr_name);
+	return this->find_dset_ndattr(str_name, dset);
+}
+
+
 int HdfGroup::find_dset_ndattr(const string& ndattr_name, HdfDataset** dset)
 {
     // check first whether this group has a dataset with this attribute
@@ -295,6 +324,24 @@ int HdfGroup::find_dset( string& dsetname, HdfDataset** dest )
     return -1;
 }
 
+void HdfGroup::set_default_ndattr_group()
+{
+	this->ndattr_default_container = true;
+}
+HdfGroup* HdfGroup::find_ndattr_default_group()
+{
+	HdfGroup * result = NULL;
+	MapGroups_t::iterator it;
+	for (it = this->groups.begin(); it != this->groups.end(); ++it)
+	{
+		if (it->second->ndattr_default_container) {
+			result = it->second;
+			break;
+		}
+	}
+	return result;
+}
+
 int HdfGroup::num_datasets()
 {
     return this->datasets.size();
@@ -343,6 +390,7 @@ void HdfGroup::_copy(const HdfGroup& src)
     HdfElement::_copy(src);
     this->datasets = src.datasets;
     this->groups = src.groups;
+    this->ndattr_default_container = src.ndattr_default_container;
 }
 
 
@@ -381,7 +429,7 @@ string HdfDataset::_str_()
     return out.str();
 }
 
-int HdfDataset::set_data_source(HdfAttrSource& src)
+int HdfDataset::set_data_source(HdfDataSource& src)
 {
     int retval = -1;
     if (src.is_src_detector() || src.is_src_ndattribute()) {
@@ -391,6 +439,10 @@ int HdfDataset::set_data_source(HdfAttrSource& src)
     return retval;
 }
 
+HdfDataSource& HdfDataset::data_source()
+{
+	return this->datasource;
+}
 
 
 /* ================== HdfDataset Class private methods ==================== */

@@ -9,6 +9,6 @@
 		    <attribute name="units" source="ndattribute" ndattribute="motoregu"></attribute>
 		</dataset>
 	</group>
-    <group name="instrument">
+    <group name="instrument" ndattr_default="true">
     </group>
 </group>

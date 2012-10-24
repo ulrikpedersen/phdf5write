@@ -23,9 +23,7 @@
 
 #define NUM_WRITE_STEPS 2
 
-class NDArray; //forward declaration
-//class NDDataType_t;
-struct NDDatatType_t;
+
 
 // Stream NDArrays to a HDF5 file
 class NDArrayToHDF5 {
@@ -53,6 +51,12 @@ public:
     WriteConfig get_conf();
     WriteConfig& get_conf_ref();
 
+    PHDF_DataType_t to_phdf_datatype(NDDataType_t) const;
+    PHDF_DataType_t to_phdf_datatype(hid_t) const;
+    hid_t to_hid_datatype(NDDataType_t) const;
+    hid_t to_hid_datatype(PHDF_DataType_t) const;
+
+
 protected:
     // print error and debug messages by default
     virtual void msg(std::string text, bool error=false)
@@ -67,7 +71,7 @@ private:
     hid_t type_nd2hdf(NDDataType_t& datatype);
     int create_file_layout();
     int create_dataset(HdfDataset* dset);
-    int create_groups(HdfGroup *group, hid_t h5handle);
+    int create_tree(HdfGroup *root, hid_t h5handle);
 
     // attribute dataset operations
     //int attr_create(){};

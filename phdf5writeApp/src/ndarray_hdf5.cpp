@@ -8,6 +8,7 @@
 #include <cstdlib>
 #include <iostream>
 #include <string>
+
 using namespace std;
 
 #include "ndarray_hdf5.h"
@@ -383,6 +384,123 @@ WriteConfig& NDArrayToHDF5::get_conf_ref()
 }
 
 
+/* Datatype translation functions. Just a simple lookup utility. */
+PHDF_DataType_t NDArrayToHDF5::to_phdf_datatype(NDDataType_t in) const
+{
+	PHDF_DataType_t out;
+	switch(in)
+	{
+	case NDInt8:
+		out = phdf_int8; break;
+	case NDUInt8:
+		out = phdf_uint8; break;
+	case NDInt16:
+		out = phdf_int16; break;
+	case NDUInt16:
+		out = phdf_uint16; break;
+	case NDInt32:
+		out = phdf_int32; break;
+	case NDUInt32:
+		out = phdf_uint32; break;
+	case NDFloat32:
+		out = phdf_float32; break;
+	case NDFloat64:
+		out = phdf_float64; break;
+	default:
+		out = phdf_int8;
+		break;
+	}
+	return out;
+}
+
+PHDF_DataType_t NDArrayToHDF5::to_phdf_datatype(hid_t in) const
+{
+	PHDF_DataType_t out;
+	if (in == H5T_NATIVE_INT8 )
+		out = phdf_int8;
+	else if (in == H5T_NATIVE_UINT8 )
+		out = phdf_uint8;
+	else if (in == H5T_NATIVE_INT16 )
+		out = phdf_int16;
+	else if (in == H5T_NATIVE_UINT16 )
+		out = phdf_uint16;
+	else if (in == H5T_NATIVE_INT32 )
+		out = phdf_int32;
+	else if (in == H5T_NATIVE_UINT32 )
+		out = phdf_uint32;
+	else if (in == H5T_NATIVE_FLOAT )
+		out = phdf_float32;
+	else if (in == H5T_NATIVE_DOUBLE )
+		out = phdf_float64;
+	else if (in == H5T_C_S1 )
+		out = phdf_string;
+	else {
+		out = phdf_int8;
+	}
+
+	return out;
+}
+
+hid_t NDArrayToHDF5::to_hid_datatype(NDDataType_t in) const
+{
+	hid_t out;
+	switch(in)
+	{
+	case NDInt8:
+		out = H5T_NATIVE_INT8; break;
+	case NDUInt8:
+		out = H5T_NATIVE_UINT8; break;
+	case NDInt16:
+		out = H5T_NATIVE_INT16; break;
+	case NDUInt16:
+		out = H5T_NATIVE_UINT16; break;
+	case NDInt32:
+		out = H5T_NATIVE_INT32; break;
+	case NDUInt32:
+		out = H5T_NATIVE_UINT32; break;
+	case NDFloat32:
+		out = H5T_NATIVE_FLOAT; break;
+	case NDFloat64:
+		out = H5T_NATIVE_DOUBLE; break;
+	default:
+		out = H5T_NATIVE_INT8;
+		break;
+	}
+	return out;
+}
+
+hid_t NDArrayToHDF5::to_hid_datatype(PHDF_DataType_t in) const
+{
+	hid_t out;
+	switch(in)
+	{
+	case phdf_int8:
+		out = H5T_NATIVE_INT8; break;
+	case phdf_uint8:
+		out = H5T_NATIVE_UINT8; break;
+	case phdf_int16:
+		out = H5T_NATIVE_INT16; break;
+	case phdf_uint16:
+		out = H5T_NATIVE_UINT16; break;
+	case phdf_int32:
+		out = H5T_NATIVE_INT32; break;
+	case phdf_uint32:
+		out = H5T_NATIVE_UINT32; break;
+	case phdf_float32:
+		out = H5T_NATIVE_FLOAT; break;
+	case phdf_float64:
+		out = H5T_NATIVE_DOUBLE; break;
+	case phdf_string:
+		out = H5T_C_S1; break;
+	default:
+		out = H5T_NATIVE_INT8;
+		break;
+	}
+	return out;
+}
+
+
+
 /*============== NDArrayToHDF5 private method implementations ================*/
 
 /** Create the groups and datasets in the HDF5 file.
@@ -392,18 +510,16 @@ int NDArrayToHDF5::create_file_layout()
 {
     int retcode = 0;
 
-    HdfGroup *tree = this->layout.get_hdftree();
-    cout << "Root tree: " << *tree << endl;
+    HdfGroup *root = this->layout.get_hdftree();
+    cout << "Root tree: " << *root << endl;
 
     // for the moment we just create the main dataset (with the attribute 'signal')
-    string signal("signal");
     HdfDataset *dset = NULL;
-    retcode = tree->find_dset_ndattr(signal, &dset);
+    retcode = root->find_dset_ndattr("signal", &dset);
     if (retcode < 0) return retcode;
     if (dset == NULL) return -1;
 
-
-    retcode -= this->create_groups(tree, this->h5file);
+    retcode -= this->create_tree(root, this->h5file);
     retcode -= this->create_dataset(dset);
 
     return retcode;
@@ -420,16 +536,16 @@ void print_arr (const char * msg, const hsize_t* sizes, size_t n)
     cout << "]" << endl;
 }
 
-/** Create this group and recursively create all subgroups in the HDF5 file.
+/** Create the root group and recursively create all subgroups and datasets in the HDF5 file.
  *
  */
-int NDArrayToHDF5::create_groups(HdfGroup* group, hid_t h5handle)
+int NDArrayToHDF5::create_tree(HdfGroup* root, hid_t h5handle)
 {
     int retcode = 0;
-    if (group == NULL) return -1; // sanity check
+    if (root == NULL) return -1; // sanity check
     herr_t hdfcode;
 
-    string name = group->get_name();
+    string name = root->get_name();
     //First make the current group inside the given hdf handle.
     hid_t new_group = H5Gcreate(h5handle, name.c_str(),
     							H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
@@ -443,11 +559,11 @@ int NDArrayToHDF5::create_groups(HdfGroup* group, hid_t h5handle)
 
 
     HdfGroup::MapGroups_t::const_iterator it;
-    HdfGroup::MapGroups_t& groups = group->get_groups();
+    HdfGroup::MapGroups_t& groups = root->get_groups();
     for (it = groups.begin(); it != groups.end(); ++it)
     {
     	// recursively call this function to create all subgroups
-    	retcode = this->create_groups( it->second, new_group );
+    	retcode = this->create_tree( it->second, new_group );
     }
     // close the handle to the group that we've created in this instance
     // of the function. This is to ensure we're not leaving any hanging,

@@ -12,29 +12,50 @@
 #include <vector>
 #include <map>
 
-enum HdfDataSrc_t { notset, detector, ndattribute, constant };
+typedef enum {
+	phdf_notset,
+	phdf_detector,
+	phdf_ndattribute,
+	phdf_constant
+}HdfDataSrc_t;
 
-class HdfAttrSource {
+typedef enum {
+	phdf_int8,
+	phdf_uint8,
+	phdf_int16,
+	phdf_uint16,
+	phdf_int32,
+	phdf_uint32,
+	phdf_float32,
+	phdf_float64,
+	phdf_string
+} PHDF_DataType_t;
+
+class HdfDataSource {
 public:
 	// Default constructor
-    HdfAttrSource();
+    HdfDataSource();
     // Initialising constructor
-    HdfAttrSource( HdfDataSrc_t srctype, const std::string& val);
-    HdfAttrSource( HdfDataSrc_t srctype);
+    HdfDataSource( HdfDataSrc_t src, const std::string& val);
+    HdfDataSource( HdfDataSrc_t src);
+    HdfDataSource( HdfDataSrc_t src, PHDF_DataType_t type);
     // Copy constructor
-    HdfAttrSource( const HdfAttrSource& src);
+    HdfDataSource( const HdfDataSource& src);
     // Assignment operator
-    HdfAttrSource& operator=(const HdfAttrSource& src);
-    ~HdfAttrSource(){};
+    HdfDataSource& operator=(const HdfDataSource& src);
+    ~HdfDataSource(){};
+    void set_datatype(PHDF_DataType_t type);
     bool is_src_detector();
     bool is_src_ndattribute();
     bool is_src_constant();
 
     std::string get_src_def(); /** return the string that define the source: either name of NDAttribute or constant value */
+    PHDF_DataType_t get_datatype();
 
 private:
-    HdfDataSrc_t data_src_type;
+    HdfDataSrc_t data_src;
     std::string val;
+    PHDF_DataType_t datatype;
 };
 
 
@@ -43,11 +64,12 @@ public:
     HdfAttribute(){};
     HdfAttribute(const HdfAttribute& src); // Copy constructor
     HdfAttribute(std::string& name);
+    HdfAttribute(const char* name);
     ~HdfAttribute(){};
     HdfAttribute& operator=(const HdfAttribute& src);
     std::string get_name();
 
-    HdfAttrSource source;
+    HdfDataSource source;
 private:
     void _copy(const HdfAttribute& src){this->name = src.name; this->source = src.source;};
     std::string name;
@@ -99,11 +121,12 @@ public:
     { out << dset._str_(); return out; }
     std::string _str_();  /** Return a string representation of the object */
 
-    int set_data_source(HdfAttrSource& src);
+    int set_data_source(HdfDataSource& src);
+    HdfDataSource& data_source();
 private:
     void _copy(const HdfDataset& src);
     std::string ndattr_name;
-    HdfAttrSource datasource;
+    HdfDataSource datasource;
 };
 
 /** Describe a HDF5 group element.
@@ -112,9 +135,9 @@ private:
  */
 class HdfGroup: public HdfElement {
 public:
-    HdfGroup() : HdfElement(){};
-    HdfGroup(const std::string& name) : HdfElement(name){};
-    HdfGroup(const char * name) : HdfElement( std::string(name)) {};
+    HdfGroup();
+    HdfGroup(const std::string& name);
+    HdfGroup(const char * name);
     HdfGroup(const HdfGroup& src);
     ~HdfGroup();
     HdfGroup& operator=(const HdfGroup& src);
@@ -124,7 +147,10 @@ public:
     HdfGroup* new_group(const std::string& name);
     HdfGroup* new_group(const char * name);
     int find_dset_ndattr(const std::string& ndattr_name, HdfDataset** dset); /** << Find and return a reference to the dataset for a given NDAttribute */
+    int find_dset_ndattr(const char * ndattr_name, HdfDataset** dset);
     int find_dset( std::string& dsetname, HdfDataset** dest);
+    void set_default_ndattr_group();
+    HdfGroup* find_ndattr_default_group(); //** << search through subgroups to return a pointer to the NDAttribute default container group
     int num_groups();
     int num_datasets();
 
@@ -141,7 +167,7 @@ public:
 private:
     void _copy(const HdfGroup& src);
     bool name_exist(const std::string& name);
-
+    bool ndattr_default_container;
     std::map<std::string, HdfDataset*> datasets;
     std::map<std::string, HdfGroup*> groups;
 };

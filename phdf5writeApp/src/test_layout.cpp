@@ -326,3 +326,81 @@ BOOST_AUTO_TEST_CASE( hdfdataset_not_present )
 }
 
 BOOST_AUTO_TEST_SUITE_END()
+
+struct hdf_tree_fixture {
+	HdfGroup entry;
+	HdfGroup *instrument;
+	HdfGroup *detector;
+	HdfDataset *data;
+	HdfDataset *ndattribute_one;
+	HdfDataset *ndattribute_two;
+
+	hdf_tree_fixture(){
+        BOOST_TEST_MESSAGE("setup hdf_tree_fixture");
+        entry = HdfGroup("entry");
+        instrument = entry.new_group("instrument");
+        detector = entry.new_group("detector");
+
+        // Dataset 'data' with one hdf string attribute: signal="1"
+        data = detector->new_dset("data");
+        HdfAttribute hdfattr("signal");
+        std::string signal_value("1");
+        hdfattr.source = HdfDataSource(phdf_constant, signal_value);
+        data->add_attribute(hdfattr);
+        HdfDataSource data_src(phdf_detector, phdf_uint32);
+        data->set_data_source(data_src); // The source of 'data' is a detector.
+
+        // instrument group is the default group for NDAttributes
+        instrument->set_default_ndattr_group();
+
+        // NDAttribute datasets
+        data_src = HdfDataSource(phdf_ndattribute, phdf_uint8);
+        ndattribute_one = instrument->new_dset("one");
+        ndattribute_one->set_data_source(data_src);
+        ndattribute_two = instrument->new_dset("two");
+        ndattribute_two->set_data_source(data_src);
+
+    }
+    ~hdf_tree_fixture(){
+        BOOST_TEST_MESSAGE("teardown hdf_tree_fixture");
+    }
+};
+
+BOOST_FIXTURE_TEST_SUITE(hdf_tree, hdf_tree_fixture)
+
+BOOST_AUTO_TEST_CASE(ndattr_default)
+{
+	// Set the instrument group to be the default container of NDAttributes
+	BOOST_REQUIRE_NO_THROW( instrument->set_default_ndattr_group() );
+	// Check that the instrument group instance get returned as the default
+	// container of NDAttributes
+	BOOST_REQUIRE_EQUAL( entry.find_ndattr_default_group(), instrument );
+}
+
+BOOST_AUTO_TEST_CASE(datatype)
+{
+	BOOST_TEST_MESSAGE("Root tree: " << entry._str_());
+	// Check that the dataset 'data' has an hdf attribute called 'signal'
+	std::string str_signal("signal");
+	BOOST_REQUIRE( data->has_attribute(str_signal));
+
+	// Check that we can search for and find the dataset 'data', based on it's
+	// hdf attribute 'signal'
+	HdfDataset *dset;
+	BOOST_REQUIRE_EQUAL( entry.find_dset_ndattr("signal", &dset), 0);
+	BOOST_REQUIRE_EQUAL( dset, data);
+
+	// Check that 'data' comes from a detector and has the right datatype: phdf_uint32
+	BOOST_REQUIRE_EQUAL( data->data_source().is_src_detector(), true );
+	BOOST_REQUIRE_EQUAL( data->data_source().get_datatype(), phdf_uint32 );
+
+
+	// Search from the root of the tree ('entry') for a default NDAttribute
+	// container. Then check that the result is indeed the 'instrument' group.
+	HdfGroup* def_ndattr_grp;
+	BOOST_REQUIRE_NO_THROW( def_ndattr_grp = entry.find_ndattr_default_group() );
+	BOOST_REQUIRE( def_ndattr_grp != NULL);
+	BOOST_REQUIRE_EQUAL( def_ndattr_grp, instrument );
+}
+
+BOOST_AUTO_TEST_SUITE_END()
