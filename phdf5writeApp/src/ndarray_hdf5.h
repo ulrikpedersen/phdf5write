@@ -72,6 +72,7 @@ private:
     int create_file_layout();
     int create_dataset(HdfDataset* dset);
     int create_tree(HdfGroup *root, hid_t h5handle);
+    void configure_ndattr_dsets(NDAttributeList *pAttributeList);
 
     // attribute dataset operations
     //int attr_create(){};

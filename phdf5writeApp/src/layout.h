@@ -123,6 +123,7 @@ public:
 
     int set_data_source(HdfDataSource& src);
     HdfDataSource& data_source();
+
 private:
     void _copy(const HdfDataset& src);
     std::string ndattr_name;
@@ -163,6 +164,8 @@ public:
     typedef std::map<std::string, HdfDataset*> MapDatasets_t;
     MapGroups_t& get_groups();
     MapDatasets_t& get_datasets();
+    void find_dsets(HdfDataSrc_t source, MapDatasets_t& dsets); //** return a map of datasets <string name, HDfDataset dset> which contains all datasets, marked as <source> data.
+
 
 private:
     void _copy(const HdfGroup& src);

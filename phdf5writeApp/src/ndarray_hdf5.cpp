@@ -73,6 +73,9 @@ void NDArrayToHDF5::h5_configure(NDArray& ndarray)
     this->timestamp.reset(ndarrinfo.totalBytes);
     this->dt_write.reset(ndarrinfo.totalBytes);
 
+    // Configure the tree structure with the NDAttributes from this NDArray
+    this->configure_ndattr_dsets(ndarray.pAttributeList);
+
     // Configure the chunk cache for datasets
     DimensionDesc chunk_cache = this->conf.min_chunk_cache();
     this->rdcc_nslots = (size_t)this->conf.cache_num_slots(chunk_cache);
@@ -570,6 +573,65 @@ int NDArrayToHDF5::create_tree(HdfGroup* root, hid_t h5handle)
     // unused, and unreferenced handles around.
     H5Gclose(new_group);
     return retcode;
+}
+
+/** Run through the NDAttributeList from the detector and find or generate
+ * corresponding entries in the HDFGroup tree.
+ */
+void NDArrayToHDF5::configure_ndattr_dsets(NDAttributeList *pAttributeList)
+{
+	NDAttribute* ndattr = NULL;
+	HdfDataset* dset = NULL;
+	HdfGroup * root = this->layout.get_hdftree();
+	if (root == NULL) return;
+
+	while((ndattr = pAttributeList->next(ndattr)) != NULL)
+	{
+		string ndattr_name = ndattr->pName;
+		bool create_new_dset = true;
+		PHDF_DataType_t phdf_dtype = NDArrayToHDF5::to_phdf_datatype(ndattr->dataType);
+		//PHDF_DataType_t phdf_dtype = phdf_uint32;
+		HdfDataSource src(phdf_ndattribute, phdf_dtype);
+
+		cout << "==== NDAttribute: " << ndattr_name;
+
+		// first check if a dataset has been defined with the name of the NDAttribute
+		dset = NULL;
+		root->find_dset(ndattr_name, &dset);
+		if (dset != NULL)
+		{
+			cout << " found dataset";
+			// Configure the datatype of the HDF dataset
+			dset->set_data_source(src);
+			create_new_dset = false;
+		}
+
+		// Second, check if an attribute has been defined with the name of this NDAttribute
+		root->find_dset_ndattr(ndattr_name, &dset);
+		if (dset != NULL)
+		{
+			cout << " found attribute";
+			// configure the datatype of the HDFAttribute
+			HdfAttribute* hattr = NULL; // TODO: method to get the HDFAttribute extracted from the dataset
+			create_new_dset = false;
+		}
+
+		// If all else fails: create a new dataset to contain the data from the
+		// NDAttribute.
+		if (create_new_dset)
+		{
+			cout << " creating new dset";
+			HdfGroup *grp = root->find_ndattr_default_group();
+			if (grp == NULL) return; // no default group defined so just get out
+			dset = NULL;
+			dset = grp->new_dset(ndattr_name);
+			if (dset == NULL) return;
+			dset->set_data_source(src);
+		}
+		cout << endl;
+	}
+	cout << "==== post NDAttributes parsing, root tree: " << endl;
+	cout << *root << endl;
 }
 
 /** Create a dataset in the HDF5 file with the details defined in the dset argument.

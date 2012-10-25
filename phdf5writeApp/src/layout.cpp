@@ -384,6 +384,58 @@ HdfGroup::MapGroups_t& HdfGroup::get_groups()
 	return this->groups;
 }
 
+
+// Utility object to support find_dsets in searching for datasets which come from
+// detector, constant, ndattaribute etc...
+struct IsSrcType {
+	HdfDataSrc_t src_type;
+	bool operator() (pair<string, HdfDataset*> it) {
+		bool ret = false;
+		switch(src_type)
+		{
+		case phdf_detector:
+			ret = it.second->data_source().is_src_detector();
+			break;
+		case phdf_constant:
+			ret = it.second->data_source().is_src_constant();
+			break;
+		case phdf_ndattribute:
+			ret = it.second->data_source().is_src_ndattribute();
+			break;
+		default:
+			ret = false;
+			break;
+		}
+		return ret;
+	}
+};
+
+void HdfGroup::find_dsets(HdfDataSrc_t source, MapDatasets_t& results)
+{
+	IsSrcType is_src_type;
+	is_src_type.src_type = source;
+	MapDatasets_t::iterator it = this->datasets.begin();
+
+	// Search through the dataset map to find any dataset with comes from <source>
+	// Each result is inserted into the <dsets> map.
+	for (	it =  this->datasets.begin();
+			it != this->datasets.end();
+			it = find_if(it, this->datasets.end(), is_src_type))
+	{
+		results.insert(pair<string, HdfDataset*>(it->second->get_full_name(), it->second));
+	}
+
+	// Finally run the same search through all subgroups
+	MapGroups_t::iterator it_groups;
+	for ( it_groups = this->groups.begin();
+			it_groups != this->groups.end();
+			++it)
+	{
+		it_groups->second->find_dsets(source, results);
+	}
+}
+
+
 /* ================== HdfGroup Class private methods ==================== */
 void HdfGroup::_copy(const HdfGroup& src)
 {
@@ -443,6 +495,7 @@ HdfDataSource& HdfDataset::data_source()
 {
 	return this->datasource;
 }
+
 
 
 /* ================== HdfDataset Class private methods ==================== */
