@@ -72,7 +72,7 @@ int LayoutXML::load_xml(const char * filename)
     return ret;
 }
 
-HdfGroup* LayoutXML::get_hdftree()
+HdfRoot* LayoutXML::get_hdftree()
 {
     return this->ptr_tree;
 }
@@ -173,7 +173,7 @@ int LayoutXML::new_group()
 
     // Initialise the tree if it has not already been done.
     if (this->ptr_tree == NULL) {
-        this->ptr_tree = new HdfGroup(str_group_name);
+        this->ptr_tree = new HdfRoot(str_group_name);
         //cout << "  Initialised the root of the tree: " << *this->ptr_tree << endl;
         this->ptr_curr_element = this->ptr_tree;
     } else {

@@ -11,6 +11,7 @@
 #include <string>
 #include <vector>
 #include <map>
+#include <set>
 
 typedef enum {
 	phdf_notset,
@@ -140,7 +141,7 @@ public:
     HdfGroup(const std::string& name);
     HdfGroup(const char * name);
     HdfGroup(const HdfGroup& src);
-    ~HdfGroup();
+    virtual ~HdfGroup();
     HdfGroup& operator=(const HdfGroup& src);
 
     HdfDataset* new_dset(const std::string& name);
@@ -150,6 +151,7 @@ public:
     int find_dset_ndattr(const std::string& ndattr_name, HdfDataset** dset); /** << Find and return a reference to the dataset for a given NDAttribute */
     int find_dset_ndattr(const char * ndattr_name, HdfDataset** dset);
     int find_dset( std::string& dsetname, HdfDataset** dest);
+    int find_dset( const char* dsetname, HdfDataset** dest);
     void set_default_ndattr_group();
     HdfGroup* find_ndattr_default_group(); //** << search through subgroups to return a pointer to the NDAttribute default container group
     int num_groups();
@@ -166,6 +168,10 @@ public:
     MapDatasets_t& get_datasets();
     void find_dsets(HdfDataSrc_t source, MapDatasets_t& dsets); //** return a map of datasets <string name, HDfDataset dset> which contains all datasets, marked as <source> data.
 
+    typedef std::map<std::string, HdfDataSource*> MapNDAttrSrc_t;
+    virtual void merge_ndattributes(MapNDAttrSrc_t::const_iterator it_begin,
+    								MapNDAttrSrc_t::const_iterator it_end,
+    								std::set<std::string>& used_ndattribute_srcs);
 
 private:
     void _copy(const HdfGroup& src);
@@ -173,6 +179,17 @@ private:
     bool ndattr_default_container;
     std::map<std::string, HdfDataset*> datasets;
     std::map<std::string, HdfGroup*> groups;
+};
+
+class HdfRoot: public HdfGroup {
+public:
+	HdfRoot();
+	HdfRoot(const std::string& name);
+	HdfRoot(const char *name);
+	virtual ~HdfRoot(){};
+    virtual void merge_ndattributes(MapNDAttrSrc_t::const_iterator it_begin,
+    								MapNDAttrSrc_t::const_iterator it_end,
+    								std::set<std::string>& used_ndattribute_srcs);
 };
 
 

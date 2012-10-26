@@ -302,6 +302,12 @@ int HdfGroup::find_dset_ndattr(const string& ndattr_name, HdfDataset** dset)
     return -1;
 }
 
+int HdfGroup::find_dset( const char* dsetname, HdfDataset** dest)
+{
+	string str_dsetname = dsetname;
+	return this->find_dset(str_dsetname, dest);
+}
+
 int HdfGroup::find_dset( string& dsetname, HdfDataset** dest )
 {
     map<string, HdfDataset*>::const_iterator it_dsets;
@@ -435,6 +441,36 @@ void HdfGroup::find_dsets(HdfDataSrc_t source, MapDatasets_t& results)
 	}
 }
 
+void HdfGroup::merge_ndattributes(MapNDAttrSrc_t::const_iterator it_begin,
+								  MapNDAttrSrc_t::const_iterator it_end,
+    							  std::set<std::string>& used_ndattribute_srcs)
+{
+	MapNDAttrSrc_t::const_iterator it;
+	MapDatasets_t::iterator it_dset;
+	for (it = it_begin; it != it_end; ++it)
+	{
+
+		it_dset = this->datasets.find(it->first);
+		if (it_dset != this->datasets.end())
+		{
+			cout << " found dataset: " << it->first << endl;
+			HdfDataSource data_src(*it->second);
+			it_dset->second->set_data_source(data_src);
+			used_ndattribute_srcs.insert(it->first);
+		}
+	}
+
+	// Recursively call the children (groups) of this group to do the same
+	// operation on their datasets.
+	MapGroups_t::iterator it_groups;
+	for (it_groups = this->groups.begin(); it_groups != this->groups.end(); ++it_groups)
+	{
+		it_groups->second->merge_ndattributes(it_begin, it_end, used_ndattribute_srcs);
+	}
+
+}
+
+
 
 /* ================== HdfGroup Class private methods ==================== */
 void HdfGroup::_copy(const HdfGroup& src)
@@ -455,6 +491,45 @@ bool HdfGroup::name_exist(const std::string& name)
     if ( this->groups.count(name) > 0 )
         return true;
     return false;
+}
+
+HdfRoot::HdfRoot()
+: HdfGroup::HdfGroup(){}
+HdfRoot::HdfRoot(const std::string& name)
+: HdfGroup::HdfGroup(name){}
+HdfRoot::HdfRoot(const char *name)
+: HdfGroup::HdfGroup(name){}
+
+
+void HdfRoot::merge_ndattributes(MapNDAttrSrc_t::const_iterator it_begin,
+    								MapNDAttrSrc_t::const_iterator it_end,
+    								set<string>& used_ndattribute_srcs)
+{
+	// first call the base class method
+	HdfGroup::merge_ndattributes(it_begin, it_end, used_ndattribute_srcs);
+
+	// Use the used_ndattribute_srcs set to work out which NDAttributes were not
+	// already found in the defined tree. The ones that were not already defined
+	// in the tree will be added as new datasets in the default NDAttribute group.
+
+	// Find the default group for NDAttribute datasets
+	HdfGroup* def_grp = this->find_ndattr_default_group();
+	if (def_grp == NULL) return; // if there are no default group: then nothing left to do
+
+	MapNDAttrSrc_t::const_iterator it;
+	for (it = it_begin; it != it_end; ++it)
+	{
+		if (used_ndattribute_srcs.count(it->first) == 0)
+		{
+			// create a new dataset in the default group
+			HdfDataset* new_dset = def_grp->new_dset(it->first);
+			if (new_dset == NULL) continue; // one already existed so just skip to next
+			HdfDataSource new_data_src(*it->second);
+			new_dset->set_data_source(new_data_src);
+		}
+	}
+
+
 }
 
 

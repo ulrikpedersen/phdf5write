@@ -30,7 +30,7 @@ BOOST_AUTO_TEST_CASE(main_xml_layout_xml   )
     BOOST_REQUIRE_EQUAL(l.get_hdftree()->find_dset_ndattr("signal", &dset), 0);
     BOOST_REQUIRE_NE( dset, null );
 
-    //HdfGroup tree;
+    //HdfRoot tree;
     //BOOST_REQUIRE_NO_THROW(tree = l.get_hdftree() );
     //BOOST_TEST_MESSAGE( tree._str_() );
 }
@@ -41,7 +41,7 @@ BOOST_AUTO_TEST_CASE( get_hdftree   )
     BOOST_CHECK_EQUAL( l.load_xml("layout.xml"), 0);
     //BOOST_TEST_MESSAGE( l );
     HdfDataset *dset = NULL, *dnull=NULL;
-    HdfGroup* tree = NULL, *gnull=NULL;
+    HdfRoot* tree = NULL, *gnull=NULL;
     BOOST_REQUIRE_NO_THROW( tree = l.get_hdftree() );
     BOOST_REQUIRE_NE( tree, gnull);
     BOOST_REQUIRE_EQUAL(tree->find_dset_ndattr("signal", &dset), 0);

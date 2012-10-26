@@ -328,7 +328,7 @@ BOOST_AUTO_TEST_CASE( hdfdataset_not_present )
 BOOST_AUTO_TEST_SUITE_END()
 
 struct hdf_tree_fixture {
-	HdfGroup entry;
+	HdfRoot entry;
 	HdfGroup *instrument;
 	HdfGroup *detector;
 	HdfDataset *data;
@@ -337,7 +337,7 @@ struct hdf_tree_fixture {
 
 	hdf_tree_fixture(){
         BOOST_TEST_MESSAGE("setup hdf_tree_fixture");
-        entry = HdfGroup("entry");
+        entry = HdfRoot("entry");
         instrument = entry.new_group("instrument");
         detector = entry.new_group("detector");
 
@@ -401,6 +401,37 @@ BOOST_AUTO_TEST_CASE(datatype)
 	BOOST_REQUIRE_NO_THROW( def_ndattr_grp = entry.find_ndattr_default_group() );
 	BOOST_REQUIRE( def_ndattr_grp != NULL);
 	BOOST_REQUIRE_EQUAL( def_ndattr_grp, instrument );
+}
+
+BOOST_AUTO_TEST_CASE(merge_ndattributes)
+{
+	// Make some pretend NDAttributes
+	HdfGroup::MapNDAttrSrc_t map_ndattr;
+	map_ndattr["one"] = new HdfDataSource(phdf_ndattribute, phdf_uint8 );
+	map_ndattr["two"] = new HdfDataSource(phdf_ndattribute, phdf_uint16 ); // modified datatype from uint8 to uint16
+	map_ndattr["three"] = new HdfDataSource(phdf_ndattribute, phdf_uint32 ); // New defined NDAttribute
+
+	// A set of strings to hold the names which has been created.
+	std::set<std::string> ndattribute_names;
+	// Run the merge method to modify datatypes and add the new NDAttribute
+	BOOST_REQUIRE_NO_THROW( entry.merge_ndattributes(map_ndattr.begin(), map_ndattr.end(), ndattribute_names));
+	BOOST_TEST_MESSAGE( entry._str_() );
+
+	// check the status of the attributes.
+	BOOST_REQUIRE_EQUAL(ndattribute_one->data_source().is_src_ndattribute(), true);
+	BOOST_REQUIRE_EQUAL(ndattribute_one->data_source().get_datatype(), phdf_uint8);
+	BOOST_CHECK_EQUAL(ndattribute_one->data_source().get_src_def(), "one"); // Will fail: not yet implemented
+	BOOST_REQUIRE_EQUAL(ndattribute_two->data_source().is_src_ndattribute(), true);
+	BOOST_REQUIRE_EQUAL(ndattribute_two->data_source().get_datatype(), phdf_uint16);
+	BOOST_CHECK_EQUAL(ndattribute_two->data_source().get_src_def(), "two"); // Will fail: not yet implemented
+	// Find the new NDAttribute "three"
+	HdfDataset *dset= NULL;
+	BOOST_REQUIRE_EQUAL(entry.find_dset("three", &dset), 0);
+	BOOST_REQUIRE_EQUAL(dset->data_source().get_datatype(), phdf_uint32);
+	BOOST_REQUIRE_EQUAL(dset->data_source().is_src_ndattribute(), true);
+	BOOST_CHECK_EQUAL(dset->data_source().get_src_def(), "three"); // Will fail: not yet implemented
+
+
 }
 
 BOOST_AUTO_TEST_SUITE_END()

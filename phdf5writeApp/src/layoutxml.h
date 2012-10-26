@@ -12,6 +12,7 @@
 
 // forward declarations
 class HdfGroup;
+class HdfRoot;
 class HdfDataSource;
 class HdfElement;
 
@@ -26,7 +27,7 @@ public:
     int load_xml(std::string& filename){ return this->load_xml(filename.c_str()); };
     int load_xml(const char* filename);
 
-    HdfGroup* get_hdftree();
+    HdfRoot* get_hdftree();
 
 
 private:
@@ -38,7 +39,7 @@ private:
     int new_dataset();
     int new_ndattribute();
 
-    HdfGroup* ptr_tree;
+    HdfRoot* ptr_tree;
     HdfElement *ptr_curr_element;
     xmlTextReaderPtr xmlreader;
 };
