@@ -204,7 +204,7 @@ int WriteConfig::next_frame(NDArray& ndarray)
 
 void WriteConfig::get_fill_value(void *fill_value, size_t *max_size_bytes)
 {
-    size_t num_bytes = FILL_VALUE_SIZE;
+    size_t num_bytes = this->dim_roi_frame.element_size;
     if (num_bytes > *max_size_bytes) num_bytes = *max_size_bytes;
     memcpy(fill_value, this->ptr_fill_value, num_bytes);
     *max_size_bytes = num_bytes;

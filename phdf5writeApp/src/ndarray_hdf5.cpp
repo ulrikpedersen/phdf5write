@@ -517,13 +517,13 @@ int NDArrayToHDF5::create_file_layout()
     cout << "Root tree: " << *root << endl;
 
     // for the moment we just create the main dataset (with the attribute 'signal')
-    HdfDataset *dset = NULL;
-    retcode = root->find_dset_ndattr("signal", &dset);
-    if (retcode < 0) return retcode;
-    if (dset == NULL) return -1;
+    //HdfDataset *dset = NULL;
+    //retcode = root->find_dset_ndattr("signal", &dset);
+    //if (retcode < 0) return retcode;
+    //if (dset == NULL) return -1;
 
     retcode -= this->create_tree(root, this->h5file);
-    retcode -= this->create_dataset(dset);
+    //retcode -= this->create_dataset(this->h5file, dset);
 
     return retcode;
 }
@@ -546,7 +546,6 @@ int NDArrayToHDF5::create_tree(HdfGroup* root, hid_t h5handle)
 {
     int retcode = 0;
     if (root == NULL) return -1; // sanity check
-    herr_t hdfcode;
 
     string name = root->get_name();
     //First make the current group inside the given hdf handle.
@@ -558,8 +557,28 @@ int NDArrayToHDF5::create_tree(HdfGroup* root, hid_t h5handle)
 		return -1;
 	}
 
-    // Todo: set some attributes on the group
+    // Set some attributes on the group
+	if (this->write_hdf_attributes( new_group,  root) < 0)
+	{
+		cerr << "Warning: Failed to write group attributes on: ";
+		cerr << root->get_full_name() << endl;
+	}
 
+	// Create all the datasets in this group
+	HdfGroup::MapDatasets_t::iterator it_dsets;
+	HdfGroup::MapDatasets_t& datasets = root->get_datasets();
+	for (it_dsets = datasets.begin(); it_dsets != datasets.end(); ++it_dsets)
+	{
+		hid_t new_dset = this->create_dataset(new_group, it_dsets->second);
+		if (new_dset <= 0) continue; // failure to create the datasets so move on to next
+		// Write the hdf attributes to the dataset
+		if (this->write_hdf_attributes( new_dset,  it_dsets->second) < 0)
+		{
+			cerr << "Warning: Failed to write dataset attributes on: ";
+			cerr << it_dsets->second->get_full_name() << endl;
+		}
+		H5Dclose(new_dset);
+	}
 
     HdfGroup::MapGroups_t::const_iterator it;
     HdfGroup::MapGroups_t& groups = root->get_groups();
@@ -581,7 +600,6 @@ int NDArrayToHDF5::create_tree(HdfGroup* root, hid_t h5handle)
 void NDArrayToHDF5::configure_ndattr_dsets(NDAttributeList *pAttributeList)
 {
 	NDAttribute* ndattr = NULL;
-	HdfDataset* dset = NULL;
 	HdfRoot * root = this->layout.get_hdftree();
 	if (root == NULL) return;
 
@@ -603,14 +621,75 @@ void NDArrayToHDF5::configure_ndattr_dsets(NDAttributeList *pAttributeList)
 
 }
 
+hid_t NDArrayToHDF5::create_dataset(hid_t group, HdfDataset *dset)
+{
+    int retcode = -1;
+    if (dset == NULL) return -1; // sanity check
+
+    if (dset->data_source().is_src_detector()) {
+    	return this->_create_dataset_detector(group, dset);
+    }
+
+    if (dset->data_source().is_src_ndattribute()) {
+    	return this->_create_dataset_metadata(group, dset);
+    }
+
+    // TODO : create datasets for profiling data...
+
+    return retcode;
+}
+
+
+hid_t NDArrayToHDF5::_create_dataset_metadata(hid_t group, HdfDataset* dset)
+{
+    hid_t dataset = -1;
+    if (dset == NULL) return -1; // sanity check
+    if (dset->data_source().is_src_detector() or
+    	dset->data_source().is_src_constant()) return -1;
+
+    hid_t dset_create_plist = -1;
+    hid_t dataspace = -1;
+
+    // dataset create property list
+    dset_create_plist = H5Pcreate(H5P_DATASET_CREATE);
+
+    hid_t datatype = NDArrayToHDF5::to_hid_datatype(dset->data_source().get_datatype());
+
+    //hid_t H5Screate_simple( int rank, const hsize_t * current_dims, const hsize_t * maximum_dims )
+    hsize_t dims[1];
+    dataspace = H5Screate_simple( 1, dims, NULL);
+    if (dataspace < 0) {
+        cerr << "ERROR: failed to create dataspace for metadata dataset: " << dset->get_full_name() << endl;
+        if (dset_create_plist > 0) H5Pclose(dset_create_plist);
+        return -1;
+    }
+
+    const char * dsetname = dset->get_name().c_str();
+    cout << "===== Creating meta data-set: " << dsetname << endl;
+    dataset = H5Dcreate2( group, dsetname,
+                                datatype, dataspace,
+                                H5P_DEFAULT, dset_create_plist, H5P_DEFAULT);
+    if (dataset < 0) {
+        cerr << "ERROR: Failed to create dataset: " << dset->get_full_name() << endl;
+        if (dataspace > 0) H5Sclose(dataspace);
+        if (dset_create_plist > 0) H5Pclose(dset_create_plist);
+        return dataset;
+    }
+
+    if (dataspace > 0) H5Sclose(dataspace);
+    if (dset_create_plist > 0) H5Pclose(dset_create_plist);
+
+    return dataset;
+}
+
 /** Create a dataset in the HDF5 file with the details defined in the dset argument.
  * Return 0 on success, negative value on error. Errors: fail to set chunk size or
  * failure to create the dataset in the file.
  */
-int NDArrayToHDF5::create_dataset(HdfDataset *dset)
+hid_t NDArrayToHDF5::_create_dataset_detector(hid_t group, HdfDataset *dset)
 {
-    int retcode = 0;
     if (dset == NULL) return -1; // sanity check
+    if (!dset->data_source().is_src_detector()) return -1;
     herr_t hdfcode;
     hid_t dset_create_plist = -1;
     hid_t dataspace = -1;
@@ -630,25 +709,21 @@ int NDArrayToHDF5::create_dataset(HdfDataset *dset)
         return -1;
     }
 
-    // TODO: hardcoded datatype of 16bit int is not good!
     //hid_t datatype = H5T_NATIVE_UINT_FAST16;
-    hid_t datatype = H5T_NATIVE_UINT16;
+    //hid_t datatype = H5T_NATIVE_UINT16;
+    hid_t datatype = NDArrayToHDF5::to_hid_datatype(dset->data_source().get_datatype());
 
-    // TODO: configure compression if requred (although not for phdf5 as this would not work)
+    // TODO: configure compression if required (although not for phdf5 as this would not work)
 
     // Setting the fill value
-    // TODO: fix hardcoded 16bit fill value
-    unsigned short fillvalue = 0;
-    size_t size_fillvalue = sizeof(unsigned short);
-    this->conf.get_fill_value((void*)&fillvalue, &size_fillvalue);
-    size_t fillvaluesize = sizeof(unsigned short);
-    this->conf.get_fill_value((void*)&fillvalue, &fillvaluesize);
-    hdfcode = H5Pset_fill_value(dset_create_plist, datatype, (void*)&fillvalue);
+    char fillvalue[8] = {0,0,0,0,0,0,0,0};
+    size_t size_fillvalue = 8 * sizeof(char);
+    this->conf.get_fill_value((void*)fillvalue, &size_fillvalue);
+    hdfcode = H5Pset_fill_value(dset_create_plist, datatype, (void*)fillvalue);
     if (hdfcode < 0) {
         cerr << "Warning: Failed to set fill value" << endl;
-        //return hdfcode;
+        //return dataset;
     }
-
 
     // Configure the dataset dimensions and max dimensions
     vec_ds_t vec_maxdim = this->conf.get_dset_maxdims();
@@ -669,28 +744,22 @@ int NDArrayToHDF5::create_dataset(HdfDataset *dset)
         return -1;
     }
 
-    //const char * dsetname = dset->get_full_name().c_str();
-    const char * dsetname = "/entry/detector/data";
+    const char * dsetname = dset->get_name().c_str();
     cout << "===== Creating dataset: " << dsetname << endl;
-    dataset = H5Dcreate2( this->h5file, dsetname,
+    dataset = H5Dcreate2( group, dsetname,
                                 datatype, dataspace,
                                 H5P_DEFAULT, dset_create_plist, H5P_DEFAULT);
     if (dataset < 0) {
         cerr << "ERROR: Failed to create dataset: " << dset->get_full_name() << endl;
-        retcode = -1;
         if (dataspace > 0) H5Sclose(dataspace);
         if (dset_create_plist > 0) H5Pclose(dset_create_plist);
+        return dataset;
     }
 
-    hdfcode = this->write_h5dataset_attributes( dataset,  dset);
-    if (hdfcode < 0) {
-        cerr << "Warning: Failed to write dataset attributes on: " << dset->get_full_name() << endl;
-    }
-
-    if (dataset > 0) H5Dclose(dataset);
+    //if (dataset > 0) H5Dclose(dataset);
     if (dataspace > 0) H5Sclose(dataspace);
     if (dset_create_plist > 0) H5Pclose(dset_create_plist);
-    return retcode;
+    return dataset;
 }
 
 /** Translate the NDArray datatype to HDF5 datatypes */
@@ -817,7 +886,7 @@ int NDArrayToHDF5::store_profiling()
 }
 
 // TODO: write attributes to dataset
-int NDArrayToHDF5::write_h5dataset_attributes( hid_t h5dataset, HdfDataset* dset)
+int NDArrayToHDF5::write_hdf_attributes( hid_t h5dataset, HdfElement* element)
 {
     int retcode = -1;
 

@@ -519,9 +519,11 @@ void HdfRoot::merge_ndattributes(MapNDAttrSrc_t::const_iterator it_begin,
 	MapNDAttrSrc_t::const_iterator it;
 	for (it = it_begin; it != it_end; ++it)
 	{
+		// Check if an attribute is not in the 'used' list - i.e. it has not been
+		// used to create a dataset elsewhere already...
 		if (used_ndattribute_srcs.count(it->first) == 0)
 		{
-			// create a new dataset in the default group
+			// create a new dataset from the NDAttribute in the default group
 			HdfDataset* new_dset = def_grp->new_dset(it->first);
 			if (new_dset == NULL) continue; // one already existed so just skip to next
 			HdfDataSource new_data_src(*it->second);

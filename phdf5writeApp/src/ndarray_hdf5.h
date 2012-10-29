@@ -70,7 +70,10 @@ private:
     int mpi_size;
     hid_t type_nd2hdf(NDDataType_t& datatype);
     int create_file_layout();
-    int create_dataset(HdfDataset* dset);
+    int create_dataset(hid_t group, HdfDataset* dset);
+    int _create_dataset_detector(hid_t group, HdfDataset* dset);
+    int _create_dataset_metadata(hid_t group, HdfDataset* dset);
+
     int create_tree(HdfGroup *root, hid_t h5handle);
     void configure_ndattr_dsets(NDAttributeList *pAttributeList);
 
@@ -82,7 +85,7 @@ private:
     // performance dataset operations
     int store_profiling();
 
-    int write_h5dataset_attributes( hid_t h5dataset, HdfDataset* dset);
+    int write_hdf_attributes( hid_t h5dataset,  HdfElement* element);
     // convenience function to write a HDF5 attribute as a string
     /*
     int write_h5attr_str(hid_t element,
