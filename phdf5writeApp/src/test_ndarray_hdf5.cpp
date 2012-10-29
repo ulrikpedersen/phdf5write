@@ -107,6 +107,11 @@ struct FrameSetFixture{
             lowframe[i].pAttributeList->add("h5_dset_size_1", "dset 1", NDAttrUInt32, (void*)(dsetdims+1) );
             lowframe[i].pAttributeList->add("h5_dset_size_2", "dset 2", NDAttrUInt32, (void*)(dsetdims+2) );
 
+            // Add some additional testing NDAttributes
+            epicsFloat64 motorpos = 0.1 * i;
+            hiframe[i].pAttributeList->add("positions", "A record of motor positions in scan", NDAttrFloat64, (void*)&motorpos);
+            lowframe[i].pAttributeList->add("positions", "A record of motor positions in scan", NDAttrFloat64, (void*)&motorpos);
+
             //frames[i].report(11);
         }
 
@@ -438,6 +443,27 @@ BOOST_AUTO_TEST_CASE(frames_auto_offset_loop)
 
     BOOST_TEST_MESSAGE("Closing file");
     BOOST_REQUIRE_EQUAL( ndh.h5_close(), 0);
+}
+
+BOOST_AUTO_TEST_CASE(datatype_conversion)
+{
+	PHDF_DataType_t phdf_datatype = phdf_int32;
+	NDDataType_t ndarr_datatype = NDInt16;
+	const NDArrayToHDF5 obj;
+
+	BOOST_CHECK_EQUAL(obj.from_ndarr_to_phdf_datatype(NDInt16), phdf_int16);
+	BOOST_CHECK_EQUAL(obj.from_ndarr_to_phdf_datatype(NDInt32), phdf_int32);
+	BOOST_CHECK_EQUAL(obj.from_ndarr_to_phdf_datatype(NDUInt16), phdf_uint16);
+	BOOST_CHECK_EQUAL(obj.from_ndarr_to_phdf_datatype(NDUInt32), phdf_uint32);
+	BOOST_CHECK_EQUAL(obj.from_ndarr_to_phdf_datatype(NDFloat64), phdf_float64);
+	BOOST_CHECK_EQUAL(obj.from_ndarr_to_phdf_datatype(NDUInt8), phdf_uint8);
+
+	BOOST_CHECK_EQUAL(obj.from_ndattr_to_phdf_datatype(NDAttrUInt8), phdf_uint8);
+	BOOST_CHECK_EQUAL(obj.from_ndattr_to_phdf_datatype(NDAttrInt8), phdf_int8);
+	BOOST_CHECK_EQUAL(obj.from_ndattr_to_phdf_datatype(NDAttrUInt16), phdf_uint16);
+	BOOST_CHECK_EQUAL(obj.from_ndattr_to_phdf_datatype(NDAttrFloat32), phdf_float32);
+	BOOST_CHECK_EQUAL(obj.from_ndattr_to_phdf_datatype(NDAttrString), phdf_string);
+
 }
 
 BOOST_AUTO_TEST_SUITE_END()

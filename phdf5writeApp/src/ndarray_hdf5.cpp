@@ -17,7 +17,7 @@ void print_arr (const char * msg, const hsize_t* sizes, size_t n);
 
 
 NDArrayToHDF5::NDArrayToHDF5()
-: h5file(0),rdcc_nslots(0),rdcc_nbytes(0) {
+: h5file(H5I_INVALID_HID),rdcc_nslots(0),rdcc_nbytes(0) {
 #ifdef H5_HAVE_PARALLEL
 	this->mpi_comm = 0;
 	this->mpi_info = 0;
@@ -30,7 +30,7 @@ NDArrayToHDF5::NDArrayToHDF5()
 
 #ifdef H5_HAVE_PARALLEL
 NDArrayToHDF5::NDArrayToHDF5( MPI_Comm comm, MPI_Info info)
-: mpi_comm(comm),mpi_info(info),h5file(0),rdcc_nslots(0),rdcc_nbytes(0)
+: mpi_comm(comm),mpi_info(info),h5file(H5I_INVALID_HID),rdcc_nslots(0),rdcc_nbytes(0)
 {
     this->load_layout_xml();
     MPI_Comm_size(comm,&this->mpi_size);
@@ -368,7 +368,7 @@ int NDArrayToHDF5::h5_close()
         cout << "File close time: " << closetime << endl;
         this->h5file = H5I_INVALID_HID;
         if (hdferr < 0) {
-            cerr << "ERROR: Failed to close file" << endl;
+            cerr << "ERROR: Failed to close file: " << fname << endl;
             retcode = -1;
         }
     }
@@ -388,7 +388,7 @@ WriteConfig& NDArrayToHDF5::get_conf_ref()
 
 
 /* Datatype translation functions. Just a simple lookup utility. */
-PHDF_DataType_t NDArrayToHDF5::to_phdf_datatype(NDDataType_t in) const
+PHDF_DataType_t NDArrayToHDF5::from_ndarr_to_phdf_datatype(NDDataType_t in) const
 {
 	PHDF_DataType_t out;
 	switch(in)
@@ -416,7 +416,38 @@ PHDF_DataType_t NDArrayToHDF5::to_phdf_datatype(NDDataType_t in) const
 	return out;
 }
 
-PHDF_DataType_t NDArrayToHDF5::to_phdf_datatype(hid_t in) const
+PHDF_DataType_t NDArrayToHDF5::from_ndattr_to_phdf_datatype(NDAttrDataType_t in) const
+{
+	PHDF_DataType_t out;
+	switch(in)
+	{
+	case NDAttrInt8:
+		out = phdf_int8; break;
+	case NDAttrUInt8:
+		out = phdf_uint8; break;
+	case NDAttrInt16:
+		out = phdf_int16; break;
+	case NDAttrUInt16:
+		out = phdf_uint16; break;
+	case NDAttrInt32:
+		out = phdf_int32; break;
+	case NDAttrUInt32:
+		out = phdf_uint32; break;
+	case NDAttrFloat32:
+		out = phdf_float32; break;
+	case NDAttrFloat64:
+		out = phdf_float64; break;
+	case NDAttrString:
+		out = phdf_string; break;
+	default:
+		out = phdf_int8;
+		break;
+	}
+	return out;
+}
+
+
+PHDF_DataType_t NDArrayToHDF5::from_hid_to_phdf_datatype(hid_t in) const
 {
 	PHDF_DataType_t out;
 	if (in == H5T_NATIVE_INT8 )
@@ -444,7 +475,7 @@ PHDF_DataType_t NDArrayToHDF5::to_phdf_datatype(hid_t in) const
 	return out;
 }
 
-hid_t NDArrayToHDF5::to_hid_datatype(NDDataType_t in) const
+hid_t NDArrayToHDF5::from_ndarr_to_hid_datatype(NDDataType_t in) const
 {
 	hid_t out;
 	switch(in)
@@ -472,7 +503,7 @@ hid_t NDArrayToHDF5::to_hid_datatype(NDDataType_t in) const
 	return out;
 }
 
-hid_t NDArrayToHDF5::to_hid_datatype(PHDF_DataType_t in) const
+hid_t NDArrayToHDF5::from_phdf_to_hid_datatype(PHDF_DataType_t in) const
 {
 	hid_t out;
 	switch(in)
@@ -608,7 +639,7 @@ void NDArrayToHDF5::configure_ndattr_dsets(NDAttributeList *pAttributeList)
 	while((ndattr = pAttributeList->next(ndattr)) != NULL)
 	{
 		string ndattr_name = ndattr->pName;
-		PHDF_DataType_t datatype = NDArrayToHDF5::to_phdf_datatype(ndattr->dataType);
+		PHDF_DataType_t datatype = NDArrayToHDF5::from_ndattr_to_phdf_datatype(ndattr->dataType);
 		map_ndattr[ndattr_name] = new HdfDataSource(phdf_ndattribute, datatype);
 	}
 
@@ -653,7 +684,8 @@ hid_t NDArrayToHDF5::_create_dataset_metadata(hid_t group, HdfDataset* dset)
     // dataset create property list
     dset_create_plist = H5Pcreate(H5P_DATASET_CREATE);
 
-    hid_t datatype = NDArrayToHDF5::to_hid_datatype(dset->data_source().get_datatype());
+    PHDF_DataType_t phdf_dtype = dset->data_source().get_datatype();
+    hid_t datatype = NDArrayToHDF5::from_phdf_to_hid_datatype(phdf_dtype);
 
     //hid_t H5Screate_simple( int rank, const hsize_t * current_dims, const hsize_t * maximum_dims )
     hsize_t dims[1];
@@ -711,7 +743,7 @@ hid_t NDArrayToHDF5::_create_dataset_detector(hid_t group, HdfDataset *dset)
 
     //hid_t datatype = H5T_NATIVE_UINT_FAST16;
     //hid_t datatype = H5T_NATIVE_UINT16;
-    hid_t datatype = NDArrayToHDF5::to_hid_datatype(dset->data_source().get_datatype());
+    hid_t datatype = NDArrayToHDF5::from_phdf_to_hid_datatype(dset->data_source().get_datatype());
 
     // TODO: configure compression if required (although not for phdf5 as this would not work)
 
@@ -762,42 +794,6 @@ hid_t NDArrayToHDF5::_create_dataset_detector(hid_t group, HdfDataset *dset)
     return dataset;
 }
 
-/** Translate the NDArray datatype to HDF5 datatypes */
-hid_t NDArrayToHDF5::type_nd2hdf(NDDataType_t& datatype)
-{
-  hid_t result;
-  switch (datatype) {
-    case NDInt8:
-      result = H5T_NATIVE_INT_FAST8;
-      break;
-    case NDUInt8:
-      result = H5T_NATIVE_UINT_FAST8;
-      break;
-    case NDInt16:
-      result = H5T_NATIVE_INT_FAST16;
-      break;
-    case NDUInt16:
-      result = H5T_NATIVE_UINT_FAST16;
-      break;
-    case NDInt32:
-      result = H5T_NATIVE_INT_FAST32;
-      break;
-    case NDUInt32:
-      result = H5T_NATIVE_UINT_FAST32;
-      break;
-    case NDFloat32:
-      result = H5T_NATIVE_FLOAT;
-      break;
-    case NDFloat64:
-      result = H5T_NATIVE_DOUBLE;
-      break;
-    default:
-      cerr << "HDArrayToHDF5: cannot convert NDArrayType: "<< datatype << " to HDF5 datatype" << endl;
-      result = -1;
-      break;
-  }
-  return result;
-}
 
 /** Store the profile data in a separate dataset
  *

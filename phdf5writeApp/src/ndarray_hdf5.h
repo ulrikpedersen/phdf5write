@@ -51,10 +51,11 @@ public:
     WriteConfig get_conf();
     WriteConfig& get_conf_ref();
 
-    PHDF_DataType_t to_phdf_datatype(NDDataType_t) const;
-    PHDF_DataType_t to_phdf_datatype(hid_t) const;
-    hid_t to_hid_datatype(NDDataType_t) const;
-    hid_t to_hid_datatype(PHDF_DataType_t) const;
+    PHDF_DataType_t from_ndarr_to_phdf_datatype(NDDataType_t in) const;
+    PHDF_DataType_t from_ndattr_to_phdf_datatype(NDAttrDataType_t in) const;
+    PHDF_DataType_t from_hid_to_phdf_datatype(hid_t in) const;
+    hid_t from_ndarr_to_hid_datatype(NDDataType_t in) const;
+    hid_t from_phdf_to_hid_datatype(PHDF_DataType_t in) const;
 
 
 protected:
@@ -68,7 +69,6 @@ protected:
 private:
     int mpi_rank;
     int mpi_size;
-    hid_t type_nd2hdf(NDDataType_t& datatype);
     int create_file_layout();
     int create_dataset(hid_t group, HdfDataset* dset);
     int _create_dataset_detector(hid_t group, HdfDataset* dset);
