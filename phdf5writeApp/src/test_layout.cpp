@@ -407,7 +407,7 @@ BOOST_AUTO_TEST_CASE(merge_ndattributes)
 {
 	// Make some pretend NDAttributes
 	HdfGroup::MapNDAttrSrc_t map_ndattr;
-	map_ndattr["one"] = new HdfDataSource(phdf_ndattribute, phdf_uint8 );
+	map_ndattr["one"] = new HdfDataSource(phdf_ndattribute, phdf_float32 );
 	map_ndattr["two"] = new HdfDataSource(phdf_ndattribute, phdf_uint16 ); // modified datatype from uint8 to uint16
 	map_ndattr["three"] = new HdfDataSource(phdf_ndattribute, phdf_uint32 ); // New defined NDAttribute
 
@@ -419,7 +419,7 @@ BOOST_AUTO_TEST_CASE(merge_ndattributes)
 
 	// check the status of the attributes.
 	BOOST_REQUIRE_EQUAL(ndattribute_one->data_source().is_src_ndattribute(), true);
-	BOOST_REQUIRE_EQUAL(ndattribute_one->data_source().get_datatype(), phdf_uint8);
+	BOOST_REQUIRE_EQUAL(ndattribute_one->data_source().get_datatype(), phdf_float32);
 	BOOST_CHECK_EQUAL(ndattribute_one->data_source().get_src_def(), "one"); // Will fail: not yet implemented
 	BOOST_REQUIRE_EQUAL(ndattribute_two->data_source().is_src_ndattribute(), true);
 	BOOST_REQUIRE_EQUAL(ndattribute_two->data_source().get_datatype(), phdf_uint16);
@@ -430,8 +430,30 @@ BOOST_AUTO_TEST_CASE(merge_ndattributes)
 	BOOST_REQUIRE_EQUAL(dset->data_source().get_datatype(), phdf_uint32);
 	BOOST_REQUIRE_EQUAL(dset->data_source().is_src_ndattribute(), true);
 	BOOST_CHECK_EQUAL(dset->data_source().get_src_def(), "three"); // Will fail: not yet implemented
-
-
 }
+
+BOOST_AUTO_TEST_CASE(find_datasets)
+{
+	HdfGroup::MapDatasets_t results;
+	BOOST_REQUIRE_NO_THROW( entry.find_dsets(phdf_detector, results) );
+	BOOST_REQUIRE_EQUAL( (int)results.size(), 1); // There should be only 1 dataset in the list
+	BOOST_REQUIRE_EQUAL( results.begin()->second->get_name(), "data");
+	BOOST_REQUIRE_EQUAL( results.begin()->first, "/entry/detector/data");
+	BOOST_REQUIRE( results.begin()->second->data_source().is_src_detector());
+}
+
+BOOST_AUTO_TEST_CASE(find_ndattribute_dsets)
+{
+	HdfGroup::MapDatasets_t results;
+	BOOST_REQUIRE_NO_THROW( entry.find_dsets(phdf_ndattribute, results) );
+	//BOOST_TEST_MESSAGE( "tree: " + entry._str_() );
+	//BOOST_TEST_MESSAGE( "dset: " + results.begin()->second->_str_() );
+	BOOST_REQUIRE_EQUAL( (int)results.size(), 2); // There should be only 2 dataset in the list
+	BOOST_REQUIRE_EQUAL( results.count("/entry/instrument/one"), 1);
+	BOOST_REQUIRE_EQUAL( results.count("/entry/instrument/two"), 1);
+	BOOST_REQUIRE( results["/entry/instrument/one"]->data_source().is_src_ndattribute());
+	BOOST_REQUIRE( results["/entry/instrument/two"]->data_source().is_src_ndattribute());
+}
+
 
 BOOST_AUTO_TEST_SUITE_END()

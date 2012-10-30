@@ -70,6 +70,10 @@ bool HdfDataSource::is_src_detector() {
 bool HdfDataSource::is_src_ndattribute() {
     return this->data_src == phdf_ndattribute ? true : false;
 }
+bool HdfDataSource::is_src(HdfDataSrc_t src)
+{
+	return this->data_src == src;
+}
 
 std::string HdfDataSource::get_src_def()
 {
@@ -390,52 +394,27 @@ HdfGroup::MapGroups_t& HdfGroup::get_groups()
 	return this->groups;
 }
 
-
-// Utility object to support find_dsets in searching for datasets which come from
-// detector, constant, ndattaribute etc...
-struct IsSrcType {
-	HdfDataSrc_t src_type;
-	bool operator() (pair<string, HdfDataset*> it) {
-		bool ret = false;
-		switch(src_type)
-		{
-		case phdf_detector:
-			ret = it.second->data_source().is_src_detector();
-			break;
-		case phdf_constant:
-			ret = it.second->data_source().is_src_constant();
-			break;
-		case phdf_ndattribute:
-			ret = it.second->data_source().is_src_ndattribute();
-			break;
-		default:
-			ret = false;
-			break;
-		}
-		return ret;
-	}
-};
-
 void HdfGroup::find_dsets(HdfDataSrc_t source, MapDatasets_t& results)
 {
-	IsSrcType is_src_type;
-	is_src_type.src_type = source;
 	MapDatasets_t::iterator it = this->datasets.begin();
 
 	// Search through the dataset map to find any dataset with comes from <source>
 	// Each result is inserted into the <dsets> map.
 	for (	it =  this->datasets.begin();
 			it != this->datasets.end();
-			it = find_if(it, this->datasets.end(), is_src_type))
+			++it)
 	{
-		results.insert(pair<string, HdfDataset*>(it->second->get_full_name(), it->second));
+		if (it->second->data_source().is_src(source))
+		{
+			results.insert(pair<string, HdfDataset*>(it->second->get_full_name(), it->second));
+		}
 	}
 
 	// Finally run the same search through all subgroups
 	MapGroups_t::iterator it_groups;
 	for ( it_groups = this->groups.begin();
 			it_groups != this->groups.end();
-			++it)
+			++it_groups)
 	{
 		it_groups->second->find_dsets(source, results);
 	}
@@ -517,17 +496,20 @@ void HdfRoot::merge_ndattributes(MapNDAttrSrc_t::const_iterator it_begin,
 	if (def_grp == NULL) return; // if there are no default group: then nothing left to do
 
 	MapNDAttrSrc_t::const_iterator it;
+	string name;
 	for (it = it_begin; it != it_end; ++it)
 	{
 		// Check if an attribute is not in the 'used' list - i.e. it has not been
 		// used to create a dataset elsewhere already...
-		if (used_ndattribute_srcs.count(it->first) == 0)
+		name = it->first;
+		if (used_ndattribute_srcs.count(name) == 0)
 		{
 			// create a new dataset from the NDAttribute in the default group
-			HdfDataset* new_dset = def_grp->new_dset(it->first);
+			HdfDataset* new_dset = def_grp->new_dset(name);
 			if (new_dset == NULL) continue; // one already existed so just skip to next
-			HdfDataSource new_data_src(*it->second);
-			new_dset->set_data_source(new_data_src);
+			//HdfDataSource new_data_src(*it->second);
+			new_dset->set_data_source(*it->second);
+			cout << "**** New dataset" << *new_dset << endl;
 		}
 	}
 
@@ -554,7 +536,15 @@ string HdfDataset::_str_()
 {
     stringstream out(stringstream::out);
     out << "< HdfDataset: \'" << this->get_full_name() << "\'";
-    out << " NDAttribute: \'" << this->ndattr_name << "\' >";
+    out << " datatype: " << this->datasource.get_datatype();
+    if (this->datasource.is_src_ndattribute())
+    {
+    	out << " NDAttribute: \'" << this->ndattr_name << "/" << this->datasource.get_src_def() << "\' >";
+    } else if (this->datasource.is_src_detector())
+    {
+    	out << " detector data >";
+    }
+
     return out.str();
 }
 

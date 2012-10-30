@@ -76,6 +76,18 @@ void NDArrayToHDF5::h5_configure(NDArray& ndarray)
     // Configure the tree structure with the NDAttributes from this NDArray
     this->configure_ndattr_dsets(ndarray.pAttributeList);
 
+    // Set the detector datatype based on the NDArray datatype
+    HdfGroup::MapDatasets_t detector_dsets;
+    this->layout.get_hdftree()->find_dsets(phdf_detector, detector_dsets);
+    HdfGroup::MapDatasets_t::iterator it_dsets;
+    for (it_dsets = detector_dsets.begin(); it_dsets != detector_dsets.end(); ++it_dsets)
+    {
+    	PHDF_DataType_t dtype = NDArrayToHDF5::from_ndarr_to_phdf_datatype(ndarray.dataType);
+    	HdfDataSource src(phdf_detector, dtype);
+    	it_dsets->second->set_data_source(src);
+    	cout << " ^^^^^^^^ dset: " << it_dsets->second->get_full_name() << " dtype: " << dtype << " src: " << src.get_datatype() << endl;
+    }
+
     // Configure the chunk cache for datasets
     DimensionDesc chunk_cache = this->conf.min_chunk_cache();
     this->rdcc_nslots = (size_t)this->conf.cache_num_slots(chunk_cache);
@@ -697,7 +709,7 @@ hid_t NDArrayToHDF5::_create_dataset_metadata(hid_t group, HdfDataset* dset)
     }
 
     const char * dsetname = dset->get_name().c_str();
-    cout << "===== Creating meta data-set: " << dsetname << endl;
+    cout << "===== Creating meta data-set: " << dsetname << " type: "<< datatype << ":" << phdf_dtype << endl;
     dataset = H5Dcreate2( group, dsetname,
                                 datatype, dataspace,
                                 H5P_DEFAULT, dset_create_plist, H5P_DEFAULT);

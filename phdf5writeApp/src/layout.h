@@ -49,6 +49,7 @@ public:
     bool is_src_detector();
     bool is_src_ndattribute();
     bool is_src_constant();
+    bool is_src(HdfDataSrc_t src);
 
     std::string get_src_def(); /** return the string that define the source: either name of NDAttribute or constant value */
     PHDF_DataType_t get_datatype();

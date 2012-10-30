@@ -87,6 +87,8 @@ struct FrameSetFixture{
 
         for (int i=0; i<NFRAMES; i++)
         {
+        	hiframe[i].dataType = NDUInt16;
+        	hiframe[i].dataSize = sizeof(unsigned short);
             util_fill_ndarr_dims( hiframe[i], sizes, 2);
             hiframe[i].pAttributeList->add("h5_fill_val", "fill value", NDAttrUInt32, (void*)&fill_value );
 
@@ -99,6 +101,8 @@ struct FrameSetFixture{
             hiframe[i].pAttributeList->add("h5_dset_size_2", "dset 2", NDAttrUInt32, (void*)(dsetdims+2) );
 
             util_fill_ndarr_dims( lowframe[i], sizes, 2);
+        	lowframe[i].dataType = NDUInt16;
+        	lowframe[i].dataSize = sizeof(unsigned short);
             lowframe[i].pAttributeList->add("h5_chunk_size_0", "dimension 0", NDAttrUInt32, (void*)(chunks) );
             lowframe[i].pAttributeList->add("h5_chunk_size_1", "dimension 1", NDAttrUInt32, (void*)(chunks+1) );
             lowframe[i].pAttributeList->add("h5_chunk_size_2", "dimension 2", NDAttrUInt32, (void*)(chunks+2) );
