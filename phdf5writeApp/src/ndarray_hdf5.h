@@ -77,7 +77,9 @@ private:
     int create_tree(HdfGroup *root, hid_t h5handle);
     void configure_ndattr_dsets(NDAttributeList *pAttributeList);
 
+    void cache_ndattributes( NDAttributeList * ndattr_list );
     int write_frame(HdfDataset& dset, void * ptr_data);
+    void write_ndattributes();
     HdfDataset* select_detector_dset();
 
     // attribute dataset operations

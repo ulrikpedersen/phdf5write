@@ -215,6 +215,81 @@ int NDArrayToHDF5::h5_write(NDArray& ndarray)
     this->conf.next_frame(ndarray);
     msg(this->conf._str_());
 
+    HdfDataset *dset;
+    HdfGroup::MapDatasets_t detector_dsets;
+    this->layout.get_hdftree()->find_dsets(phdf_detector, detector_dsets);
+    if (detector_dsets.size() <= 0)
+    {
+    	// If no dataset has been defined to receive the data, then we just return
+    	this->msg("No detector dataset configured in file.", false);
+    } else {
+    	// TODO: here we just pick the first returned detector dataset. Later
+    	//       we need to look up in the NDAttribute, the name of which dataset to use.
+    	//       This will allow for writing different frames to different datasets (i.e.
+    	//       separate raw data from flatfields, backgrounds etc.
+    	dset = detector_dsets.begin()->second;
+    	this->write_frame(*dset, ndarray.pData);
+    }
+
+    this->cache_ndattributes(ndarray.pAttributeList);
+
+
+    return retcode;
+}
+
+int NDArrayToHDF5::h5_close()
+{
+    //msg("h5_close()");
+    int retcode = 0;
+    herr_t hdferr = 0;
+    char fname[512] = "\0";
+
+    if (this->h5file != H5I_INVALID_HID) {
+    	this->write_ndattributes();
+        //msg("Writing profile data");
+        this->store_profiling();
+        H5Fget_name(this->h5file, fname, 512-1 );
+        cout << "Closing file: " << fname << endl;
+        closetime.reset();
+        hdferr = H5Fclose(this->h5file);
+        closetime.stamp_now();
+        cout << "File close time: " << closetime << endl;
+        this->h5file = H5I_INVALID_HID;
+        if (hdferr < 0) {
+            cerr << "ERROR: Failed to close file: " << fname << endl;
+            retcode = -1;
+        }
+    }
+    return retcode;
+}
+
+
+void NDArrayToHDF5::cache_ndattributes( NDAttributeList * ndattr_list )
+{
+    // Run through all the NDAttributes and cache their values
+    NDAttribute* ndattr = NULL;
+    size_t ndattr_type_size=8;
+    char ptr_ndattr_data[8] = {0,0,0,0,0,0,0,0};
+    NDAttrDataType_t ndattr_type = NDAttrUndefined;
+    HdfGroup::MapDatasets_t ndattr_dsets;
+    this->layout.get_hdftree()->find_dsets(phdf_ndattribute, ndattr_dsets);
+    for (HdfGroup::MapDatasets_t::iterator it = ndattr_dsets.begin();
+    	 it != ndattr_dsets.end();
+    	 ++it)
+    {
+    	ndattr = ndattr_list->find(it->second->get_name().c_str());
+    	if (ndattr == NULL) continue;
+    	ndattr->getValueInfo(&ndattr_type, &ndattr_type_size);
+    	ndattr->getValue(ndattr_type, ptr_ndattr_data, ndattr_type_size);
+    	it->second->data_append_value(ptr_ndattr_data);
+    }
+}
+
+int NDArrayToHDF5::write_frame(HdfDataset& dset, void * ptr_data)
+{
+    int retcode = 0;
+    herr_t hdferr = 0;
+
     // Timing configuration step
     //this->writestep[0].dt_end(); // takes no measurable time
 
@@ -223,25 +298,7 @@ int NDArrayToHDF5::h5_write(NDArray& ndarray)
     // Timing caching configuration
     //this->writestep[1].dt_end(); // takes no measurable time
 
-    HdfDataset *dset;
-    //string name = "data";
-    //this->layout.get_hdftree()->find_dset(name, &dset);
-    HdfGroup::MapDatasets_t detector_dsets;
-    this->layout.get_hdftree()->find_dsets(phdf_detector, detector_dsets);
-    if (detector_dsets.size() <= 0)
-    {
-    	// If no dataset has been defined to receive the data, then we just return
-    	this->msg("No detector dataset configured in file.", false);
-    	return retcode;
-    }
-
-    // TODO: here we just pick the first returned detector dataset. Later
-    //       we need to look up in the NDAttribute, the name of which dataset to use.
-    //       This will allow for writing different frames to different datasets (i.e.
-    //       separate raw data from flatfields, backgrounds etc.
-    const char *dset_name = detector_dsets.begin()->second->get_full_name().c_str();
-    //const char *dset_name = dset->get_full_name().c_str();
-
+    const char * dset_name = dset.get_full_name().c_str();
     hid_t dataset = H5Dopen2(this->h5file, dset_name, dset_access_plist);
     if (dataset < 0) {
         msg("ERROR: unable to open dataset", true);
@@ -265,7 +322,6 @@ int NDArrayToHDF5::h5_write(NDArray& ndarray)
     // Timing extending dataset
     this->writestep[0].dt_end();
 
-
     hid_t file_dataspace = H5Dget_space(dataset);
     if (file_dataspace < 0) {
         msg("ERROR: unable to get dataspace", true);
@@ -275,7 +331,6 @@ int NDArrayToHDF5::h5_write(NDArray& ndarray)
     }
     // Timing getting the file dataspace description
     //this->writestep[1].dt_end(); // takes no measurable time
-
 
     hid_t datatype = H5Dget_type(dataset);
     if (datatype < 0) {
@@ -352,7 +407,7 @@ int NDArrayToHDF5::h5_write(NDArray& ndarray)
 
     this->dt_write.dt_start();
     hdferr = H5Dwrite( dataset, datatype, mem_dataspace,
-                       file_dataspace, xfer_plist, ndarray.pData);
+                       file_dataspace, xfer_plist, ptr_data);
     if (hdferr < 0) {
         msg("ERROR: unable to write to dataset", true);
         H5Sclose(mem_dataspace);
@@ -380,30 +435,29 @@ int NDArrayToHDF5::h5_write(NDArray& ndarray)
     return retcode;
 }
 
-int NDArrayToHDF5::h5_close()
+void NDArrayToHDF5::write_ndattributes()
 {
-    //msg("h5_close()");
-    int retcode = 0;
-    herr_t hdferr = 0;
-    char fname[512] = "\0";
-
-    if (this->h5file != H5I_INVALID_HID) {
-        //msg("Writing profile data");
-        this->store_profiling();
-        H5Fget_name(this->h5file, fname, 512-1 );
-        cout << "Closing file: " << fname << endl;
-        closetime.reset();
-        hdferr = H5Fclose(this->h5file);
-        closetime.stamp_now();
-        cout << "File close time: " << closetime << endl;
-        this->h5file = H5I_INVALID_HID;
-        if (hdferr < 0) {
-            cerr << "ERROR: Failed to close file: " << fname << endl;
-            retcode = -1;
-        }
+	const char * fullname = NULL;
+	hid_t h5_dataset = -1;
+	hid_t h5_errcode = 0;
+	hid_t h5_datatype = 0;
+    HdfGroup::MapDatasets_t ndattr_dsets;
+    this->layout.get_hdftree()->find_dsets(phdf_ndattribute, ndattr_dsets);
+    for (HdfGroup::MapDatasets_t::iterator it = ndattr_dsets.begin();
+    	 it != ndattr_dsets.end();
+    	 ++it)
+    {
+    	fullname = it->second->get_full_name().c_str();
+    	h5_datatype = NDArrayToHDF5::from_phdf_to_hid_datatype(it->second->data_source().get_datatype());
+    	h5_dataset = H5Dopen(this->h5file, fullname, H5P_DEFAULT);
+    	h5_errcode = H5Dwrite(h5_dataset, h5_datatype,
+    			              H5S_ALL, H5S_ALL, H5P_DEFAULT,
+    	                      it->second->data());
+    	if (h5_errcode < 0) {
+    		msg("ERROR: unable to write NDAttribute dataset", true);
+    	}
+    	H5Dclose(h5_dataset);
     }
-
-    return retcode;
 }
 
 WriteConfig NDArrayToHDF5::get_conf()
