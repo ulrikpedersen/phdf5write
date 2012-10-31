@@ -14,6 +14,7 @@
 class HdfGroup;
 class HdfRoot;
 class HdfDataSource;
+class HdfAttribute;
 class HdfElement;
 
 int main_xml(const char *fname);
@@ -33,11 +34,12 @@ public:
 private:
     void process_node();
 
-    int process_attribute(HdfDataSource& out);
+    int process_dset_xml_attribute(HdfDataSource& out);
+    int process_attribute_xml_attribute(HdfAttribute& out);
 
     int new_group();
     int new_dataset();
-    int new_ndattribute();
+    int new_attribute();
 
     HdfRoot* ptr_tree;
     HdfElement *ptr_curr_element;

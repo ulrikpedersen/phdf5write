@@ -102,7 +102,7 @@ void LayoutXML::process_node()
             else if ( name == XML_ATTR_DATASET )
                 ret = this->new_dataset();
             else if ( name == XML_ATTR_ATTRIBUTE )
-                ret = this->new_ndattribute();
+                ret = this->new_attribute();
             if (ret != 0)
                 cerr << "Warning: adding new node: " << name << " failed..." << endl;
             break;
@@ -126,10 +126,10 @@ void LayoutXML::process_node()
     }
 }
 
-/** Process the XML element's attributes
+/** Process a datasets XML attributes
  * to work out the source of the attribute value: either detector data, NDAttribute or constant.
  */
-int LayoutXML::process_attribute(HdfDataSource& out)
+int LayoutXML::process_dset_xml_attribute(HdfDataSource& out)
 {
     int ret = -1;
     if (not xmlTextReaderHasAttributes(this->xmlreader) ) return ret;
@@ -156,6 +156,55 @@ int LayoutXML::process_attribute(HdfDataSource& out)
 
     return ret;
 }
+
+int LayoutXML::process_attribute_xml_attribute(HdfAttribute& out)
+{
+    int ret = -1;
+    if (not xmlTextReaderHasAttributes(this->xmlreader) ) return ret;
+
+    xmlChar *attr_src = NULL;
+    string str_attr_src;
+
+    attr_src = xmlTextReaderGetAttribute(this->xmlreader, (const xmlChar*)XML_ATTR_SOURCE);
+    if (attr_src == NULL) return ret;
+    str_attr_src = (char*)attr_src;
+
+    string str_attr_val = "";
+    xmlChar *attr_val = NULL;
+    string str_attr_type = "";
+    xmlChar *attr_type = NULL;
+
+    // If the tag is: source="ndattribute"
+    // Then setup the data source as a phdf_ndattribute with the name of the NDAttribute as argument value
+    if (str_attr_src == XML_ATTR_SRC_NDATTR) {
+    	attr_val = xmlTextReaderGetAttribute(this->xmlreader, (const xmlChar*)XML_ATTR_SRC_NDATTR);
+    	if (attr_val != NULL) str_attr_val = (char*)attr_val;
+    	out.source = HdfDataSource( phdf_ndattribute, str_attr_val );
+    }
+    // On the other hand if source="constant"
+    // Then setup the data source as a phdf_constant with a string value.
+    // Todo: a constant currently is only supported as a string type. This is
+    // probably Good Enough (TM) for most use but should really be made work for
+    // at least a int and float as well.
+    else if (str_attr_src == XML_ATTR_SRC_CONST) {
+    	attr_val = xmlTextReaderGetAttribute(this->xmlreader, (const xmlChar*)XML_ATTR_SRC_CONST_VALUE);
+    	if (attr_val != NULL) str_attr_val = (char*)attr_val;
+    	out.source = HdfDataSource( phdf_constant, str_attr_val );
+    	attr_type = xmlTextReaderGetAttribute(this->xmlreader, (const xmlChar*)XML_ATTR_SRC_CONST_TYPE);
+    	if (attr_type != NULL) {
+    		str_attr_type = (char*)attr_type;
+    		PHDF_DataType_t dtype = phdf_string;
+    		if (str_attr_type == "int") dtype = phdf_int32;
+    		else if (str_attr_type == "float") dtype = phdf_float64;
+    		else if (str_attr_type == "string") dtype = phdf_string;
+    		out.source.set_const_value(dtype, str_attr_val);
+    	}
+    }
+    ret = 0;
+
+    return ret;
+}
+
 
 int LayoutXML::new_group()
 {
@@ -229,12 +278,12 @@ int LayoutXML::new_dataset()
     this->ptr_curr_element = dset;
 
     HdfDataSource attrval;
-    this->process_attribute(attrval);
+    this->process_dset_xml_attribute(attrval);
     dset->set_data_source(attrval);
     return 0;
 }
 
-int LayoutXML::new_ndattribute()
+int LayoutXML::new_attribute()
 {
     int ret = 0;
     // First check the basics
@@ -249,7 +298,7 @@ int LayoutXML::new_ndattribute()
 
     string str_ndattr_name((char*)ndattr_name);
     HdfAttribute ndattr(str_ndattr_name);
-    this->process_attribute(ndattr.source);
+    this->process_attribute_xml_attribute(ndattr);
 
     ret = this->ptr_curr_element->add_attribute(ndattr);
     return ret;

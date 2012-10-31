@@ -111,6 +111,14 @@ size_t HdfDataSource::datatype_size()
 	return retval;
 }
 
+void HdfDataSource::set_const_value(PHDF_DataType_t dtype, const std::string& str_val)
+{
+	if (this->data_src != phdf_constant) return;
+	this->set_datatype(dtype);
+	this->val = str_val;
+}
+
+
 /* ================== HdfElement Class public methods ==================== */
 HdfElement::HdfElement()
 {
