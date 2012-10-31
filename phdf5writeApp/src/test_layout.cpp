@@ -354,7 +354,7 @@ struct hdf_tree_fixture {
         instrument->set_default_ndattr_group();
 
         // NDAttribute datasets
-        data_src = HdfDataSource(phdf_ndattribute, phdf_uint8);
+        data_src = HdfDataSource(phdf_ndattribute, phdf_uint16);
         ndattribute_one = instrument->new_dset("one");
         ndattribute_one->set_data_source(data_src);
         ndattribute_two = instrument->new_dset("two");
@@ -455,5 +455,25 @@ BOOST_AUTO_TEST_CASE(find_ndattribute_dsets)
 	BOOST_REQUIRE( results["/entry/instrument/two"]->data_source().is_src_ndattribute());
 }
 
+BOOST_AUTO_TEST_CASE(append_ndattribute_data)
+{
+	HdfDataSource src = ndattribute_one->data_source();
+	BOOST_REQUIRE_EQUAL( ndattribute_one->data(), (void*)NULL);
+	BOOST_REQUIRE_NO_THROW( ndattribute_one->set_data_source(src, 5) );
+	BOOST_REQUIRE_NE( ndattribute_one->data(), (void*)NULL);
+	unsigned short val = 34;
+	BOOST_REQUIRE_EQUAL( ndattribute_one->data_append_value((void*)&val), 1);
+	BOOST_REQUIRE_EQUAL( ndattribute_one->data_append_value((void*)&val), 2);
+	BOOST_REQUIRE_EQUAL( ndattribute_one->data_append_value((void*)&val), 3);
+	BOOST_REQUIRE_EQUAL( ndattribute_one->data_append_value((void*)&val), 4);
+	BOOST_REQUIRE_EQUAL( ndattribute_one->data_append_value((void*)&val), 5);
+	BOOST_REQUIRE_EQUAL( ndattribute_one->data_append_value((void*)&val), 6);
+	BOOST_REQUIRE_EQUAL( ndattribute_one->data_append_value((void*)&val), 7);
+	BOOST_REQUIRE_EQUAL( ndattribute_one->data_append_value((void*)&val), 8);
+	BOOST_REQUIRE_EQUAL( ndattribute_one->data_append_value((void*)&val), 9);
+	BOOST_REQUIRE_EQUAL( ndattribute_one->data_append_value((void*)&val), 10);
+
+
+}
 
 BOOST_AUTO_TEST_SUITE_END()

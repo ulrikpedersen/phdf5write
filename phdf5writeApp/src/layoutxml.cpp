@@ -230,10 +230,7 @@ int LayoutXML::new_dataset()
 
     HdfDataSource attrval;
     this->process_attribute(attrval);
-    if (dset->set_data_source(attrval) < 0)
-    {
-        cerr << "  Warning: could not set datasource on " << dset->get_full_name() << endl;
-    }
+    dset->set_data_source(attrval);
     return 0;
 }
 

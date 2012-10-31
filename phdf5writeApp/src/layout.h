@@ -53,6 +53,7 @@ public:
 
     std::string get_src_def(); /** return the string that define the source: either name of NDAttribute or constant value */
     PHDF_DataType_t get_datatype();
+    size_t datatype_size();
 
 private:
     HdfDataSrc_t data_src;
@@ -110,11 +111,11 @@ private:
 
 class HdfDataset: public HdfElement {
 public:
-    HdfDataset() : HdfElement(){};
-    HdfDataset(const std::string& name) : HdfElement(name){};
+    HdfDataset();
+    HdfDataset(const std::string& name);
     HdfDataset(const HdfDataset& src);
     HdfDataset& operator=(const HdfDataset& src);
-    ~HdfDataset(){};
+    ~HdfDataset();
 
     //void is_detector_data();
 
@@ -123,13 +124,24 @@ public:
     { out << dset._str_(); return out; }
     std::string _str_();  /** Return a string representation of the object */
 
-    int set_data_source(HdfDataSource& src);
+    void set_data_source(HdfDataSource& src);
+    void set_data_source(HdfDataSource& src, size_t max_elements);
     HdfDataSource& data_source();
+
+    void data_alloc_max_elements(size_t max_elements);
+    size_t data_append_value(void * val);
+    const void * data();
 
 private:
     void _copy(const HdfDataset& src);
     std::string ndattr_name;
     HdfDataSource datasource;
+
+    void data_clear();
+    void * data_ptr;
+    size_t data_nelements;
+    size_t data_current_element;
+    size_t data_max_bytes;
 };
 
 /** Describe a HDF5 group element.

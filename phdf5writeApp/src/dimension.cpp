@@ -195,7 +195,7 @@ long int DimensionDesc::data_num_elements()
     vec_ds_t::const_iterator it;
     for (it = this->dims.begin(); it != this->dims.end(); ++it)
     {
-        num_elements *= *it;
+    	if (*it > 0) num_elements *= *it;
     }
     return num_elements;
 }

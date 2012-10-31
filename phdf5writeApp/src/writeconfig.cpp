@@ -98,6 +98,18 @@ int WriteConfig::num_extra_dims()
     return extra_dims>0 ? extra_dims : 0;
 }
 
+long int WriteConfig::num_frames()
+{
+	long int result = 1;
+	for (int dim = 0;
+		 dim < this->dim_full_dataset.num_dimensions() - this->dim_roi_frame.num_dimensions();
+		 dim++)
+	{
+		result *= this->dim_full_dataset.dim_size_vec().at(dim);
+	}
+	return result;
+}
+
 void WriteConfig::inc_position(NDArray& ndarray)
 {
     NDAttributeList * list = ndarray.pAttributeList;

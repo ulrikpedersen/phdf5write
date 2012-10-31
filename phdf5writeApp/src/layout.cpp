@@ -9,6 +9,7 @@
 #include <string>
 #include <sstream>
 #include <algorithm>
+#include <cstring>
 
 using namespace std;
 
@@ -83,6 +84,31 @@ std::string HdfDataSource::get_src_def()
 PHDF_DataType_t HdfDataSource::get_datatype()
 {
 	return this->datatype;
+}
+
+size_t HdfDataSource::datatype_size()
+{
+	size_t retval = sizeof(char);
+	switch (this->datatype)
+	{
+	case phdf_uint8:
+	case phdf_int8:
+		retval = 1; break;
+	case phdf_uint16:
+	case phdf_int16:
+		retval = 2; break;
+	case phdf_uint32:
+	case phdf_int32:
+	case phdf_float32:
+		retval = 4; break;
+	case phdf_float64:
+		retval = 8; break;
+	case phdf_string:
+		retval = 1; break;
+	default:
+		retval = 0; break;
+	}
+	return retval;
 }
 
 /* ================== HdfElement Class public methods ==================== */
@@ -507,9 +533,7 @@ void HdfRoot::merge_ndattributes(MapNDAttrSrc_t::const_iterator it_begin,
 			// create a new dataset from the NDAttribute in the default group
 			HdfDataset* new_dset = def_grp->new_dset(name);
 			if (new_dset == NULL) continue; // one already existed so just skip to next
-			//HdfDataSource new_data_src(*it->second);
 			new_dset->set_data_source(*it->second);
-			cout << "**** New dataset" << *new_dset << endl;
 		}
 	}
 
@@ -519,8 +543,28 @@ void HdfRoot::merge_ndattributes(MapNDAttrSrc_t::const_iterator it_begin,
 
 /* ================== HdfDataset Class public methods ==================== */
 HdfDataset::HdfDataset(const HdfDataset& src)
+: data_ptr(NULL), data_nelements(0),
+  data_current_element(0), data_max_bytes(0)
 {
     this->_copy(src);
+}
+
+HdfDataset::HdfDataset()
+: HdfElement(),
+  data_ptr(NULL), data_nelements(0), data_current_element(0),data_max_bytes(0)
+{}
+
+HdfDataset::HdfDataset(const std::string& name)
+: HdfElement(name),
+  data_ptr(NULL), data_nelements(0), data_current_element(0),data_max_bytes(0)
+{}
+
+HdfDataset::~HdfDataset()
+{
+	if (this->data_ptr != NULL) {
+		free(this->data_ptr);
+		this->data_ptr = NULL;
+	}
 }
 
 HdfDataset& HdfDataset::operator =(const HdfDataset& src)
@@ -539,7 +583,8 @@ string HdfDataset::_str_()
     out << " datatype: " << this->datasource.get_datatype();
     if (this->datasource.is_src_ndattribute())
     {
-    	out << " NDAttribute: \'" << this->ndattr_name << "/" << this->datasource.get_src_def() << "\' >";
+    	out << " NDAttribute: \'" << this->ndattr_name << "/" << this->datasource.get_src_def() << "\'";
+    	out << " num/max elements: " << this->data_current_element << "/" << this->data_nelements << " >";
     } else if (this->datasource.is_src_detector())
     {
     	out << " detector data >";
@@ -548,19 +593,70 @@ string HdfDataset::_str_()
     return out.str();
 }
 
-int HdfDataset::set_data_source(HdfDataSource& src)
+void HdfDataset::set_data_source(HdfDataSource& src)
 {
-    int retval = -1;
-    if (src.is_src_detector() || src.is_src_ndattribute()) {
-        this->datasource = src;
-        retval = 0;
-    }
-    return retval;
+    this->datasource = src;
+    this->data_clear();
+}
+
+void HdfDataset::set_data_source(HdfDataSource& src, size_t max_elements)
+{
+	this->set_data_source(src);
+	this->data_alloc_max_elements(max_elements);
 }
 
 HdfDataSource& HdfDataset::data_source()
 {
 	return this->datasource;
+}
+
+void HdfDataset::data_alloc_max_elements(size_t max_elements)
+{
+	this->data_clear(); // make sure we're freeing memory before allocating
+	this->data_max_bytes = this->datasource.datatype_size() * max_elements;
+	this->data_ptr = calloc(max_elements, this->datasource.datatype_size());
+	this->data_current_element = 0;
+	this->data_nelements = max_elements;
+}
+
+size_t HdfDataset::data_append_value(void * val)
+{
+	if (this->data_ptr == NULL) return 0;
+	size_t esize = this->datasource.datatype_size();
+	if (esize * this->data_current_element > this->data_max_bytes) return 0;
+
+	// automatically re-allocate twice as much memory if we have filled up the
+	// current buffer.
+	if (this->data_current_element >= this->data_nelements)
+	{
+		this->data_nelements *= 2;
+		void * ptmp = calloc( this->data_nelements, esize);
+		memcpy( ptmp, this->data_ptr, this->data_max_bytes );
+		free(this->data_ptr);
+		this->data_ptr = ptmp;
+		this->data_max_bytes *= 2;
+	}
+
+	memcpy((char*)this->data_ptr + (esize * this->data_current_element), val, esize);
+	this->data_current_element++;
+	return this->data_current_element;
+}
+
+const void * HdfDataset::data()
+{
+	return this->data_ptr;
+}
+
+void HdfDataset::data_clear()
+{
+	// Only free the memory if we have it allocated.
+	if (this->data_ptr != NULL) {
+		free(this->data_ptr);
+		this->data_ptr = NULL;
+	}
+	this->data_nelements = 0;
+	this->data_max_bytes = 0;
+	this->data_current_element = 0;
 }
 
 
@@ -571,4 +667,10 @@ void HdfDataset::_copy(const HdfDataset& src)
     HdfElement::_copy(src);
     this->ndattr_name = src.ndattr_name;
     this->datasource = src.datasource;
+
+    this->data_current_element = src.data_current_element;
+    this->data_max_bytes = src.data_max_bytes;
+    this->data_nelements = src.data_nelements;
+    this->data_ptr = calloc( this->data_nelements, this->datasource.datatype_size() );
+
 }

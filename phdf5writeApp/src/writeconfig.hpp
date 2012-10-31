@@ -47,6 +47,7 @@ public:
     vec_ds_t get_dset_maxdims();
     void proc_rank_size(int rank, int size);
     int num_extra_dims();
+    long int num_frames();
 
     // a few flags to turn on/off various IO parameters
     void dset_extendible(bool ext) {this->extendible = ext;};
