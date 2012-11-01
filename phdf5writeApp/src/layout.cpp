@@ -176,6 +176,12 @@ HdfElement * HdfElement::get_parent()
 	return this->parent;
 }
 
+void HdfElement::it_attributes(MapAttributes_t::iterator &it_begin, MapAttributes_t::iterator &it_end)
+{
+	it_begin = this->attributes.begin();
+	it_end = this->attributes.end();
+}
+
 int HdfElement::add_attribute(HdfAttribute& attr)
 {
     if (this->attributes.count(attr.get_name()) != 0) return -1;
@@ -552,19 +558,24 @@ void HdfRoot::merge_ndattributes(MapNDAttrSrc_t::const_iterator it_begin,
 /* ================== HdfDataset Class public methods ==================== */
 HdfDataset::HdfDataset(const HdfDataset& src)
 : data_ptr(NULL), data_nelements(0),
-  data_current_element(0), data_max_bytes(0)
+  data_current_element(0), data_max_bytes(0),
+  data_nelements_stored(0)
 {
     this->_copy(src);
 }
 
 HdfDataset::HdfDataset()
 : HdfElement(),
-  data_ptr(NULL), data_nelements(0), data_current_element(0),data_max_bytes(0)
+  data_ptr(NULL), data_nelements(0),
+  data_current_element(0),data_max_bytes(0),
+  data_nelements_stored(0)
 {}
 
 HdfDataset::HdfDataset(const std::string& name)
 : HdfElement(name),
-  data_ptr(NULL), data_nelements(0), data_current_element(0),data_max_bytes(0)
+  data_ptr(NULL), data_nelements(0),
+  data_current_element(0),data_max_bytes(0),
+  data_nelements_stored(0)
 {}
 
 HdfDataset::~HdfDataset()
@@ -649,6 +660,25 @@ size_t HdfDataset::data_append_value(void * val)
 	this->data_current_element++;
 	return this->data_current_element;
 }
+
+size_t HdfDataset::data_num_elements()
+{
+	return this->data_nelements;
+}
+
+size_t HdfDataset::data_store_size()
+{
+	return this->data_nelements + this->data_nelements_stored;
+}
+
+void HdfDataset::data_stored()
+{
+	size_t tmp_nelements = this->data_nelements;
+	this->data_nelements_stored += this->data_nelements;
+	this->data_clear();
+	this->data_alloc_max_elements(tmp_nelements);
+}
+
 
 const void * HdfDataset::data()
 {

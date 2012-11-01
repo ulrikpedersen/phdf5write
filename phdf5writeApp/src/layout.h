@@ -98,10 +98,12 @@ public:
     bool has_attribute(const std::string& attr_name);
     int tree_level();
     HdfElement *get_parent();
+    typedef std::map<std::string, HdfAttribute> MapAttributes_t;
+    void it_attributes(MapAttributes_t::iterator &it_begin, MapAttributes_t::iterator &it_end);
 
 protected:
     void _copy(const HdfElement& src);
-    std::map<std::string, HdfAttribute> attributes;
+    MapAttributes_t attributes;
     std::string name;
 public:
     friend class HdfGroup;
@@ -131,6 +133,9 @@ public:
 
     void data_alloc_max_elements(size_t max_elements);
     size_t data_append_value(void * val);
+    size_t data_num_elements();
+    size_t data_store_size();
+    void data_stored();
     const void * data();
 
 private:
@@ -143,6 +148,7 @@ private:
     size_t data_nelements;
     size_t data_current_element;
     size_t data_max_bytes;
+    size_t data_nelements_stored;
 };
 
 /** Describe a HDF5 group element.

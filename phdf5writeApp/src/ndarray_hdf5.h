@@ -90,13 +90,14 @@ private:
     // performance dataset operations
     int store_profiling();
 
-    int write_hdf_attributes( hid_t h5dataset,  HdfElement* element);
+    void write_hdf_attributes( hid_t h5_handle,  HdfElement* element);
     // convenience function to write a HDF5 attribute as a string
-    /*
-    int write_h5attr_str(hid_t element,
-                         std::string &attr_name,
-                         std::string &str_attr_value){};
-    */
+    void write_h5attr_str(hid_t element,
+                          const std::string &attr_name,
+                          const std::string &str_attr_value) const;
+    void write_h5attr_number(hid_t element, const std::string& attr_name,
+			 				 DimensionDesc dims,
+			 				 PHDF_DataType_t datatype, void * data) const;
 
     // Write the HDF5 dataset attributes that makes the file NeXuS compatible
     //int write_h5attr_nxs(){};
