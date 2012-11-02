@@ -71,6 +71,8 @@ private:
     int mpi_size;
     int create_file_layout();
     int create_dataset(hid_t group, HdfDataset* dset);
+    hid_t _create_simple_dset(hid_t group, HdfDataset *dset);
+    int _write_simple_frame(HdfDataset& dset, void *pdata);
     int _create_dataset_detector(hid_t group, HdfDataset* dset);
     int _create_dataset_metadata(hid_t group, HdfDataset* dset);
 
@@ -79,6 +81,7 @@ private:
 
     void cache_ndattributes( NDAttributeList * ndattr_list );
     int write_frame(HdfDataset& dset, void * ptr_data);
+    void write_ndattribute(HdfDataset* dset);
     void write_ndattributes();
     HdfDataset* select_detector_dset();
 

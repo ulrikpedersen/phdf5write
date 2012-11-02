@@ -2,33 +2,39 @@ TOP=../..
 
 include $(TOP)/configure/CONFIG
 
-# Set some base paths to MPI, HDF5 and Boost
-ifeq ($(EPICS_HOST_ARCH),linux-x86)
-MPIDIR=/dls_sw/apps/openmpi/1.4.3/32
-#MPIDIR=/dls_sw/work/tools/RHEL6/prefixes/openmpi-1.4.5
-# parallel version of hdf5 -can be replaced with non parallel but why would you???
-HDF5DIR=/dls_sw/apps/hdf5/1.8.7/openMPI/32
-#HDF5DIR=/dls_sw/work/tools/RHEL6/prefixes/hdf5p-1.8.9
-BOOSTDIR=/dls_sw/work/tools/RHEL5
-#BOOSTDIR=/dls_sw/work/tools/RHEL6/prefixes/boost-1.48.0
 
-else
-ifeq ($(EPICS_HOST_ARCH),linux-x86_64)
-#MPIDIR=/dls_sw/work/tools/RHEL6/prefixes/openmpi-1.4.5
-ifdef $MPIDIR
- HDF5DIR=/dls_sw/work/tools/RHEL6/prefixes/hdf5p-1.8.9
- HDF5LIB=phdf5
- phdf5_DIR=$(HDF5DIR)/lib
- USR_INCLUDES += -I$(MPIDIR)/include
-else
- HDF5DIR=/dls_sw/work/tools/RHEL6/prefixes/hdf5-1.8.9
- HDF5LIB=hdf5
- hdf5_DIR=$(HDF5DIR)/lib
-endif
+#########   For RHEL5 64 bit   ####################################
+#BOOSTDIR=/dls_sw/work/common/boost/1.48.0/64
+#MPIDIR=/dls_sw/apps/openmpi/1.4.3/64/
+#HDF5DIR=/dls_sw/apps/hdf5/1.8.7/openMPI/64/
+#HDF5LIB=hdf5
+#hdf5_DIR=$(HDF5DIR)/lib
+
+#########   For RHEL6 64 bit   ####################################
+#BOOSTDIR=/dls_sw/work/tools/RHEL6/prefixes/boost-1.48.0
+#SZDIR=/dls_sw/work/tools/RHEL6/prefixes/szip-2.1
+#HDF5DIR=/dls_sw/work/tools/RHEL6/prefixes/hdf5-1.8.9
+#HDF5DIR=/dls_sw/work/tools/RHEL6/prefixes/hdf5-1.8.9
+#HDF5LIB=hdf5
+#hdf5_DIR=$(HDF5DIR)/lib
+
+#########   For RHEL6 64 bit PARALLEL  ####################################
 BOOSTDIR=/dls_sw/work/tools/RHEL6/prefixes/boost-1.48.0
+MPIDIR=/dls_sw/work/tools/RHEL6/prefixes/openmpi-1.4.5
 SZDIR=/dls_sw/work/tools/RHEL6/prefixes/szip-2.1
-endif
-endif
+# The EPICS support modules lib dir will be listed
+# before any of these -L<dir> definitions, causing the linker to pick
+# up the areaDetector (non-parallel) hdf5 libs. To work around this,
+# the parallel hdf5 libs are installed with a filename prefix of 'p':
+# libphdf5.a etc.
+HDF5DIR=/dls_sw/work/tools/RHEL6/prefixes/hdf5p-1.8.9
+HDF5LIB=phdf5
+phdf5_DIR=$(HDF5DIR)/lib
+sz_DIR=$(SZDIR)/lib
+
+
+USR_INCLUDES += -I$(MPIDIR)/include
+
 
 # Directoris where to find these MPI libraries.
 mpi_cxx_DIR=$(MPIDIR)/lib
@@ -36,12 +42,6 @@ mpi_DIR=$(MPIDIR)/lib
 open-rte_DIR=$(MPIDIR)/lib
 open-pal_DIR=$(MPIDIR)/lib
 
-# The EPICS support modules lib dir will be listed
-# before any of these -L<dir> definitions, causing the linker to pick
-# up the areaDetector (non-parallel) hdf5 libs. To work around this,
-# the parallel hdf5 libs are installed with a filename prefix of 'p':
-# libphdf5.a etc.
-sz_DIR=$(SZDIR)/lib
 
 # C++ compiler flags found by running the command: h5pcc -show
 USR_CXXFLAGS += -D_FILE_OFFSET_BITS=64 -D_LARGEFILE_SOURCE -D_LARGEFILE64_SOURCE
@@ -75,6 +75,29 @@ USR_INCLUDES += -I/usr/include/libxml2
 ifdef BOOSTDIR
 boost_unit_test_framework_DIR=$(BOOSTDIR)/lib
 
+ifdef MPIDIR
+PROD_IOC += test_mpi_ndarray_hdf5
+test_mpi_ndarray_hdf5_INCLUDES = -I$(BOOSTDIR)/include
+test_mpi_ndarray_hdf5_SRCS_DEFAULT += test_mpi_ndarray_hdf5.cpp
+test_mpi_ndarray_hdf5_OBJS += ndarray_hdf5 dimension writeconfig layout layoutxml profiling
+test_mpi_ndarray_hdf5_LIBS += adtransferPlugin asyn ADBase NDPlugin Com
+test_mpi_ndarray_hdf5_LIBS += boost_unit_test_framework
+test_mpi_ndarray_hdf5_LDFLAGS += -L$(BOOSTDIR)/lib
+test_mpi_ndarray_hdf5_LIBS += mpi_cxx mpi open-rte open-pal 
+test_mpi_ndarray_hdf5_SYS_LIBS += xml2 dl nsl util m dl z
+test_mpi_ndarray_hdf5_LIBS +=  $(HDF5LIB) sz
+
+PROD_IOC += test_real_lustre
+test_real_lustre_INCLUDES = -I$(BOOSTDIR)/include
+test_real_lustre_SRCS_DEFAULT += test_real_lustre.cpp
+test_real_lustre_OBJS += ndarray_hdf5 dimension writeconfig layout layoutxml profiling
+test_real_lustre_LIBS += adtransferPlugin asyn ADBase NDPlugin Com
+#test_real_lustre_LIBS += boost_unit_test_framework
+#test_real_lustre_LDFLAGS += -L$(BOOSTDIR)/lib
+test_real_lustre_LIBS += mpi_cxx mpi open-rte open-pal 
+test_real_lustre_SYS_LIBS += xml2 dl nsl util m dl z
+test_real_lustre_LIBS +=  $(HDF5LIB) sz
+else
 
 PROD_IOC += test_dimension
 test_dimension_INCLUDES = -I$(BOOSTDIR)/include
@@ -104,29 +127,6 @@ test_ndarray_hdf5_LDFLAGS += -L$(BOOSTDIR)/lib
 test_ndarray_hdf5_SYS_LIBS += xml2 dl nsl util m dl z
 test_ndarray_hdf5_LIBS += $(HDF5LIB) sz
 
-ifdef MPIDIR
-PROD_IOC += test_mpi_ndarray_hdf5
-test_mpi_ndarray_hdf5_INCLUDES = -I$(BOOSTDIR)/include
-test_mpi_ndarray_hdf5_SRCS_DEFAULT += test_mpi_ndarray_hdf5.cpp
-test_mpi_ndarray_hdf5_OBJS += ndarray_hdf5 dimension writeconfig layout layoutxml profiling
-test_mpi_ndarray_hdf5_LIBS += adtransferPlugin asyn ADBase NDPlugin Com
-test_mpi_ndarray_hdf5_LIBS += boost_unit_test_framework
-test_mpi_ndarray_hdf5_LDFLAGS += -L$(BOOSTDIR)/lib
-test_mpi_ndarray_hdf5_LIBS += mpi_cxx mpi open-rte open-pal 
-test_mpi_ndarray_hdf5_SYS_LIBS += xml2 dl nsl util m dl z
-test_mpi_ndarray_hdf5_LIBS +=  $(HDF5LIB) sz
-
-PROD_IOC += test_real_lustre
-test_real_lustre_INCLUDES = -I$(BOOSTDIR)/include
-test_real_lustre_SRCS_DEFAULT += test_real_lustre.cpp
-test_real_lustre_OBJS += ndarray_hdf5 dimension writeconfig layout layoutxml profiling
-test_real_lustre_LIBS += adtransferPlugin asyn ADBase NDPlugin Com
-#test_real_lustre_LIBS += boost_unit_test_framework
-#test_real_lustre_LDFLAGS += -L$(BOOSTDIR)/lib
-test_real_lustre_LIBS += mpi_cxx mpi open-rte open-pal 
-test_real_lustre_SYS_LIBS += xml2 dl nsl util m dl z
-test_real_lustre_LIBS +=  $(HDF5LIB) sz
-endif
 
 PROD_IOC += test_layout
 test_layout_INCLUDES = -I$(BOOSTDIR)/include
@@ -150,7 +150,8 @@ test_profiling_OBJS += profiling
 test_profiling_LIBS += boost_unit_test_framework
 test_profiling_LDFLAGS += -L$(BOOSTDIR)/lib
 
-endif
+endif # MPIDIR
+endif # BOOSTDIR
 
 # ------------------------
 # Build The Application
