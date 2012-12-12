@@ -38,7 +38,7 @@ public:
     // Operators
     WriteConfig& operator=(const WriteConfig& src); /** assignment operator copies src */
 
-    static const HSIZE_T *get_vec_ptr(vec_ds_t& vec);
+    static HSIZE_T *get_vec_ptr(vec_ds_t& vec);
 
     vec_ds_t get_chunk_dims(){return this->dim_chunk.dim_size_vec();};
     vec_ds_t get_dset_dims(){return this->dim_active_dataset.dim_size_vec();};

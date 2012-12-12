@@ -23,7 +23,17 @@
 
 #define NUM_WRITE_STEPS 2
 
-
+typedef struct {
+	vec_ds_t dims_dset_size;
+	vec_ds_t dims_frame_size;
+	vec_ds_t dims_max_size;
+	vec_ds_t dims_offset;
+	vec_ds_t dims_chunk_size;
+	size_t chunk_cache_bytes;
+	bool extendible;
+	void * fillvalue;
+	const void * pdata;
+} DatasetWriteParams_t;
 
 // Stream NDArrays to a HDF5 file
 class NDArrayToHDF5 {
@@ -64,7 +74,10 @@ protected:
         { msg(text.c_str(), error);};
     virtual void msg(const char *text,
                      bool error=false)
-        { std::cout << "NDArrayToHDF5: " << text << std::endl;};
+        {
+        if (error) std::cerr << "### NDArrayToHDF5: ERROR ### " << text << std::endl;
+        else std::cout << "NDArrayToHDF5: " << text << std::endl;
+        };
 
 private:
     int mpi_rank;
@@ -72,7 +85,6 @@ private:
     int create_file_layout();
     int create_dataset(hid_t group, HdfDataset* dset);
     hid_t _create_simple_dset(hid_t group, HdfDataset *dset);
-    int _write_simple_frame(HdfDataset& dset, void *pdata);
     int _create_dataset_detector(hid_t group, HdfDataset* dset);
     int _create_dataset_metadata(hid_t group, HdfDataset* dset);
 
@@ -80,9 +92,9 @@ private:
     void configure_ndattr_dsets(NDAttributeList *pAttributeList);
 
     void cache_ndattributes( NDAttributeList * ndattr_list );
-    int write_frame(HdfDataset& dset, void * ptr_data);
-    void write_ndattribute(HdfDataset* dset);
+    int write_frame(HdfDataset * dset, void * ptr_data);
     void write_ndattributes();
+    int write_dataset(HdfDataset* dset, DatasetWriteParams_t *params);
     HdfDataset* select_detector_dset();
 
     // attribute dataset operations
@@ -101,6 +113,11 @@ private:
     void write_h5attr_number(hid_t element, const std::string& attr_name,
 			 				 DimensionDesc dims,
 			 				 PHDF_DataType_t datatype, void * data) const;
+
+    // ============== playground ==========================
+    // demo methods used during development but not intended for permanent use.
+    int _write_simple_frame(HdfDataset& dset, void *pdata);
+    //=============== end of playground ===================
 
     // Write the HDF5 dataset attributes that makes the file NeXuS compatible
     //int write_h5attr_nxs(){};

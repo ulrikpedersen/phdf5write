@@ -19,15 +19,15 @@ include $(TOP)/configure/CONFIG
 #hdf5_DIR=$(HDF5DIR)/lib
 
 #########   For RHEL6 64 bit PARALLEL  ####################################
-BOOSTDIR=/dls_sw/work/tools/RHEL6/prefixes/boost-1.48.0
-MPIDIR=/dls_sw/work/tools/RHEL6/prefixes/openmpi-1.4.5
-SZDIR=/dls_sw/work/tools/RHEL6/prefixes/szip-2.1
+BOOSTDIR=/dls_sw/prod/tools/RHEL6-x86_64/boost/1-48-0/prefix
+MPIDIR=/dls_sw/prod/tools/RHEL6-x86_64/openmpi/1-4-5/prefix
+SZDIR=/dls_sw/prod/tools/RHEL6-x86_64/szip/2-1/prefix
 # The EPICS support modules lib dir will be listed
 # before any of these -L<dir> definitions, causing the linker to pick
 # up the areaDetector (non-parallel) hdf5 libs. To work around this,
 # the parallel hdf5 libs are installed with a filename prefix of 'p':
 # libphdf5.a etc.
-HDF5DIR=/dls_sw/work/tools/RHEL6/prefixes/hdf5p-1.8.9
+HDF5DIR=/dls_sw/prod/tools/RHEL6-x86_64/phdf5/1-8-9/prefix
 HDF5LIB=phdf5
 phdf5_DIR=$(HDF5DIR)/lib
 sz_DIR=$(SZDIR)/lib

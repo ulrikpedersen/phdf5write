@@ -50,7 +50,7 @@ void util_fill_ndarr_dims(NDArray &ndarr, unsigned long int *sizes, int ndims)
 #define DIMX 2
 
 #define NDIMENSIONS 3
-#define NFRAMES 8
+#define NFRAMES 4
 #define YSIZE 4
 #define XSIZE 6
 // full dataset defined as fastest changing dimension last:
@@ -189,7 +189,7 @@ struct FrameSetFixture{
 
 
 /* Single, parallel run
- * Work as an MPI job with RANK=2
+ * Work as an MPI job with RANK=2separate raw data from flatfields, backgrounds etc
  * First process will write the high frames and second process the low frames
  */
 BOOST_FIXTURE_TEST_SUITE(ParallelRun, FrameSetFixture)

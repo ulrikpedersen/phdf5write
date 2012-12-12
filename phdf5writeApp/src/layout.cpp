@@ -597,18 +597,28 @@ HdfDataset& HdfDataset::operator =(const HdfDataset& src)
 
 string HdfDataset::_str_()
 {
+	unsigned int i = 0;
+	PHDF_DataType_t dtype;
     stringstream out(stringstream::out);
     out << "< HdfDataset: \'" << this->get_full_name() << "\'";
     out << " datatype: " << this->datasource.get_datatype();
     if (this->datasource.is_src_ndattribute())
     {
     	out << " NDAttribute: \'" << this->ndattr_name << "/" << this->datasource.get_src_def() << "\'";
-    	out << " num/max elements: " << this->data_current_element << "/" << this->data_nelements << " >";
+    	out << " num/max elements: " << this->data_current_element << "/" << this->data_nelements << " ";
+    	out << " ptr: " << this->data_ptr << " ";
+    	dtype = this->data_source().get_datatype();
+    	if (dtype == phdf_float64)
+    		for (i=0; i<this->data_current_element; i++)
+    			out << *(((double*)this->data_ptr)+i) << ", ";
+    	else if (dtype == phdf_uint32 || dtype == phdf_int32)
+    		for (i=0; i<this->data_current_element; i++)
+    			out << *(((int*)this->data_ptr)+i) << ", ";
     } else if (this->datasource.is_src_detector())
     {
-    	out << " detector data >";
+    	out << " detector data";
     }
-
+    out << ">";
     return out.str();
 }
 

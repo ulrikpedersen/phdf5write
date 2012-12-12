@@ -497,9 +497,9 @@ int WriteConfig::get_attr_value(const string& attr_name, NDAttributeList *ptr_at
     return retval;
 }
 
-const HSIZE_T * WriteConfig::get_vec_ptr(vec_ds_t& vec)
+HSIZE_T * WriteConfig::get_vec_ptr(vec_ds_t& vec)
 {
-    return (const HSIZE_T*)&vec.front();
+    return (HSIZE_T*)&vec.front();
 }
 
 
