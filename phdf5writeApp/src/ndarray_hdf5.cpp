@@ -230,7 +230,7 @@ int NDArrayToHDF5::h5_write(NDArray& ndarray)
 {
     int retcode = 0;
     //herr_t hdferr = 0;
-    msg("h5_write()");
+    //msg("h5_write()");
 
     // Initialise performance measurements
     this->writestep[0].dt_start();
@@ -241,7 +241,7 @@ int NDArrayToHDF5::h5_write(NDArray& ndarray)
     }
 
     this->conf.next_frame(ndarray);
-    msg(this->conf._str_());
+    //msg(this->conf._str_());
 
     HdfDataset *dset;
     HdfGroup::MapDatasets_t detector_dsets;
@@ -334,12 +334,12 @@ void NDArrayToHDF5::cache_ndattributes( NDAttributeList * ndattr_list )
     	if (ndattr_type_size != dset->data_source().datatype_size()) continue;
 
     	ndattr->getValue(ndattr_type, ptr_ndattr_data, ndattr_type_size);
-    	cout << "--- Caching:  " << name << " val=";
-    	if (ndattr_type == NDAttrInt32 || ndattr_type == NDAttrUInt32) cout << *(epicsInt32*)ptr_ndattr_data;
-    	else if (ndattr_type == NDAttrFloat64) cout << *(epicsFloat64*)ptr_ndattr_data;
-    	else if (ndattr_type == NDAttrString) cout << *(char*)ptr_ndattr_data;
-    	else cout << " <unknown dtype>";
-    	cout << endl;
+    	//cout << "--- Caching:  " << name << " val=";
+    	//if (ndattr_type == NDAttrInt32 || ndattr_type == NDAttrUInt32) cout << *(epicsInt32*)ptr_ndattr_data;
+    	//else if (ndattr_type == NDAttrFloat64) cout << *(epicsFloat64*)ptr_ndattr_data;
+    	//else if (ndattr_type == NDAttrString) cout << *(char*)ptr_ndattr_data;
+    	//else cout << " <unknown dtype>";
+    	//cout << endl;
     	dset->data_append_value(ptr_ndattr_data);
     }
     free(ptr_ndattr_data);
@@ -430,10 +430,10 @@ int NDArrayToHDF5::write_dataset(HdfDataset* dset, DatasetWriteParams_t *params)
     }
 
     if (params->extendible) {
-        smsg = "Extending "  + fullname + " to: ";
-        print_arr( smsg.c_str(),
+        //smsg = "Extending "  + fullname + " to: ";
+        /*print_arr( smsg.c_str(),
         		WriteConfig::get_vec_ptr( params->dims_dset_size ),
-        		num_dimensions);
+        		num_dimensions);*/
         h5_err = H5Dset_extent( h5_dataset,
         		WriteConfig::get_vec_ptr( params->dims_dset_size ));
         if (h5_err < 0) {
@@ -467,10 +467,10 @@ int NDArrayToHDF5::write_dataset(HdfDataset* dset, DatasetWriteParams_t *params)
     // Select the slab that we want to write to in the file
     //dims_frame = params->dims_frame_size;
     //dims_frame.insert(dims_frame.begin(), 1);
-    smsg = "select_hyperslab "  + fullname + " start: ";
-    print_arr(smsg.c_str(), WriteConfig::get_vec_ptr( params->dims_offset ), params->dims_offset.size());
-    smsg = "select_hyperslab "  + fullname + " count: ";
-    print_arr(smsg.c_str(), WriteConfig::get_vec_ptr( params->dims_frame_size ), params->dims_frame_size.size());
+    //smsg = "select_hyperslab "  + fullname + " start: ";
+    //print_arr(smsg.c_str(), WriteConfig::get_vec_ptr( params->dims_offset ), params->dims_offset.size());
+    //smsg = "select_hyperslab "  + fullname + " count: ";
+    //print_arr(smsg.c_str(), WriteConfig::get_vec_ptr( params->dims_frame_size ), params->dims_frame_size.size());
     h5_err = H5Sselect_hyperslab( h5_file_dataspace, H5S_SELECT_SET,
     							  WriteConfig::get_vec_ptr( params->dims_offset ), NULL,
                                   WriteConfig::get_vec_ptr( params->dims_frame_size ), NULL);
@@ -504,11 +504,9 @@ int NDArrayToHDF5::write_dataset(HdfDataset* dset, DatasetWriteParams_t *params)
             msg("ERROR: unable to configure dataset I/O transfer type", true);
         }
     }
-    cout << "Transfermode COLLECTIVE: " << this->conf.is_io_collective() << endl;
+    //cout << "Transfermode COLLECTIVE: " << this->conf.is_io_collective() << endl;
 #endif
 
-    cout << *dset << endl;
-    cout << "Data pointer: "<< params->pdata << endl;
     h5_err = H5Dwrite( h5_dataset, h5_datatype, h5_mem_dataspace,
                        h5_file_dataspace, h5_plist_xfer, params->pdata);
     if (h5_err < 0) {
@@ -517,17 +515,15 @@ int NDArrayToHDF5::write_dataset(HdfDataset* dset, DatasetWriteParams_t *params)
     	goto end_write_dataset;
     }
 
-
-
     end_write_dataset:
 	if (h5_dataset > 0) H5Dclose(h5_dataset);
 	if (h5_file_dataspace > 0) H5Sclose(h5_file_dataspace);
 	if (h5_mem_dataspace > 0) H5Sclose(h5_mem_dataspace);
 	if (h5_plist_xfer > 0) H5Pclose(h5_plist_xfer);
-	cout << "Done writing dataset: " << fullname \
-			<< " remaining open hdf5 objects: " \
-			<<	H5Fget_obj_count(this->h5file, H5F_OBJ_DATASET | H5F_OBJ_GROUP | H5F_OBJ_DATATYPE | H5F_OBJ_ATTR) \
-			<< endl;
+	//cout << "Done writing dataset: " << fullname \
+	//		<< " remaining open hdf5 objects: " \
+	//		<<	H5Fget_obj_count(this->h5file, H5F_OBJ_DATASET | H5F_OBJ_GROUP | H5F_OBJ_DATATYPE | H5F_OBJ_ATTR) \
+	//		<< endl;
     return retval;
 }
 
@@ -736,7 +732,7 @@ int NDArrayToHDF5::create_tree(HdfGroup* root, hid_t h5handle)
 	}
 
     // Set some attributes on the group
-	//this->write_hdf_attributes( new_group,  root);
+	this->write_hdf_attributes( new_group,  root);
 
 	// Create all the datasets in this group
 	HdfGroup::MapDatasets_t::iterator it_dsets;
@@ -746,7 +742,7 @@ int NDArrayToHDF5::create_tree(HdfGroup* root, hid_t h5handle)
 		hid_t new_dset = this->create_dataset(new_group, it_dsets->second);
 		if (new_dset <= 0) continue; // failure to create the datasets so move on to next
 		// Write the hdf attributes to the dataset
-		//this->write_hdf_attributes( new_dset,  it_dsets->second);
+		this->write_hdf_attributes( new_dset,  it_dsets->second);
 		H5Dclose(new_dset);
 	}
 
@@ -848,12 +844,12 @@ hid_t NDArrayToHDF5::create_dataset(hid_t group, HdfDataset *dset)
     if (dset == NULL) return -1; // sanity check
 
     if (dset->data_source().is_src_detector()) {
-    	return this->_create_dataset_detector(group, dset);
+    	return this->create_dataset_detector(group, dset);
     	//return this->_create_simple_dset(group, dset);
     }
 
     if (dset->data_source().is_src_ndattribute()) {
-    	return this->_create_dataset_metadata(group, dset);
+    	return this->create_dataset_metadata(group, dset);
     	//return this->_create_dataset_detector(group, dset);
     	//return this->_create_simple_dset(group, dset);
     }
@@ -865,7 +861,7 @@ hid_t NDArrayToHDF5::create_dataset(hid_t group, HdfDataset *dset)
 
 
 
-hid_t NDArrayToHDF5::_create_dataset_metadata(hid_t group, HdfDataset* dset)
+hid_t NDArrayToHDF5::create_dataset_metadata(hid_t group, HdfDataset* dset)
 {
     hid_t dataset = -1;
     if (dset == NULL) return -1; // sanity check
@@ -939,7 +935,7 @@ hid_t NDArrayToHDF5::_create_dataset_metadata(hid_t group, HdfDataset* dset)
  * Return the hid_t handle to the new dataset on success; -1 on error.
  * Errors: fail to set chunk size or failure to create the dataset in the file.
  */
-hid_t NDArrayToHDF5::_create_dataset_detector(hid_t group, HdfDataset *dset)
+hid_t NDArrayToHDF5::create_dataset_detector(hid_t group, HdfDataset *dset)
 {
     if (dset == NULL) return -1; // sanity check
     //if (!dset->data_source().is_src_detector()) return -1;
@@ -1102,23 +1098,30 @@ int NDArrayToHDF5::store_profiling()
 
 void NDArrayToHDF5::write_hdf_attributes( hid_t h5_handle, HdfElement* element)
 {
-	HdfElement::MapAttributes_t::iterator it_attr, it_attr_begin, it_attr_end;
+	HdfElement::MapAttributes_t::iterator it_attr;
+	PHDF_DataType_t attr_dtype = phdf_string;
 
-	for (it_attr=it_attr_begin;
-			it_attr != it_attr_end;
+	for (it_attr=element->get_attributes().begin();
+			it_attr != element->get_attributes().end();
 			++it_attr)
 	{
 		HdfAttribute &attr = it_attr->second; // Take a reference - i.e. *not* a copy!
-		if (true)
+		attr_dtype = attr.source.get_datatype();
+		switch ( attr_dtype )
 		// if string
 		{
+		case phdf_string:
 			this->write_h5attr_str(h5_handle,
 					attr.get_name(),
 					attr.source.get_src_def());
-		} else {
-
+			break;
+		case phdf_float64:
+			break;
+		case phdf_int32:
+			break;
+		default:
+			break;
 		}
-
 	}
 }
 

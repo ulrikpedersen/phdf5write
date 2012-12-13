@@ -176,10 +176,9 @@ HdfElement * HdfElement::get_parent()
 	return this->parent;
 }
 
-void HdfElement::it_attributes(MapAttributes_t::iterator &it_begin, MapAttributes_t::iterator &it_end)
+HdfElement::MapAttributes_t& HdfElement::get_attributes()
 {
-	it_begin = this->attributes.begin();
-	it_end = this->attributes.end();
+	return this->attributes;
 }
 
 int HdfElement::add_attribute(HdfAttribute& attr)

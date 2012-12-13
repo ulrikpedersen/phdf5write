@@ -84,9 +84,8 @@ private:
     int mpi_size;
     int create_file_layout();
     int create_dataset(hid_t group, HdfDataset* dset);
-    hid_t _create_simple_dset(hid_t group, HdfDataset *dset);
-    int _create_dataset_detector(hid_t group, HdfDataset* dset);
-    int _create_dataset_metadata(hid_t group, HdfDataset* dset);
+    int create_dataset_detector(hid_t group, HdfDataset* dset);
+    int create_dataset_metadata(hid_t group, HdfDataset* dset);
 
     int create_tree(HdfGroup *root, hid_t h5handle);
     void configure_ndattr_dsets(NDAttributeList *pAttributeList);
@@ -117,6 +116,7 @@ private:
     // ============== playground ==========================
     // demo methods used during development but not intended for permanent use.
     int _write_simple_frame(HdfDataset& dset, void *pdata);
+    hid_t _create_simple_dset(hid_t group, HdfDataset *dset);
     //=============== end of playground ===================
 
     // Write the HDF5 dataset attributes that makes the file NeXuS compatible

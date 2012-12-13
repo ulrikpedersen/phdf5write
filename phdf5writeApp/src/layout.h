@@ -99,7 +99,7 @@ public:
     int tree_level();
     HdfElement *get_parent();
     typedef std::map<std::string, HdfAttribute> MapAttributes_t;
-    void it_attributes(MapAttributes_t::iterator &it_begin, MapAttributes_t::iterator &it_end);
+    MapAttributes_t& get_attributes();
 
 protected:
     void _copy(const HdfElement& src);

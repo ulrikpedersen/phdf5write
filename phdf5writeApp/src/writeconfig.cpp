@@ -127,7 +127,7 @@ void WriteConfig::inc_position(NDArray& ndarray)
     if (ret == this->dim_full_dataset.num_dimensions()) {
         // Origins/Offsets from the NDArray attribute if they are available for every dimension.
         this->origin = attr_origins;
-        cout << "GOT ROI offset from attributes!" << endl;
+        //cout << "GOT ROI offset from attributes!" << endl;
     } else {
         cout << "ATTRIBUTES NOT LISTING ROI" << endl;
         // if origin not available as NDAttr for every dimension then

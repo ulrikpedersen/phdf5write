@@ -82,20 +82,21 @@ void sim_config::loadxml(const std::string &xmlfile)
 }
 
 
-void util_fill_ndarr_dims(NDArray &ndarr, unsigned long int *sizes, int ndims, int rank)
+void util_fill_ndarr_dims(NDArray &ndarr, unsigned long int *sizes, int ndims)
 {
-    static short counter=0;
+    static short counter = 3;
     int i=0;
     ndarr.ndims = ndims;
-    ndarr.dataType = NDUInt16;
     int num_elements = 1;
     for (i=0; i<ndims; i++) {
-        ndarr.initDimension(&(ndarr.dims[i]), sizes[i]);
+    	// Note: the NDArray dimensions are reverse order in relation to
+    	//       the HDF5 dataset dimensionality. sigh....
+        ndarr.initDimension(&(ndarr.dims[ndims-i-1]), sizes[i]);
         num_elements *= sizes[i];
     }
     ndarr.pData = calloc(num_elements, sizeof(short));
     short *ptrdata = (short*)ndarr.pData;
-    ptrdata[0] = rank; ptrdata[1] = ++counter;
+    ptrdata[0] = counter++; ptrdata[1] = counter++;
 }
 
 
@@ -105,6 +106,8 @@ struct Fixture{
     unsigned long int sizes[2], chunks[3], dsetdims[3];
     int numframes;
     int fill_value;
+    int zero;
+    int yoffset;
 
     MPI_Comm mpi_comm;
     char mpi_name[100];
@@ -119,7 +122,7 @@ struct Fixture{
         cout << "MAIN: Setup Fixture" << endl;
         //fname = "smallframes.h5";
         config.loadxml(configxml);
-
+        zero=0;
         mpi_size = 1;
         mpi_rank = 0;
         mpi_name_len = 100;
@@ -138,6 +141,7 @@ struct Fixture{
 
 
 #endif
+        yoffset= config.subframe.y * mpi_rank;
 
         // output filename
         fname = config.filename;
@@ -148,12 +152,17 @@ struct Fixture{
         cout << "MAIN: num_frames: " << numframes<<endl;
 
         //sizes[0]=CHUNK_X; sizes[1]=CHUNK_Y * NUM_CHUNKS;
-        sizes[1] = config.subframe.x; sizes[0] = config.subframe.y;
+        sizes[0] = config.subframe.y;
+        sizes[1] = config.subframe.x;
 
         //chunks[0]=CHUNK_X; chunks[1]=CHUNK_Y; chunks[2]=CHUNK_Z;
-        chunks[2] = config.chunking.x; chunks[1] = config.chunking.y; chunks[0] = config.chunking.z;
+        chunks[0] = config.chunking.z;
+        chunks[1] = config.chunking.y;
+        chunks[2] = config.chunking.x;
 
-        dsetdims[2]=sizes[1], dsetdims[1]=sizes[0]*mpi_size, dsetdims[0]=numframes;
+        dsetdims[0]=numframes;
+        dsetdims[1]=sizes[0]*mpi_size;
+        dsetdims[2]=sizes[1];
 
         cout << "MAIN: dataset: " << dsetdims[0] << " " << dsetdims[1] << " " << dsetdims[2]<<endl;
         fill_value = config.fill_value;
@@ -164,6 +173,7 @@ struct Fixture{
         for (int i=0; i<chunks[0]; i++)
         {
             NDArray *pnd = new NDArray();
+            pnd->dataType = NDUInt16;
             pnd->pAttributeList->add("h5_chunk_size_0", "dimension 0", NDAttrUInt32, (void*)(chunks) );
             pnd->pAttributeList->add("h5_chunk_size_1", "dimension 1", NDAttrUInt32, (void*)(chunks+1) );
             pnd->pAttributeList->add("h5_chunk_size_2", "dimension 2", NDAttrUInt32, (void*)(chunks+2) );
@@ -172,9 +182,13 @@ struct Fixture{
             pnd->pAttributeList->add("h5_dset_size_1", "dset 1", NDAttrUInt32, (void*)(dsetdims+1) );
             pnd->pAttributeList->add("h5_dset_size_2", "dset 2", NDAttrUInt32, (void*)(dsetdims+2) );
 
+            pnd->pAttributeList->add("h5_roi_origin_0", "offset 0", NDAttrUInt32, (void*)&zero );
+            pnd->pAttributeList->add("h5_roi_origin_1", "offset 1", NDAttrUInt32, (void*)&yoffset );
+            pnd->pAttributeList->add("h5_roi_origin_2", "offset 2", NDAttrUInt32, (void*)&zero );
+
             pnd->pAttributeList->add("h5_fill_val", "fill value", NDAttrUInt32, (void*)(&fill_value) );
             frames.push_back( pnd );
-            util_fill_ndarr_dims( *frames[i], sizes, 2, mpi_rank);
+            util_fill_ndarr_dims( *frames[i], sizes, 2);
 
             //pnd->report(11);
         }
@@ -210,6 +224,7 @@ int main(int argc, char *argv[])
     char * configfile = argv[1];
     cout << "MAIN: using config file: " << configfile << endl;
     struct Fixture fixt(configfile);
+    NDArray * pndarray;
 
 
 #ifdef H5_HAVE_PARALLEL
@@ -224,9 +239,8 @@ int main(int argc, char *argv[])
     NDArrayToHDF5 ndh;
 #endif
 
-
     ndh.h5_configure(*fixt.frames[0]);
-
+    //fixt.frames[0]->report(100);
     ndh.get_conf_ref().io_collective(fixt.config.collective);
     ndh.get_conf_ref().io_mpiposix(fixt.config.ioposix);
     ndh.get_conf_ref().dset_extendible(fixt.config.extendible);
@@ -243,8 +257,11 @@ int main(int argc, char *argv[])
 
         cacheframe = i%fixt.frames.size();
         cout << "MAIN: ===== Writing frame[" << cacheframe << "] no: " << i << endl;
-
-        ndh.h5_write( *fixt.frames[cacheframe]);
+        pndarray = fixt.frames[cacheframe];
+        pndarray->pAttributeList->remove("h5_roi_origin_0");
+        pndarray->pAttributeList->add("h5_roi_origin_0", "offset 0", NDAttrUInt32, (void*)&i );
+        //pndarray->pAttributeList->report(100);
+        ndh.h5_write( *pndarray );
 
 
 
