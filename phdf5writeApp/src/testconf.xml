@@ -2,19 +2,21 @@
 <!--     <filename>/mnt/lustre03/up45-tmp-to-be-deleted-02-08-2011/stripe8/phdftest_19.h5</filename> -->
 <!--     <filename>/mnt/lustre03/up45-tmp-to-be-deleted-02-08-2011/largestripe8/phdftest_32.h5</filename> -->
 <!--    <filename>/mnt/play01/up45/phdf/stripe4/phdftest_26.h5</filename>-->
-    <filename>/mnt/play01/up45/phdf/largestripe4/phdftest_49.h5</filename>
+<!--    <filename>/mnt/play01/up45/phdf/largestripe4/phdftest_49.h5</filename> -->
+<!--    <filename>/mnt/play01/up45/stripe6/test_real_play01_1.h5</filename> -->
+    <filename>/mnt/play01/up45/stripe6/test_real_play01_11.h5</filename>
     <chunking>
         <x>4096</x>
-        <y>256</y>
-        <z>4</z>
+        <y>64</y>
+        <z>8</z>
     </chunking>
     <subframe>
         <x>4096</x>
         <y>256</y>
     </subframe>
-    <numframes>1600</numframes>
+    <numframes>1000</numframes>
     <fillvalue>0</fillvalue>
     <collective>1</collective>
     <ioposix>0</ioposix>
-    <extendible>0</extendible>
+    <extendible>1</extendible>
 </phdftest>
