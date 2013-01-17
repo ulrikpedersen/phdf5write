@@ -826,7 +826,9 @@ int NDArrayToHDF5::_write_simple_frame(HdfDataset& dset, void *pdata)
      * Create property list for collective dataset write.
      */
     plist_id = H5Pcreate(H5P_DATASET_XFER);
+    #ifdef H5_HAVE_PARALLEL
 	H5Pset_dxpl_mpio(plist_id, H5FD_MPIO_COLLECTIVE);
+	#endif
 	dataset = H5Dopen2(this->h5file,
 			dset.get_full_name().c_str(),
 			dset_access_plist);

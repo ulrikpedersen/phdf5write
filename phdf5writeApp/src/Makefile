@@ -9,39 +9,33 @@ include $(TOP)/configure/CONFIG
 #HDF5DIR=/dls_sw/apps/hdf5/1.8.7/openMPI/64/
 #HDF5LIB=hdf5
 #hdf5_DIR=$(HDF5DIR)/lib
+######### End of RHEL5 defs #######################################
 
-#########   For RHEL6 64 bit   ####################################
-#BOOSTDIR=/dls_sw/work/tools/RHEL6/prefixes/boost-1.48.0
-#SZDIR=/dls_sw/work/tools/RHEL6/prefixes/szip-2.1
-#HDF5DIR=/dls_sw/work/tools/RHEL6/prefixes/hdf5-1.8.9
-#HDF5DIR=/dls_sw/work/tools/RHEL6/prefixes/hdf5-1.8.9
+################# RHEL6 64bit #####################################
+BOOSTDIR=/dls_sw/prod/tools/RHEL6-x86_64/boost/1-48-0/prefix
+SZDIR=/dls_sw/prod/tools/RHEL6-x86_64/szip/2-1/prefix
+
+#==== For non-parallel (unit testing) use these definitions ========
+#HDF5DIR=/dls_sw/prod/tools/RHEL6-x86_64/hdf5/1-8-9/prefix
 #HDF5LIB=hdf5
 #hdf5_DIR=$(HDF5DIR)/lib
 
-#########   For RHEL6 64 bit PARALLEL  ####################################
-BOOSTDIR=/dls_sw/prod/tools/RHEL6-x86_64/boost/1-48-0/prefix
+#==== OR for parallel MPI applications use these definitions =======
 MPIDIR=/dls_sw/prod/tools/RHEL6-x86_64/openmpi/1-4-5/prefix
-SZDIR=/dls_sw/prod/tools/RHEL6-x86_64/szip/2-1/prefix
-# The EPICS support modules lib dir will be listed
-# before any of these -L<dir> definitions, causing the linker to pick
-# up the areaDetector (non-parallel) hdf5 libs. To work around this,
-# the parallel hdf5 libs are installed with a filename prefix of 'p':
-# libphdf5.a etc.
 HDF5DIR=/dls_sw/prod/tools/RHEL6-x86_64/phdf5/1-8-9/prefix
 HDF5LIB=phdf5
 phdf5_DIR=$(HDF5DIR)/lib
-sz_DIR=$(SZDIR)/lib
+
+################ End of RHEL6 defs ##################################
 
 
 USR_INCLUDES += -I$(MPIDIR)/include
-
-
-# Directoris where to find these MPI libraries.
+sz_DIR=$(SZDIR)/lib
+# Directoris where to find libraries.
 mpi_cxx_DIR=$(MPIDIR)/lib
 mpi_DIR=$(MPIDIR)/lib
 open-rte_DIR=$(MPIDIR)/lib
 open-pal_DIR=$(MPIDIR)/lib
-
 
 # C++ compiler flags found by running the command: h5pcc -show
 USR_CXXFLAGS += -D_FILE_OFFSET_BITS=64 -D_LARGEFILE_SOURCE -D_LARGEFILE64_SOURCE
@@ -54,20 +48,8 @@ HOST_OPT=NO
 #USR_INCLUDES += -I$(HDF5DIR)/include
 USR_CXXFLAGS += -I$(HDF5DIR)/include
 
-# Point to MPI header files
+# Point to libxml2 header files
 USR_INCLUDES += -I/usr/include/libxml2
-
-# Testing: this type of linker flag is defined *after* the support modules lib dirs.
-#USR_LDFLAGS += -D__________________BLAH___________
-#USR_LDFLAGS+= --library=$(HDF5DIR)/lib/libhdf5
-
-# Install the parallel HDF5 libs directly into this modules lib dir to override
-# the hdf5 libs which are supplied with areaDetector
-#LIB_INSTALLS+=$(wildcard $(HDF5DIR)/lib/*.a)
-#LIB_INSTALLS+=$(wildcard $(HDF5DIR)/lib/*.so)
-#LIB_INSTALLS+=$(wildcard $(SZDIR)/lib/*.a)
-#LIB_INSTALLS+=$(wildcard $(SZDIR)/lib/*.so)
-
 
 # -----------------------------------------------------------------------
 #  Build a unit test application if we have boost installed somewhere
@@ -121,9 +103,7 @@ test_ndarray_hdf5_SRCS_DEFAULT += test_ndarray_hdf5.cpp
 test_ndarray_hdf5_OBJS += ndarray_hdf5 dimension writeconfig layout layoutxml profiling
 test_ndarray_hdf5_LIBS += adtransferPlugin asyn ADBase NDPlugin Com
 test_ndarray_hdf5_LIBS += boost_unit_test_framework
-#test_ndarray_hdf5_LDFLAGS += -D__________BLUH____________
 test_ndarray_hdf5_LDFLAGS += -L$(BOOSTDIR)/lib
-#test_ndarray_hdf5_LIBS += mpi_cxx mpi open-rte open-pal 
 test_ndarray_hdf5_SYS_LIBS += xml2 dl nsl util m dl z
 test_ndarray_hdf5_LIBS += $(HDF5LIB) sz
 
@@ -153,9 +133,9 @@ test_profiling_LDFLAGS += -L$(BOOSTDIR)/lib
 endif # MPIDIR
 endif # BOOSTDIR
 
-# ------------------------
-# Build The Application
-# ------------------------
+# ------------------------------
+# Build The Main Application
+# ------------------------------
 
 PROD_IOC += phdf5write
 
