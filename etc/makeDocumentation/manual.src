@@ -1,19 +1,20 @@
 /**
-\mainpage phdf5write EPICS Support Module
+\mainpage phdf5write 
 \section intro_sec Introduction
-I'm going to describe the module here, possibly with a <a href="http://www.google.co.uk">web link to the manufacturers webpage</a>. \n
-You can also link to \ref thing.vdb "internally generated documentation" with alternate text, or by just by mentioning its name, e.g. thing.vdb
+A parallel HDF5 file writer for 2D detector systems.\n
 
 \section bugs_sec Known Bugs
-- I'm going to describe any known bugs here
+- Plenty
 
 \section user_sec User Manual
 This section contains instructions for the end user
 
 \section build_sec Build Instructions 
-- \subpage build_instructions_example
 
-IOCs build using these build instructions are available in iocs/
+\section design_sec Design
+Some UML models. First of all how various modules are connected in a full scale system.
+\image html "../world_uml.png"
+The phdf5write class diagram.
+\image html "../phdf5write_classes.png"
 **/
 
-/* Build instructions page will be generated from the xml file given to dls-xml-iocbuilder.py --doc */
