@@ -1,4 +1,4 @@
-/*
+/** \cond
  * test_dimension.cpp
  *
  *  Created on: 10 Jan 2012
@@ -471,3 +471,4 @@ BOOST_AUTO_TEST_CASE(datatype_conversion)
 }
 
 BOOST_AUTO_TEST_SUITE_END()
+/** \endcond */

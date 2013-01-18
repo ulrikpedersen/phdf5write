@@ -1,4 +1,4 @@
-/*
+/** \cond
  * test_layout.cpp
  *
  *  Created on: 24 Jan 2012
@@ -477,3 +477,4 @@ BOOST_AUTO_TEST_CASE(append_ndattribute_data)
 }
 
 BOOST_AUTO_TEST_SUITE_END()
+/** \endcond */

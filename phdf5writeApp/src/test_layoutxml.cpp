@@ -1,4 +1,4 @@
-/*
+/** \cond
  * test_layoutxml.cpp
  *
  *  Created on: 26 Jan 2012
@@ -52,4 +52,4 @@ BOOST_AUTO_TEST_CASE( get_hdftree   )
 }
 
 BOOST_AUTO_TEST_SUITE_END()
-
+/** \endcond */

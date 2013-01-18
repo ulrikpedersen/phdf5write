@@ -1,4 +1,4 @@
-/*
+/** \cond
  * test_profiling.cpp
  *
  *  Created on: 14 Feb 2012
@@ -68,3 +68,4 @@ BOOST_AUTO_TEST_CASE(stamps)
 }
 
 BOOST_AUTO_TEST_SUITE_END()
+/** \endcond */

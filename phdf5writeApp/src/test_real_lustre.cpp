@@ -1,4 +1,4 @@
-/*
+/** \cond
  * test_real_lustre.cpp
  *
  *  Created on: 14 Feb 2012
@@ -270,4 +270,4 @@ int main(int argc, char *argv[])
     cout << "MAIN: Closing file" << endl;;
     ndh.h5_close();
 }
-
+/** \endcond */
