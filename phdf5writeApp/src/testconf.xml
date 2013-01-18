@@ -4,7 +4,8 @@
 <!--    <filename>/mnt/play01/up45/phdf/stripe4/phdftest_26.h5</filename>-->
 <!--    <filename>/mnt/play01/up45/phdf/largestripe4/phdftest_49.h5</filename> -->
 <!--    <filename>/mnt/play01/up45/stripe6/test_real_play01_1.h5</filename> -->
-    <filename>/mnt/play01/up45/stripe6/test_real_play01_11.h5</filename>
+<!--    <filename>/mnt/play01/up45/stripe6/test_real_play01_11.h5</filename> -->
+        <filename>/tmp/phdftesting.h5</filename>
     <chunking>
         <x>4096</x>
         <y>64</y>
@@ -14,7 +15,7 @@
         <x>4096</x>
         <y>256</y>
     </subframe>
-    <numframes>1000</numframes>
+    <numframes>16</numframes>
     <fillvalue>0</fillvalue>
     <collective>1</collective>
     <ioposix>0</ioposix>

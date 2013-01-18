@@ -10,7 +10,7 @@ module load dasc
 module unload dasc
 module load openmpi
 module load phdf5
-module load boost
+#module load boost
 module list
 echo $( which mpirun )
 num_processes=2
@@ -18,7 +18,8 @@ if [[ $1 ]] ; then
     num_processes=$1
 fi
 
-/home/up45/bin/rederr mpirun -np ${num_processes} \
+./rederr \
+$( which mpirun ) -np ${num_processes} \
     --mca btl sm,self,tcp \
 	--tag-output \
 	bin/linux-x86_64/test_mpi_ndarray_hdf5 \

@@ -18,11 +18,12 @@ if [[ $1 ]] ; then
     num_processes=$1
 fi
 
-host_file="labhosts"
+#host_file="labhosts"
+host_file="localhosts"
 script_path=$(pwd -P)
 
 time \
-rederr \
+./rederr \
 $( which mpirun ) -np ${num_processes} \
     --nooversubscribe \
     --mca btl sm,self,tcp \
