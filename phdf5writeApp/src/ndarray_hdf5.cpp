@@ -15,11 +15,7 @@ using namespace std;
 
 void print_arr (const char * msg, const hsize_t* sizes, size_t n);
 
-#ifdef H5_HAVE_PARALLEL
-	#define METADATA_NDIMS 2
-#else
-	#define METADATA_NDIMS 1
-#endif
+#define METADATA_NDIMS 2
 
 NDArrayToHDF5::NDArrayToHDF5()
 : h5file(H5I_INVALID_HID),rdcc_nslots(0),rdcc_nbytes(0) {
@@ -416,6 +412,11 @@ int NDArrayToHDF5::write_dataset(HdfDataset* dset, DatasetWriteParams_t *params)
     fullname = dset->get_full_name();
     size_t num_dimensions = params->dims_dset_size.size();
 
+    if (! H5Iis_valid(this->h5file)) {
+    	msg("ERROR: file ID is not valid (file not open)", true);
+    	return -1;
+    }
+
     h5_plist_dset_access = H5Pcreate(H5P_DATASET_ACCESS);
 
     if (params->chunk_cache_bytes > 0) {
@@ -430,10 +431,10 @@ int NDArrayToHDF5::write_dataset(HdfDataset* dset, DatasetWriteParams_t *params)
     }
 
     if (params->extendible) {
-        //smsg = "Extending "  + fullname + " to: ";
-        /*print_arr( smsg.c_str(),
+        smsg = "Extending "  + fullname + " to: ";
+        print_arr( smsg.c_str(),
         		WriteConfig::get_vec_ptr( params->dims_dset_size ),
-        		num_dimensions);*/
+        		num_dimensions);
         h5_err = H5Dset_extent( h5_dataset,
         		WriteConfig::get_vec_ptr( params->dims_dset_size ));
         if (h5_err < 0) {
@@ -878,6 +879,7 @@ hid_t NDArrayToHDF5::create_dataset_metadata(hid_t group, HdfDataset* dset)
     hsize_t dims[METADATA_NDIMS];
     hsize_t maxdims[METADATA_NDIMS];
     hsize_t chunkdims[METADATA_NDIMS];
+
     // If we're part of a larger MPI job (multiple processes)
     // then the metadata is in 2D tables.
     if (this->mpi_size > 0) {
@@ -902,7 +904,7 @@ hid_t NDArrayToHDF5::create_dataset_metadata(hid_t group, HdfDataset* dset)
     hid_t datatype = NDArrayToHDF5::from_phdf_to_hid_datatype(phdf_dtype);
 
     /* Modify dataset creation properties, i.e. enable chunking  */
-    print_arr("Metadata chunking: ", chunkdims, ndims);
+    //print_arr("Metadata chunking: ", chunkdims, ndims);
     H5Pset_chunk (dset_create_plist, ndims, chunkdims);
 
     dataspace = H5Screate_simple( ndims, dims, maxdims);

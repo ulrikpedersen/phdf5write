@@ -14,12 +14,12 @@ iocBoot_DEPEND_DIRS += $(filter %App,$(DIRS))
 
 ifeq ($(wildcard etc),etc)
 	include $(TOP)/etc/makeIocs/Makefile.iocs
-	UNINSTALL_DIRS += documentation/doxygen $(IOC_DIRS)
-	DIRS := $(DIRS) $(filter-out $(DIRS), $(wildcard etc))
+	#UNINSTALL_DIRS += documentation/doxygen $(IOC_DIRS)
+	#DIRS := $(DIRS) $(filter-out $(DIRS), $(wildcard etc))
 endif
 
 # Comment out the following line to disable building of example iocs
-DIRS := $(DIRS) $(filter-out $(DIRS), $(wildcard iocs))
+#DIRS := $(DIRS) $(filter-out $(DIRS), $(wildcard iocs))
 
 include $(TOP)/configure/RULES_TOP
 

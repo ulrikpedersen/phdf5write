@@ -6,6 +6,13 @@
 
 #include <hdf5.h>
 
+#include <osiSock.h>
+
+#include "ByteBuffer2.h"
+#include "PVDataTiny.h"
+#include "PrintHandler.h"
+#include "Channel.h"
+
 #include "server.hpp"
 #include "ndarray_hdf5.h"
 

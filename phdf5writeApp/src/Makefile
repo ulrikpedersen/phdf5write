@@ -4,16 +4,17 @@ include $(TOP)/configure/CONFIG
 
 
 #########   For RHEL5 64 bit   ####################################
-#BOOSTDIR=/dls_sw/work/common/boost/1.48.0/64
-#MPIDIR=/dls_sw/apps/openmpi/1.4.3/64/
-#HDF5DIR=/dls_sw/apps/hdf5/1.8.7/openMPI/64/
-#HDF5LIB=hdf5
-#hdf5_DIR=$(HDF5DIR)/lib
+BOOSTDIR=/dls_sw/work/common/boost/1.48.0/64
+MPIDIR=/dls_sw/apps/openmpi/1.4.3/64/
+HDF5DIR=/dls_sw/apps/hdf5/1.8.7/openMPI/64/
+#HDF5DIR=/dls_sw/apps/hdf5/1.8.7/64/
+HDF5LIB=hdf5
+hdf5_DIR=$(HDF5DIR)/lib
 ######### End of RHEL5 defs #######################################
 
 ################# RHEL6 64bit #####################################
-BOOSTDIR=/dls_sw/prod/tools/RHEL6-x86_64/boost/1-48-0/prefix
-SZDIR=/dls_sw/prod/tools/RHEL6-x86_64/szip/2-1/prefix
+#BOOSTDIR=/dls_sw/prod/tools/RHEL6-x86_64/boost/1-48-0/prefix
+#SZDIR=/dls_sw/prod/tools/RHEL6-x86_64/szip/2-1/prefix
 
 #==== For non-parallel (unit testing) use these definitions ========
 #HDF5DIR=/dls_sw/prod/tools/RHEL6-x86_64/hdf5/1-8-9/prefix
@@ -21,10 +22,10 @@ SZDIR=/dls_sw/prod/tools/RHEL6-x86_64/szip/2-1/prefix
 #hdf5_DIR=$(HDF5DIR)/lib
 
 #==== OR for parallel MPI applications use these definitions =======
-MPIDIR=/dls_sw/prod/tools/RHEL6-x86_64/openmpi/1-4-5/prefix
-HDF5DIR=/dls_sw/prod/tools/RHEL6-x86_64/phdf5/1-8-9/prefix
-HDF5LIB=phdf5
-phdf5_DIR=$(HDF5DIR)/lib
+#MPIDIR=/dls_sw/prod/tools/RHEL6-x86_64/openmpi/1-4-5/prefix
+#HDF5DIR=/dls_sw/prod/tools/RHEL6-x86_64/phdf5/1-8-9/prefix
+#HDF5LIB=phdf5
+#phdf5_DIR=$(HDF5DIR)/lib
 
 ################ End of RHEL6 defs ##################################
 

@@ -8,7 +8,8 @@ WORK=/dls_sw/work/R3.14.11/support
 ASYN=$(SUPPORT)/asyn/4-19
 AREADETECTOR=$(SUPPORT)/areaDetector/1-8beta6-dls2
 #ADTRANSFER=$(SUPPORT)/adtransfer/1-1
-ADTRANSFER=/home/up45/workspace/adtransfer
+#ADTRANSFER=/home/up45/workspace/adtransfer
+ADTRANSFER=$(WORK)/adtransfer
 
 # EPICS_BASE usually appears last so other apps can override stuff:
 EPICS_BASE=/dls_sw/epics/R3.14.11/base
