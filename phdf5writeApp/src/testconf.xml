@@ -5,7 +5,7 @@
 <!--    <filename>/mnt/play01/up45/phdf/largestripe4/phdftest_49.h5</filename> -->
 <!--    <filename>/mnt/play01/up45/stripe6/test_real_play01_1.h5</filename> -->
 <!--    <filename>/mnt/play01/up45/stripe6/test_real_play01_11.h5</filename> -->
-        <filename>/tmp/phdftesting.h5</filename>
+        <filename>/dls/i13/epics/excaliburtmp/phdftesting.h5</filename>
     <chunking>
         <x>4096</x>
         <y>64</y>
