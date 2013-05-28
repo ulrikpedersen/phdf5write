@@ -6,27 +6,26 @@
 # First some module work to setup the environment
 # This is a RHEL6 configuration
 
-module load dasc
-module unload dasc
-module load openmpi
-module load phdf5
-module list
+MPIDIR=/dls_sw/prod/tools/RHEL6-x86_64/openmpi/1-4-5/prefix
 
-echo $( which mpirun )
+echo $MPIDIR/bin/mpirun
 num_processes=2
 if [[ $1 ]] ; then 
     num_processes=$1
 fi
 
 #host_file="labhosts"
-host_file="localhosts"
+host_file="targethosts"
+#host_file="localhosts"
+#host_file=officehosts
 script_path=$(pwd -P)
 
 time \
 ./rederr \
-$( which mpirun ) -np ${num_processes} \
+$MPIDIR/bin/mpirun -np ${num_processes} \
     --nooversubscribe \
     --mca btl sm,self,tcp \
+    --mca btl_tcp_if_include em1 \
     --tag-output \
     --hostfile ${host_file} \
     --bynode \
