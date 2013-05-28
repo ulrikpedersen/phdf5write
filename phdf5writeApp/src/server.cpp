@@ -43,7 +43,7 @@ void Server::signal_open_cmd(std::string& filename, int mode)
     cout <<   "                 |_ Receive buf: " << this->recv_buffer << endl;
     cout <<   "                  |_ Open file: " << filename << endl;
     if (this->recv_buffer != NULL) {
-        this->recv_buffer->report(11);
+        //this->recv_buffer->report(11);
         if (this->hdf) this->hdf->h5_configure(*this->recv_buffer);
     }
 

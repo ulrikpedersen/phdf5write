@@ -116,14 +116,14 @@ int NDArrayToHDF5::h5_open(const char *filename)
     hid_t file_access_plist = H5Pcreate(H5P_FILE_ACCESS);
 
 #ifdef H5_HAVE_PARALLEL
-    msg("--------- HURRAH! WE ARE PARALLEL! ---------");
+    //msg("--------- HURRAH! WE ARE PARALLEL! ---------");
     int flag = 0;
     MPI_Initialized(&flag);
     if (flag != true) {
-        msg("---- but sadly MPI has *not* been initialized!");
+        msg("---- PARALLEL: but sadly MPI has *not* been initialized!");
 
     } else {
-        msg("---- and MPI has been initialized!");
+        msg("---- HURRAH! WE ARE PARALLEL: and MPI has been initialized!");
 
         // Configure the file access property list to use MPI communicator
         if (this->conf.is_io_mpiposix()) {
