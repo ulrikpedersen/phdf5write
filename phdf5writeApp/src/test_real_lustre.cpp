@@ -103,7 +103,10 @@ void util_fill_ndarr_dims(NDArray &ndarr, unsigned long int *sizes, int ndims)
 struct Fixture{
     std::string fname;
     std::vector<NDArray *> frames;
-    unsigned long int sizes[2], chunks[3], dsetdims[3];
+    unsigned long int sizes[2];
+    unsigned long int chunks[3];
+    unsigned long int dsetdims[3];
+    unsigned long int i;
     int numframes;
     int fill_value;
     int zero;
@@ -170,7 +173,9 @@ struct Fixture{
         cout << "MAIN: chunks: " << chunks[0] << " " << chunks[1] << " " << chunks[2]<<endl;
         cout << "MAIN: fill value: " << fill_value<<endl;
 
-        for (int i=0; i<chunks[0]; i++)
+        for (   i=0UL;
+        		i<chunks[0];
+        		i++)
         {
             NDArray *pnd = new NDArray();
             pnd->dataType = NDUInt16;

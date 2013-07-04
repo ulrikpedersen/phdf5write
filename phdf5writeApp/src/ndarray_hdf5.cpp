@@ -79,7 +79,12 @@ void NDArrayToHDF5::h5_configure(NDArray& ndarray)
 
     // Set the detector datatype based on the NDArray datatype
     HdfGroup::MapDatasets_t detector_dsets;
-    this->layout.get_hdftree()->find_dsets(phdf_detector, detector_dsets);
+    HdfRoot * hdfTreeRoot = this->layout.get_hdftree();
+    if (hdfTreeRoot == NULL) {
+    	msg("ERROR: no hdf tree root configured this will end badly!", true);
+    } else {
+    	hdfTreeRoot->find_dsets(phdf_detector, detector_dsets);
+    }
     HdfGroup::MapDatasets_t::iterator it_dsets;
     for (it_dsets = detector_dsets.begin(); it_dsets != detector_dsets.end(); ++it_dsets)
     {
@@ -237,7 +242,18 @@ int NDArrayToHDF5::h5_write(NDArray& ndarray)
     }
 
     this->conf.next_frame(ndarray);
-    //msg(this->conf._str_());
+    msg(this->conf._str_());
+
+    // debug
+    NDAttribute *roi1;
+    epicsInt32 roi1_val=0;
+
+    roi1 = ndarray.pAttributeList->find("h5_roi_origin_0");
+    if (roi1 != NULL) {
+    	roi1->getValue(NDAttrInt32, &roi1_val, sizeof(epicsInt32));
+    	cout << " origin offset: " << roi1_val << endl;
+    }
+
 
     HdfDataset *dset;
     HdfGroup::MapDatasets_t detector_dsets;
@@ -405,7 +421,7 @@ int NDArrayToHDF5::write_dataset(HdfDataset* dset, DatasetWriteParams_t *params)
     hid_t h5_mem_dataspace = -1;
     hid_t h5_plist_xfer = -1;
     hid_t h5_err = -1;
-    //vec_ds_t dims_frame;
+    vec_ds_t dims_frame;
     hid_t dset_dtype;
     string smsg;
 
@@ -466,12 +482,12 @@ int NDArrayToHDF5::write_dataset(HdfDataset* dset, DatasetWriteParams_t *params)
     }
 
     // Select the slab that we want to write to in the file
-    //dims_frame = params->dims_frame_size;
-    //dims_frame.insert(dims_frame.begin(), 1);
-    //smsg = "select_hyperslab "  + fullname + " start: ";
-    //print_arr(smsg.c_str(), WriteConfig::get_vec_ptr( params->dims_offset ), params->dims_offset.size());
-    //smsg = "select_hyperslab "  + fullname + " count: ";
-    //print_arr(smsg.c_str(), WriteConfig::get_vec_ptr( params->dims_frame_size ), params->dims_frame_size.size());
+    dims_frame = params->dims_frame_size;
+    dims_frame.insert(dims_frame.begin(), 1);
+    smsg = "select_hyperslab "  + fullname + " start: ";
+    print_arr(smsg.c_str(), WriteConfig::get_vec_ptr( params->dims_offset ), params->dims_offset.size());
+    smsg = "select_hyperslab "  + fullname + " count: ";
+    print_arr(smsg.c_str(), WriteConfig::get_vec_ptr( params->dims_frame_size ), params->dims_frame_size.size());
     h5_err = H5Sselect_hyperslab( h5_file_dataspace, H5S_SELECT_SET,
     							  WriteConfig::get_vec_ptr( params->dims_offset ), NULL,
                                   WriteConfig::get_vec_ptr( params->dims_frame_size ), NULL);

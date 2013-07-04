@@ -33,7 +33,7 @@ void Server::signal_client_connect(int status)
 
 void Server::signal_waiting_for_frame()
 {
-    this->msg("signal_waiting_for_frame()");
+    //this->msg("signal_waiting_for_frame()");
 }
 
 void Server::signal_open_cmd(std::string& filename, int mode)
@@ -78,13 +78,13 @@ void Server::signal_got_frame(NDArray *frame)
 
 void Server::signal_sending_response()
 {
-    this->msg("signal_sending_response()");
+    //this->msg("signal_sending_response()");
 }
 
 
 void Server::signal_completed_response(int status)
 {
-    this->msg("signal_completed_response()");
+    //this->msg("signal_completed_response()");
 }
 
 

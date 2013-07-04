@@ -51,7 +51,7 @@ int LayoutXML::load_xml(const char * filename)
 
     this->xmlreader = xmlReaderForFile(filename, NULL, 0);
     if (this->xmlreader == NULL) {
-        cerr << "Unable to open XML file: " << filename << endl;
+        cerr << "ERROR: Unable to open XML file: " << filename << endl;
         this->xmlreader = NULL;
         return -1;
     }
@@ -66,9 +66,12 @@ int LayoutXML::load_xml(const char * filename)
     }
 
     // If no elements were created then we've failed...
-    if (this->ptr_tree == NULL) return -1;
+    if (this->ptr_tree == NULL) {
+    	cerr << "ERROR: LayouXML::load_xml() Unable to create the Root tree!" << endl;
+    	return -1;
+    }
 
-    //cout << "Tree shape: " << this->ptr_tree->_str_() << endl;
+    cout << "XML layout tree shape: " << this->ptr_tree->_str_() << endl;
     return ret;
 }
 
