@@ -14,7 +14,7 @@
 
 class Server: public AdTransferServer {
 public:
-    Server(int port):AdTransferServer(port),port(port),hdf(NULL){ log = log4cxx::Logger::getLogger("NDArrayToHDF5"); };
+    Server(int port):AdTransferServer(port),port(port),hdf(NULL){ log = log4cxx::Logger::getLogger("Server"); };
     virtual ~Server(){};
     void register_hdf_writer(NDArrayToHDF5 *hdf) {this->hdf = hdf;};
 

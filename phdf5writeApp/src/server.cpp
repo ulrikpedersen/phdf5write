@@ -31,7 +31,7 @@ void Server::signal_client_connect(int status)
 
 void Server::signal_waiting_for_frame()
 {
-    //LOG4CXX_INFO(log, "signal_waiting_for_frame()");
+    LOG4CXX_TRACE(log, "signal_waiting_for_frame()");
 }
 
 int Server::signal_open_cmd(std::string& filename, int mode)
@@ -95,7 +95,7 @@ void Server::signal_sending_response()
 
 void Server::signal_completed_response(int status)
 {
-    LOG4CXX_TRACE(log, "signal_completed_response()");
+    LOG4CXX_TRACE(log, "signal_completed_response(" << status << ")");
 }
 
 

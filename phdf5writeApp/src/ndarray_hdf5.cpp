@@ -539,7 +539,7 @@ int NDArrayToHDF5::write_dataset(HdfDataset* dset, DatasetWriteParams_t *params)
     LOG4CXX_TRACE(log, "Transfermode COLLECTIVE: " << this->conf.is_io_collective() );
 #endif
 
-    LOG4CXX_INFO(log, "Writing to: " << fullname << " [" << params->dims_offset[2] << "]");
+    LOG4CXX_INFO(log, "Writing to: " << fullname << " [" << params->dims_offset[0] << "]");
     h5_err = H5Dwrite( h5_dataset, h5_datatype, h5_mem_dataspace,
                        h5_file_dataspace, h5_plist_xfer, params->pdata);
     if (h5_err < 0) {

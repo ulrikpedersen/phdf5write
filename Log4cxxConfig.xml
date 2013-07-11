@@ -26,6 +26,7 @@
   </root>
 
   <!-- Specify the level for some specific categories -->
+  <!--   priority can be error, warn, info, debug, trace -->
   <category name="main" >
         <priority value ="info" />
         <appender-ref ref="appxConsoleAppender"/>
@@ -42,6 +43,11 @@
 
   <category name="LayoutXML" >
         <priority value ="info" />
+        <appender-ref ref="appxConsoleAppender"/>
+  </category>
+
+  <category name="Server" >
+        <priority value ="debug" />
         <appender-ref ref="appxConsoleAppender"/>
   </category>
 
