@@ -95,7 +95,7 @@ private:
     bool extendible;
     bool mpiposix;
     bool iocollective;
-    const HSIZE_T alignment;
+    HSIZE_T alignment;
     int alloc_time;
 
     int proc_rank;

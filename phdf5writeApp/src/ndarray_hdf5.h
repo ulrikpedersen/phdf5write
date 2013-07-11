@@ -60,6 +60,7 @@ public:
     int h5_open(const char *filename);
     int h5_write(NDArray &ndarray);
     int h5_close();
+    int h5_reset();
     WriteConfig get_conf();
     WriteConfig& get_conf_ref();
 

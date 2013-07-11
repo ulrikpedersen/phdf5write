@@ -24,6 +24,7 @@ public:
     virtual void signal_waiting_for_frame();
     virtual int signal_open_cmd(std::string& filename, int mode);
     virtual int signal_close_cmd();
+    virtual int signal_reset_cmd();
     virtual int signal_got_frame(NDArray *frame);
     virtual void signal_sending_response();
     virtual void signal_completed_response(int status);

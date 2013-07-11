@@ -171,8 +171,7 @@ int NDArrayToHDF5::h5_open(const char *filename)
     }
     */
 
-    //HSIZE_T alignment = this->conf.get_alignment();
-    HSIZE_T alignment = 1024*1024;
+    HSIZE_T alignment = this->conf.get_alignment();
     LOG4CXX_DEBUG(log, "Setting file alignment: " << alignment );
     hdfcode = H5Pset_alignment( file_access_plist, 64*1024, alignment);
     if (hdfcode < 0) {
@@ -297,10 +296,16 @@ int NDArrayToHDF5::h5_write(NDArray& ndarray)
 
 int NDArrayToHDF5::h5_close()
 {
-    //LOG4CXX_TRACE(log, "h5_close()");
+    LOG4CXX_TRACE(log, "h5_close()");
     int retcode = 0;
     herr_t hdferr = 0;
     char fname[512] = "\0";
+
+    if (H5Iis_valid(this->h5file) == false) {
+    	LOG4CXX_ERROR(log, "h5file ID is not valid. File or library not open.");
+    	this->h5file = H5I_INVALID_HID;
+    	retcode = -1;
+    }
 
     if (this->h5file != H5I_INVALID_HID) {
     	this->write_ndattributes();
@@ -311,9 +316,9 @@ int NDArrayToHDF5::h5_close()
         LOG4CXX_DEBUG(log, "Remaining open objects: "
         	              << H5Fget_obj_count(this->h5file, H5F_OBJ_DATASET | H5F_OBJ_GROUP | H5F_OBJ_DATATYPE | H5F_OBJ_ATTR));
 
-        LOG4CXX_DEBUG(log, "Flushing file");
-        hdferr = H5Fflush(this->h5file, H5F_SCOPE_LOCAL);
-        LOG4CXX_DEBUG(log, "Done flushing: " << hdferr);
+//        LOG4CXX_DEBUG(log, "Flushing file");
+//        hdferr = H5Fflush(this->h5file, H5F_SCOPE_LOCAL);
+//        LOG4CXX_DEBUG(log, "Done flushing: " << hdferr);
 
         LOG4CXX_INFO(log, "Closing file: " << fname);
         hdferr = H5Fclose(this->h5file);
@@ -326,6 +331,18 @@ int NDArrayToHDF5::h5_close()
         }
     }
     return retcode;
+}
+
+int NDArrayToHDF5::h5_reset()
+{
+    herr_t hdfreturn;
+    LOG4CXX_INFO(log, "RESETTING! Closing down HDF5 library");
+    hdfreturn = H5close();
+    LOG4CXX_INFO(log, "Closed down HDF5 library: " << hdfreturn );
+    LOG4CXX_INFO(log, "Reopening HDF5 library");
+    hdfreturn = H5open();
+    LOG4CXX_INFO(log, "Opened HDF5 library: " << hdfreturn );
+    return hdfreturn;
 }
 
 

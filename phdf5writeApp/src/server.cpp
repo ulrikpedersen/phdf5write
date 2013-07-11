@@ -63,6 +63,17 @@ int Server::signal_close_cmd()
     return retcode;
 }
 
+int Server::signal_reset_cmd()
+{
+    int retcode = 0;
+    LOG4CXX_TRACE(log, "signal_reset_cmd()");
+    if (this->hdf) retcode = this->hdf->h5_reset();
+    if (retcode < 0) {
+        LOG4CXX_WARN(log, "Problem resetting hdf5 library");
+    }
+    return retcode;
+}
+
 
 int Server::signal_got_frame(NDArray *frame)
 {

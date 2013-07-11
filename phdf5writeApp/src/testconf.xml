@@ -6,7 +6,7 @@
 <!--    <filename>/mnt/play01/up45/stripe6/test_real_play01_1.h5</filename> -->
 <!--    <filename>/mnt/play01/up45/stripe6/test_2.h5</filename> -->
 <!--     <filename>/dls/i13/epics/excaliburtmp/phdftesting.h5</filename> -->
- <filename>/mnt/lustre01/i13-1/data/2013/cm5938-3/tmp/benchmark/stripe8/excalibur_18.h5</filename>
+ <filename>/mnt/lustre01/i13-1/data/2013/cm5938-3/tmp/benchmark/stripe8/excalibur_19.h5</filename>
 <!--<filename>/mnt/lustre03/testdir/excalibur/excalibur_01.h5</filename>-->
     <chunking>
         <x>2048</x>
@@ -17,7 +17,7 @@
         <x>2048</x>
         <y>256</y>
     </subframe>
-    <numframes>20000</numframes>
+    <numframes>100</numframes>
     <fillvalue>0</fillvalue>
     <collective>0</collective>
     <ioposix>0</ioposix>

@@ -255,7 +255,7 @@ DimensionDesc WriteConfig::min_chunk_cache()
 
 HSIZE_T WriteConfig::get_alignment()
 {
-    return this->dim_chunk.data_num_bytes();
+    return this->alignment;
 }
 
 /** Calculate the number of 'slots' in the cache.
@@ -324,6 +324,7 @@ void WriteConfig::_copy(const WriteConfig& src)
 {
     memcpy(this->ptr_fill_value, src.ptr_fill_value, FILL_VALUE_SIZE);
 
+    this->alignment = src.alignment;
     this->dim_chunk = src.dim_chunk;
     this->dim_roi_frame = src.dim_roi_frame;
     this->dim_full_dataset = src.dim_full_dataset;

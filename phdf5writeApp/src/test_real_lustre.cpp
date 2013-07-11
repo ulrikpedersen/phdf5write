@@ -288,10 +288,17 @@ int main(int argc, char *argv[])
         pndarray->pAttributeList->add("h5_roi_origin_0", "offset 0", NDAttrUInt32, (void*)&i );
         //pndarray->pAttributeList->report(100);
         ndh.h5_write( *pndarray );
-
-
-
     }
+
+
+    // Testing the H5close functions to shut down the hdf library
+//    herr_t hdfreturn;
+//    LOG4CXX_INFO(log, "Closing down HDF5 library");
+//    hdfreturn = H5close();
+//    LOG4CXX_INFO(log, "Closed down HDF5 library: " << hdfreturn );
+//    LOG4CXX_INFO(log, "Reopening HDF5 library");
+//    hdfreturn = H5open();
+//    LOG4CXX_INFO(log, "Opened HDF5 library: " << hdfreturn );
 
     LOG4CXX_DEBUG(log, "Closing file");
     ndh.h5_close();
