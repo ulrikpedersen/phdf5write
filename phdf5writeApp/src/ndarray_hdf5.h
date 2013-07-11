@@ -13,6 +13,8 @@
 #include <string>
 
 #include <hdf5.h>
+#include <log4cxx/logger.h>
+
 
 #include "dimension.h"
 #include "layoutxml.h"
@@ -69,6 +71,8 @@ public:
 
 
 protected:
+    void print_arr (const char * msg, const hsize_t* sizes, size_t n);
+    std::string str_arr (const char * msg, const hsize_t* sizes, size_t n);
     // print error and debug messages by default
     virtual void msg(std::string text, bool error=false)
         { msg(text.c_str(), error);};
@@ -80,6 +84,7 @@ protected:
         };
 
 private:
+    log4cxx::LoggerPtr log;
     int mpi_rank;
     int mpi_size;
     int create_file_layout();

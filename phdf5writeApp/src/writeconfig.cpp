@@ -30,14 +30,14 @@ using namespace std;
  * for all options.
  */
 WriteConfig::WriteConfig()
-:alignment(H5_DEFAULT_ALIGN)
+:alignment(H5_DEFAULT_ALIGN), alloc_time(0)
 {
     this->_default_init();
 }
 
 
 WriteConfig::WriteConfig(NDArray& ndarray, int mpi_rank, int mpi_proc)
-:alignment(H5_DEFAULT_ALIGN)
+:alignment(H5_DEFAULT_ALIGN), alloc_time(0)
 {
     this->_default_init();
     this->proc_rank_size(mpi_rank, mpi_proc);
@@ -45,7 +45,7 @@ WriteConfig::WriteConfig(NDArray& ndarray, int mpi_rank, int mpi_proc)
 }
 
 WriteConfig::WriteConfig(const WriteConfig& src)
-:alignment(H5_DEFAULT_ALIGN)
+:alignment(H5_DEFAULT_ALIGN), alloc_time(0)
 {
     this->_default_init();
     this->_copy(src);
@@ -87,7 +87,7 @@ void WriteConfig::proc_rank_size(int rank, int size)
 
     if (size < 1) this->proc_size = 1;
     else this->proc_size = size;
-    //cout << "WriteConfig: setting rank=" << this->proc_rank << " proc_size=" << this->proc_size << endl;
+    //LOG4CXX_DEBUG(log,  "WriteConfig: setting rank=" << this->proc_rank << " proc_size=" << this->proc_size );
 }
 
 int WriteConfig::num_extra_dims()
@@ -127,9 +127,9 @@ void WriteConfig::inc_position(NDArray& ndarray)
     if (ret == this->dim_full_dataset.num_dimensions()) {
         // Origins/Offsets from the NDArray attribute if they are available for every dimension.
         this->origin = attr_origins;
-        //cout << "GOT ROI offset from attributes!" << endl;
+        //LOG4CXX_DEBUG(log,  "GOT ROI offset from attributes!" );
     } else {
-        cout << "ATTRIBUTES NOT LISTING ROI" << endl;
+        LOG4CXX_DEBUG(log,  "ATTRIBUTES NOT LISTING ROI" );
         // if origin not available as NDAttr for every dimension then
         // we increment manually based on some assumptions (see comments below)
 
@@ -166,10 +166,10 @@ void WriteConfig::inc_position(NDArray& ndarray)
                     // Normally we will reset the origin here and next iteration will
                     // increment the next dim -except if this is the last dimension, in
                     // which case we dont reset because we could end up overwriting data.
-                    cout << "    --set full dimsize: " << idim << " " << this->dim_full_dataset << endl;
+                    LOG4CXX_DEBUG(log,  "    --set full dimsize: " << idim << " " << this->dim_full_dataset );
                     if (it_origen == this->origin.begin() + num_extra_dims) {
                         this->dim_full_dataset.set_dimension_size(idim, full_dset_dims.at(idim) + 1);
-                        cout << " set full dimsize: " << idim << " " << this->dim_full_dataset << endl;
+                        LOG4CXX_DEBUG(log,  " set full dimsize: " << idim << " " << this->dim_full_dataset );
                         break;
                     }
                     else *it_origen=0;
@@ -231,7 +231,7 @@ long int WriteConfig::istorek()
     int istore_k = 0;
     int num_chunks_dset = 0;
     num_chunks_dset = this->dim_chunk.num_fits( this->dim_full_dataset, true);
-    cout << "istorek num_chunks_dset: " << num_chunks_dset << endl;
+    LOG4CXX_DEBUG(log,  "istorek num_chunks_dset: " << num_chunks_dset );
     // if invalid (i.e. the dataset size is not known or too small) we return error
     if (num_chunks_dset <= 0) return -1;
 
@@ -266,14 +266,14 @@ HSIZE_T WriteConfig::get_alignment()
  */
 unsigned long int WriteConfig::cache_num_slots( DimensionDesc& cache_block )
 {
-    cout << "num_fits in cache block" << endl;
+    LOG4CXX_DEBUG(log,  "num_fits in cache block" );
 
     int num_chunks = this->dim_chunk.num_fits(cache_block, true);
     if (num_chunks <= 0) return 0; // a fault: the cache_block is smaller than the chunk dimensions
 
     unsigned long int start_range =  10*num_chunks;
     unsigned long int end_range   = 100*num_chunks;
-    cout << "start_range: " << start_range << endl;
+    LOG4CXX_DEBUG(log,  "start_range: " << start_range );
     vector<unsigned int long> range (end_range-start_range, 0);
 
     // Range of numbers from 10 to 100 times the number of chunks in the cache block
@@ -294,13 +294,13 @@ string WriteConfig::_str_()
     out << "<WriteConfig:";
     //out << " filename=  " << this->file_name();
     out << " rank=" << this->proc_rank << " nproc=" << this->proc_size;
-    out << "\n\tROI:    " << this->dim_roi_frame;
-    out << "\n\tchunk:  " << this->dim_chunk;
-    out << "\n\tdset:   " << this->dim_full_dataset;
-    out << "\n\tactive: " << this->dim_active_dataset;
-    out << "\n\toffset: " << DimensionDesc(this->origin, this->dim_roi_frame.element_size)._str_();
-    out << "\n\tposix=" << this->mpiposix << " collective=" << this->iocollective << " extendible=" << this->extendible;
-    out << "\n /WriteConfig>";
+    out << "\n\t\t\tROI:    " << this->dim_roi_frame;
+    out << "\n\t\t\tchunk:  " << this->dim_chunk;
+    out << "\n\t\t\tdset:   " << this->dim_full_dataset;
+    out << "\n\t\t\tactive: " << this->dim_active_dataset;
+    out << "\n\t\t\toffset: " << DimensionDesc(this->origin, this->dim_roi_frame.element_size)._str_();
+    out << "\n\t\t\tposix=" << this->mpiposix << " collective=" << this->iocollective << " extendible=" << this->extendible;
+    out << "\n\t\t /WriteConfig>";
     return out.str();
 }
 
@@ -311,10 +311,11 @@ string WriteConfig::_str_()
  * ======================================================================= */
 void WriteConfig::_default_init()
 {
+	log = log4cxx::Logger::getLogger("WriteConfig");
     this->ptr_fill_value = (void*)calloc(FILL_VALUE_SIZE, sizeof(char));
     this->proc_rank = 0;
     this->proc_size = 1;
-    this->iocollective = true;
+    this->iocollective = false;
     this->mpiposix = false;
     this->extendible = true;
 }
@@ -389,6 +390,11 @@ int WriteConfig::get_attr_fill_val(NDAttributeList *ptr_attr_list)
     return 0;
 }
 
+int WriteConfig::get_alloc_time()
+{
+	return this->alloc_time;
+}
+
 /**
  * Parse a a series of attributes formatted: "h5_nnnn_%d"
  */
@@ -403,7 +409,7 @@ int WriteConfig::get_attr_array(string& attr_name, NDAttributeList *ptr_attr_lis
         stringstream ss_attr(stringstream::out);
         ss_attr << attr_name << i;
         retcode = this->get_attr_value(ss_attr.str(), ptr_attr_list, &attr_value);
-        //cout << "get_attr_values (" << ss_attr.str() << ")return: " << attr_value << endl;
+        //LOG4CXX_DEBUG(log,  "get_attr_values (" << ss_attr.str() << ")return: " << attr_value );
         if (retcode >= 0) dst.push_back((unsigned long)attr_value);
         else break;
         i++;
@@ -450,7 +456,7 @@ void WriteConfig::parse_ndarray_attributes(NDArray& ndarray)
         this->dim_chunk = DimensionDesc(tmpdims, this->dim_roi_frame.element_size);
 
     }
-    //cout << "Chunk size: " << this->dim_chunk << endl;
+    //LOG4CXX_DEBUG(log,  "Chunk size: " << this->dim_chunk );
 
     // Get the full dataset size from the NDArray attributes
     attr_name = ATTR_DSET_SIZE;
@@ -459,7 +465,7 @@ void WriteConfig::parse_ndarray_attributes(NDArray& ndarray)
     if (ret > 0) {
         this->dim_full_dataset = DimensionDesc(tmpdims, this->dim_roi_frame.element_size);
     }
-    //cout << "full dataset: " << this->dim_full_dataset << endl;
+    //LOG4CXX_DEBUG(log,  "full dataset: " << this->dim_full_dataset );
 
     // Configure the current active dataset with the frame dimensions and the
     // additional dimensions all set to 1
@@ -470,13 +476,13 @@ void WriteConfig::parse_ndarray_attributes(NDArray& ndarray)
         vec_act_dset.insert(vec_act_dset.begin(), nextradims, 1);
         this->dim_active_dataset = DimensionDesc(vec_act_dset, this->dim_roi_frame.element_size);
     }
-    //cout << this->dim_active_dataset << endl;
+    //LOG4CXX_DEBUG(log,  this->dim_active_dataset );
 
     /* Collect the fill value from the ndarray attributes */
     ret = this->get_attr_fill_val(list);
-    //cout << "get_attr_fill_val returns: " << ret << " value: " << *((unsigned long*)this->ptr_fill_value) << endl;
+    //LOG4CXX_DEBUG(log,  "get_attr_fill_val returns: " << ret << " value: " << *((unsigned long*)this->ptr_fill_value) );
 
-    //cout << *this << endl;
+    //LOG4CXX_DEBUG(log,  *this );
 }
 
 int WriteConfig::get_attr_value(const string& attr_name, NDAttributeList *ptr_attr_list, int *attr_value)
@@ -484,7 +490,7 @@ int WriteConfig::get_attr_value(const string& attr_name, NDAttributeList *ptr_at
     long int retval = 0;
     int retcode = 0;
     NDAttribute *ptr_ndattr;
-    //cout << "getting attribute: " << attr_name << endl;
+    //LOG4CXX_DEBUG(log,  "getting attribute: " << attr_name );
     ptr_ndattr = ptr_attr_list->find(attr_name.c_str());
     if (ptr_ndattr == NULL) return -1;
     if (ptr_ndattr->dataType ==  NDAttrString ) return -1;

@@ -15,6 +15,7 @@ include $(TOP)/configure/CONFIG
 ################# RHEL6 64bit #####################################
 BOOSTDIR=/dls_sw/prod/tools/RHEL6-x86_64/boost/1-48-0/prefix
 SZDIR=/dls_sw/prod/tools/RHEL6-x86_64/szip/2-1/prefix
+LOG4CXXDIR=/dls_sw/prod/tools/RHEL6-x86_64/log4cxx/0-10-0/prefix
 
 #==== For non-parallel (unit testing) use these definitions ========
 #HDF5DIR=/dls_sw/prod/tools/RHEL6-x86_64/hdf5/1-8-9/prefix
@@ -37,6 +38,7 @@ mpi_cxx_DIR=$(MPIDIR)/lib
 mpi_DIR=$(MPIDIR)/lib
 open-rte_DIR=$(MPIDIR)/lib
 open-pal_DIR=$(MPIDIR)/lib
+log4cxx_DIR=$(LOG4CXXDIR)/lib
 
 # C++ compiler flags found by running the command: h5pcc -show
 USR_CXXFLAGS += -D_FILE_OFFSET_BITS=64 -D_LARGEFILE_SOURCE -D_LARGEFILE64_SOURCE
@@ -48,6 +50,7 @@ HOST_OPT=NO
 # This can be forced by using USR_CXXFLAGS instead of USR_INCLUDES
 #USR_INCLUDES += -I$(HDF5DIR)/include
 USR_CXXFLAGS += -I$(HDF5DIR)/include
+USR_CXXFLAGS += -I$(LOG4CXXDIR)/include 
 
 # Point to libxml2 header files
 USR_INCLUDES += -I/usr/include/libxml2
@@ -68,6 +71,7 @@ test_mpi_ndarray_hdf5_LIBS += boost_unit_test_framework
 test_mpi_ndarray_hdf5_LDFLAGS += -L$(BOOSTDIR)/lib
 test_mpi_ndarray_hdf5_LIBS += mpi_cxx mpi open-rte open-pal 
 test_mpi_ndarray_hdf5_SYS_LIBS += xml2 dl nsl util m dl z
+test_mpi_ndarray_hdf5_LIBS += log4cxx
 test_mpi_ndarray_hdf5_LIBS +=  $(HDF5LIB) sz
 
 PROD_IOC += test_real_lustre
@@ -79,6 +83,7 @@ test_real_lustre_LIBS += adtransferPlugin asyn ADBase NDPlugin Com
 #test_real_lustre_LDFLAGS += -L$(BOOSTDIR)/lib
 test_real_lustre_LIBS += mpi_cxx mpi open-rte open-pal 
 test_real_lustre_SYS_LIBS += xml2 dl nsl util m dl z
+test_real_lustre_LIBS += log4cxx
 test_real_lustre_LIBS +=  $(HDF5LIB) sz
 else
 
@@ -88,6 +93,7 @@ test_dimension_SRCS_DEFAULT += test_dimension.cpp
 test_dimension_OBJS += dimension
 test_dimension_LIBS += adtransferPlugin asyn ADBase NDPlugin Com
 test_dimension_LIBS += boost_unit_test_framework
+test_dimension_LIBS += log4cxx
 test_dimension_LDFLAGS += -L$(BOOSTDIR)/lib
 
 PROD_IOC += test_writeconfig
@@ -96,6 +102,7 @@ test_writeconfig_SRCS_DEFAULT += test_writeconfig.cpp
 test_writeconfig_OBJS += dimension writeconfig
 test_writeconfig_LIBS += adtransferPlugin asyn ADBase NDPlugin Com
 test_writeconfig_LIBS += boost_unit_test_framework
+test_writeconfig_LIBS += log4cxx
 test_writeconfig_LDFLAGS += -L$(BOOSTDIR)/lib
 
 PROD_IOC += test_ndarray_hdf5
@@ -106,6 +113,7 @@ test_ndarray_hdf5_LIBS += adtransferPlugin asyn ADBase NDPlugin Com
 test_ndarray_hdf5_LIBS += boost_unit_test_framework
 test_ndarray_hdf5_LDFLAGS += -L$(BOOSTDIR)/lib
 test_ndarray_hdf5_SYS_LIBS += xml2 dl nsl util m dl z
+test_ndarray_hdf5_LIBS += log4cxx
 test_ndarray_hdf5_LIBS += $(HDF5LIB) sz
 
 
@@ -114,6 +122,7 @@ test_layout_INCLUDES = -I$(BOOSTDIR)/include
 test_layout_SRCS_DEFAULT += test_layout.cpp
 test_layout_OBJS += layout
 test_layout_LIBS += boost_unit_test_framework
+test_layout_LIBS += log4cxx
 test_layout_LDFLAGS += -L$(BOOSTDIR)/lib
 
 PROD_IOC += test_layoutxml
@@ -121,6 +130,7 @@ test_layoutxml_INCLUDES = -I$(BOOSTDIR)/include -I/usr/include/libxml2
 test_layoutxml_SRCS_DEFAULT += test_layoutxml.cpp
 test_layoutxml_OBJS += layoutxml layout
 test_layoutxml_LIBS += boost_unit_test_framework
+test_layoutxml_LIBS += log4cxx
 test_layoutxml_SYS_LIBS += xml2 m z
 test_layoutxml_LDFLAGS += -L$(BOOSTDIR)/lib
 
@@ -155,7 +165,6 @@ phdf5write_SRCS += profiling.cpp
 # The following adds object code from base/src/vxWorks
 phdf5write_OBJS_vxWorks += $(EPICS_BASE_BIN)/vxComLibrary
 
-
 # Link against the MPI and HDF5 libraries. This combination of libraries was found by running
 # h5pcc -show
 # mpicc -showme:compile
@@ -165,6 +174,7 @@ ifdef MPIDIR
 endif 
 phdf5write_SYS_LIBS += xml2 dl nsl util m dl z
 phdf5write_LIBS +=  $(HDF5LIB) sz
+phdf5write_LIBS += log4cxx
 
 
 # The adtransferPlugin has the ADTransferServer class

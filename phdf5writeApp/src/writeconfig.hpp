@@ -9,6 +9,7 @@
 #define WRITECONFIG_HPP_
 #include <cstdlib>
 #include <string>
+#include <log4cxx/logger.h>
 
 #include "dimension.h"
 
@@ -45,6 +46,7 @@ public:
     vec_ds_t get_offsets(){return this->origin;};
     vec_ds_t get_roi_frame(){return this->dim_roi_frame.dim_size_vec();};
     vec_ds_t get_dset_maxdims();
+    int get_alloc_time();
     void proc_rank_size(int rank, int size);
     int num_extra_dims();
     long int num_frames();
@@ -56,6 +58,7 @@ public:
     bool is_dset_extendible(){return this->extendible; };
     bool is_io_mpiposix() {return this->mpiposix; };
     bool is_io_collective() {return this->iocollective; };
+    void set_alloc_time( int alloc_time) { this->alloc_time = alloc_time; };
 
     long int istorek();
 
@@ -78,6 +81,7 @@ public:
     std::string _str_();  /** Return a string representation of the object */
 
 private:
+    log4cxx::LoggerPtr log;
     void _default_init();
     void _copy(const WriteConfig& src);
     DimensionDesc get_detector_dims();
@@ -92,6 +96,7 @@ private:
     bool mpiposix;
     bool iocollective;
     const HSIZE_T alignment;
+    int alloc_time;
 
     int proc_rank;
     int proc_size;

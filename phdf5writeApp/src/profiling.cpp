@@ -51,9 +51,9 @@ string Profiling::_str()
             ++it, ++dit, i++)
     {
         //if (i%4 == 0) out << "\n\t";
-        out << "\n\t" << *it << "s\t" << *dit << "s";
+        out << " " << *it << "s\t" << *dit << "s";
     }
-    out << "\n/Profiling>";
+    out << " /Profiling>";
     return out.str();
 }
 

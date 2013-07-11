@@ -8,6 +8,10 @@
 
 #include <hdf5.h>
 
+#include <log4cxx/logger.h>
+#include <log4cxx/xml/domconfigurator.h>
+#include <log4cxx/ndc.h>
+
 #include <osiSock.h>
 
 #include "ByteBuffer2.h"
@@ -30,6 +34,7 @@ typedef struct phdf5_options_t
     int base_port;
     int debugger;
     int verbose_level;
+    char* log_config_xml;
 } phdf5_options_t;
 
 static const struct option phdf5_longopts[] =
@@ -52,6 +57,7 @@ static void phdf5_print_help()
     		"    -p, --port=PORT     Use PORT number as the base port\n"
     		"    -x, --xml=FILE      Load XML configuration from FILE\n"
     		"    -d, --debugger      Wait for GDB to connect and set gdb_read=1\n"
+    		"    -l, --logger=FILE   Load log4cxx XML configuration from FILE\n"
             );
 }
 
@@ -65,8 +71,9 @@ static void phdf5_parse_options(int argc, char *argv[], phdf5_options_t *ptr_opt
     ptr_options->base_port = 9101;
     ptr_options->debugger = 0;
     ptr_options->verbose_level = 0;
+    ptr_options->log_config_xml = NULL;
 
-    while ((optc = getopt_long (argc, argv, "hp:x:dv", phdf5_longopts, NULL)) != -1)
+    while ((optc = getopt_long (argc, argv, "hp:x:dvl:", phdf5_longopts, NULL)) != -1)
         switch (optc)
         {
         case 'h':
@@ -86,6 +93,10 @@ static void phdf5_parse_options(int argc, char *argv[], phdf5_options_t *ptr_opt
         case 'v':
         	ptr_options->verbose_level++;
         	break;
+        case 'l':
+            ptr_options->log_config_xml = (char*)calloc(strlen(optarg)+1, sizeof(char));
+            strncpy(ptr_options->log_config_xml, optarg, strlen(optarg));
+            break;
         case '?':
             printf("Unknown option -%c. Will be ignored.\n", optopt);
             break;
@@ -108,6 +119,7 @@ static void phdf5_parse_options(int argc, char *argv[], phdf5_options_t *ptr_opt
 
 void phdf5_run_writer(phdf5_options_t *ptr_options)
 {
+	log4cxx::LoggerPtr log( log4cxx::Logger::getLogger("main") );
     int mpi_rank    = 0;
     int mpi_size    = 0;
     int gdb_ready   = 0;
@@ -115,7 +127,7 @@ void phdf5_run_writer(phdf5_options_t *ptr_options)
     gethostname(hostname, sizeof(hostname));
 
 #ifdef H5_HAVE_PARALLEL
-    cout << "Hurrah! We are parallel!" << endl;
+    LOG4CXX_INFO(log, "Hurrah! We are parallel!");
     int mpi_namelen = 0;
     char mpi_name[MPI_MAX_PROCESSOR_NAME];
     MPI_Comm comm = MPI_COMM_WORLD;
@@ -126,27 +138,23 @@ void phdf5_run_writer(phdf5_options_t *ptr_options)
     MPI_Comm_rank(MPI_COMM_WORLD,&mpi_rank);
     MPI_Get_processor_name(mpi_name,&mpi_namelen);
 
-    cout << "MPI info: size=" << mpi_size;
-    cout << " rank=" << mpi_rank;
-    cout << " cpu=" << mpi_name;
-    cout << endl;
+    LOG4CXX_INFO(log, "MPI info: size=" << mpi_size
+                      << " rank=" << mpi_rank
+                      <<" cpu=" << mpi_name);
 
     /* Enable (optional) easy attachment of GDB: Process 0 will loop until a GDB has been attached
      * and set var gdb_ready = 1.
      * The remaining processes will wait at an MPI barrier until then.*/
     if (ptr_options->debugger != 0) {
 		if (mpi_rank == 0) {
-			cout << "PID "<< getpid() << " on "<< hostname
-					<<" ready for attaching GDB" << endl;
-			cout << "Once GDB is attached do: (gdb) set var gdb_ready = 1"
-					<< endl;
+			LOG4CXX_INFO(log, "PID "<< getpid() << " on "<< hostname
+                              <<" ready for attaching GDB");
+			LOG4CXX_INFO(log, "Once GDB is attached do: (gdb) set var gdb_ready = 1");
 			while (gdb_ready == 0) {
 				sleep(2);
 			}
 		} else {
-			cout
-					<< "Waiting for GDB to attach to process 0 and do \"set var gdb_ready = 1\""
-					<< endl;
+			LOG4CXX_INFO(log, "Waiting for GDB to attach to process 0 and do \"set var gdb_ready = 1\"");
 		}
 		MPI_Barrier(MPI_COMM_WORLD );
 	}
@@ -157,14 +165,13 @@ void phdf5_run_writer(phdf5_options_t *ptr_options)
     }
 
 #else
-    cout << "Sadly, we are not parallel" << endl;
+    LOG4CXX_WARN(log, "Sadly, we are not parallel");
 
     // Wait for GDB to connect and set gdb_ready=1
     if (ptr_options->debugger != 0) {
-		cout << "PID "<< getpid() << " on "<< hostname
-				<<" ready for attaching GDB" << endl;
-		cout << "Once GDB is attached do: (gdb) set var gdb_ready = 1"
-				<< endl;
+		LOG4CXX_INFO(log, "PID "<< getpid() << " on "<< hostname
+                          <<" ready for attaching GDB");
+		LOG4CXX_INFO(log, "Once GDB is attached do: (gdb) set var gdb_ready = 1");
 		while (gdb_ready == 0) {
 			sleep(2);
 		}
@@ -174,16 +181,16 @@ void phdf5_run_writer(phdf5_options_t *ptr_options)
 
     int port = ptr_options->base_port + mpi_rank;
 
-    cout << "=== Starting server on port: " << port << endl;
+    LOG4CXX_INFO(log, "=== Starting server on port: " << port);
     Server server(port);
     server.register_hdf_writer( &h5writer );
 
     server.run();
 
 #ifdef H5_HAVE_PARALLEL
-    cout << "Waiting at MPI barrier" << endl;
+    LOG4CXX_INFO(log, "Waiting at MPI barrier");
     MPI_Barrier(MPI_COMM_WORLD);
-    cout << "Finalizing..." << endl;
+    LOG4CXX_INFO(log, "Finalizing...");
     MPI_Finalize();
 #endif
 
@@ -194,6 +201,13 @@ int main(int argc,char *argv[])
     program_name = argv[0];
     phdf5_options_t options;
     phdf5_parse_options(argc, argv, &options);
+    if (options.log_config_xml != NULL) {
+    	log4cxx::xml::DOMConfigurator::configure(options.log_config_xml);
+    }
+    log4cxx::LoggerPtr log( log4cxx::Logger::getLogger("main") );
+    //log4cxx::LoggerPtr logi( log4cxx::Logger::getLogger("NDArrayToHDF5") );
+    LOG4CXX_DEBUG(log, "Logging configured using: " << options.log_config_xml);
+    //LOG4CXX_TRACE(logi, "Logi configured using: " << options.log_config_xml);
     phdf5_run_writer(&options);
     return 0;
 }

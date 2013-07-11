@@ -32,6 +32,7 @@ using namespace std;
 LayoutXML::LayoutXML() :
 ptr_tree(NULL), ptr_curr_element(NULL)
 {
+	log = log4cxx::Logger::getLogger("LayoutXML");
 
     /* Initialize the libxml2 library and check potential ABI mismatches
      * between the version it was compiled for and the actual shared
@@ -51,27 +52,27 @@ int LayoutXML::load_xml(const char * filename)
 
     this->xmlreader = xmlReaderForFile(filename, NULL, 0);
     if (this->xmlreader == NULL) {
-        cerr << "ERROR: Unable to open XML file: " << filename << endl;
+        LOG4CXX_ERROR(log, "Unable to open XML file: " << filename );
         this->xmlreader = NULL;
         return -1;
     }
 
-    cout << "Loading HDF5 layout XML file: " << filename << endl;
+    LOG4CXX_INFO(log, "Loading HDF5 layout XML file: " << filename);
     while ( (ret = xmlTextReaderRead(this->xmlreader)) == 1) {
         this->process_node();
     }
     xmlFreeTextReader(this->xmlreader);
     if (ret != 0) {
-        cerr << "Failed to parse XML file: "<< filename << endl;
+    	LOG4CXX_ERROR(log, "Failed to parse XML file: "<< filename );
     }
 
     // If no elements were created then we've failed...
     if (this->ptr_tree == NULL) {
-    	cerr << "ERROR: LayouXML::load_xml() Unable to create the Root tree!" << endl;
+    	LOG4CXX_ERROR(log, "Unable to create the Root tree!" );
     	return -1;
     }
 
-    cout << "XML layout tree shape: " << this->ptr_tree->_str_() << endl;
+    LOG4CXX_DEBUG(log, "XML layout tree shape: " << this->ptr_tree->_str_() );
     return ret;
 }
 
@@ -99,7 +100,7 @@ void LayoutXML::process_node()
     {
         // Elements can be either 'group', 'dataset' or 'attribute'
         case XML_READER_TYPE_ELEMENT:
-            //cout << "process_node: \'" << name << "\' (" << xmlname << ")" << endl;
+            //LOG4CXX_DEBUG(log, "process_node: \'" << name << "\' (" << xmlname << ")" );
             if ( name == XML_ATTR_GROUP )
                 ret = this->new_group();
             else if ( name == XML_ATTR_DATASET )
@@ -107,7 +108,7 @@ void LayoutXML::process_node()
             else if ( name == XML_ATTR_ATTRIBUTE )
                 ret = this->new_attribute();
             if (ret != 0)
-                cerr << "Warning: adding new node: " << name << " failed..." << endl;
+                LOG4CXX_WARN(log, "adding new node: " << name << " failed..." );
             break;
 
         // Parser callback at the end of an element.
@@ -116,7 +117,7 @@ void LayoutXML::process_node()
 
             if (name == XML_ATTR_GROUP || name == XML_ATTR_DATASET)
             {
-                //cout << "END ELEMENT name: " << name << " curr: " << this->ptr_curr_element->get_full_name() << endl;
+                //LOG4CXX_DEBUG(log, "END ELEMENT name: " << name << " curr: " << this->ptr_curr_element->get_full_name() );
                 if (this->ptr_curr_element != NULL)
                     this->ptr_curr_element = this->ptr_curr_element->get_parent();
 
@@ -217,7 +218,7 @@ int LayoutXML::new_group()
     xmlChar * group_name = NULL;
     group_name = xmlTextReaderGetAttribute(this->xmlreader,
                                            (const xmlChar *)XML_ATTR_ELEMENT_NAME);
-    //cout << "  new_group: " << group_name << endl;
+    //LOG4CXX_DEBUG(log, "  new_group: " << group_name );
     if (group_name == NULL) return -1;
 
     string str_group_name((char*)group_name);
@@ -226,7 +227,7 @@ int LayoutXML::new_group()
     // Initialise the tree if it has not already been done.
     if (this->ptr_tree == NULL) {
         this->ptr_tree = new HdfRoot(str_group_name);
-        //cout << "  Initialised the root of the tree: " << *this->ptr_tree << endl;
+        //LOG4CXX_DEBUG(log, "  Initialised the root of the tree: " << *this->ptr_tree );
         this->ptr_curr_element = this->ptr_tree;
     } else {
         HdfGroup *parent = static_cast<HdfGroup *>(this->ptr_curr_element);
@@ -268,7 +269,7 @@ int LayoutXML::new_dataset()
     xmlChar *dset_name = NULL;
     dset_name = xmlTextReaderGetAttribute(this->xmlreader,
                                           (const xmlChar *)XML_ATTR_ELEMENT_NAME);
-    //cout << "  new_dataset: " << dset_name << endl;
+    //LOG4CXX_DEBUG(log, "  new_dataset: " << dset_name );
     if (dset_name == NULL) return -1;
 
     string str_dset_name((char*)dset_name);
@@ -296,7 +297,7 @@ int LayoutXML::new_attribute()
     xmlChar *ndattr_name = NULL;
     ndattr_name = xmlTextReaderGetAttribute(this->xmlreader,
                                             (const xmlChar*)XML_ATTR_ELEMENT_NAME);
-    //cout << "  new_attribute: " << ndattr_name << " attached to: " << this->ptr_curr_element->get_full_name() << endl;
+    //LOG4CXX_DEBUG(log, "  new_attribute: " << ndattr_name << " attached to: " << this->ptr_curr_element->get_full_name() );
     if (ndattr_name == NULL) return -1;
 
     string str_ndattr_name((char*)ndattr_name);

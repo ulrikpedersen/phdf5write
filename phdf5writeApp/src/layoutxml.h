@@ -9,6 +9,7 @@
 #define LAYOUTXML_H_
 
 #include <libxml/xmlreader.h>
+#include <log4cxx/logger.h>
 
 // forward declarations
 class HdfGroup;
@@ -41,6 +42,7 @@ private:
     int new_dataset();
     int new_attribute();
 
+    log4cxx::LoggerPtr log;
     HdfRoot* ptr_tree;
     HdfElement *ptr_curr_element;
     xmlTextReaderPtr xmlreader;

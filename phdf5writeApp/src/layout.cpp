@@ -407,16 +407,15 @@ string HdfGroup::_str_()
     out << "< HdfGroup: \'" << this->get_full_name() << "\'";
     out << " groups=" << this->num_groups();
     out << " dsets=" << this->num_datasets();
-    out << " attr=" << this->attributes.size();
+    out << " attr=" << this->attributes.size() << ">";
     //out << " level=" << this->tree_level();
-    out << " >";
 
     map<string, HdfGroup*>::iterator it_groups;
     for (it_groups = this->groups.begin();
             it_groups != this->groups.end();
             ++it_groups)
     {
-        out << "\n";
+        out << "\n\t\t\t\t";
         for (int i=0; i<this->tree_level(); i++) out << "  ";
         out << it_groups->second->_str_();
     }

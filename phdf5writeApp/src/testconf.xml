@@ -4,20 +4,23 @@
 <!--    <filename>/mnt/play01/up45/phdf/stripe4/phdftest_26.h5</filename>-->
 <!--    <filename>/mnt/play01/up45/phdf/largestripe4/phdftest_49.h5</filename> -->
 <!--    <filename>/mnt/play01/up45/stripe6/test_real_play01_1.h5</filename> -->
-    <filename>/mnt/play01/up45/stripe6/test_2.h5</filename>
+<!--    <filename>/mnt/play01/up45/stripe6/test_2.h5</filename> -->
 <!--     <filename>/dls/i13/epics/excaliburtmp/phdftesting.h5</filename> -->
+ <filename>/mnt/lustre01/i13-1/data/2013/cm5938-3/tmp/benchmark/stripe8/excalibur_18.h5</filename>
+<!--<filename>/mnt/lustre03/testdir/excalibur/excalibur_01.h5</filename>-->
     <chunking>
-        <x>4096</x>
-        <y>64</y>
+        <x>2048</x>
+        <y>256</y>
         <z>8</z>
     </chunking>
     <subframe>
-        <x>4096</x>
+        <x>2048</x>
         <y>256</y>
     </subframe>
-    <numframes>16</numframes>
+    <numframes>20000</numframes>
     <fillvalue>0</fillvalue>
-    <collective>1</collective>
+    <collective>0</collective>
     <ioposix>0</ioposix>
     <extendible>1</extendible>
+    <alloc_time>3</alloc_time>
 </phdftest>

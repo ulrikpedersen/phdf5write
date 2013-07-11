@@ -18,6 +18,10 @@
 #include <NDArray.h>
 #include "ndarray_hdf5.h"
 
+#include <log4cxx/logger.h>
+#include <log4cxx/xml/domconfigurator.h>
+
+
 using namespace std;
 
 typedef struct dims_t{
@@ -37,6 +41,7 @@ struct sim_config
     bool extendible;
     bool ioposix;
     bool collective;
+    int alloc_time;
     void loadxml(const std::string &xmlfile);
 };
 
@@ -79,11 +84,15 @@ void sim_config::loadxml(const std::string &xmlfile)
     // Use extendible dataset
     extendible = (bool)pt.get("phdftest.extendible", 1);
 
+    // Define the dataset allocation time
+    alloc_time = pt.get("phdftest.alloc_time", 0);
+
 }
 
 
 void util_fill_ndarr_dims(NDArray &ndarr, unsigned long int *sizes, int ndims)
 {
+	log4cxx::LoggerPtr log( log4cxx::Logger::getLogger("main") );
     static short counter = 3;
     int i=0;
     ndarr.ndims = ndims;
@@ -95,12 +104,19 @@ void util_fill_ndarr_dims(NDArray &ndarr, unsigned long int *sizes, int ndims)
         num_elements *= sizes[i];
     }
     ndarr.pData = calloc(num_elements, sizeof(short));
+    LOG4CXX_TRACE(log, "Filling array with dummy data...");
+    for (i=0; i<num_elements; i++) {
+    	*((short*)ndarr.pData + i) = i;
+    }
+
     short *ptrdata = (short*)ndarr.pData;
     ptrdata[0] = counter++; ptrdata[1] = counter++;
+    LOG4CXX_TRACE(log, "Done filling array!");
 }
 
 
 struct Fixture{
+	log4cxx::LoggerPtr log;
     std::string fname;
     std::vector<NDArray *> frames;
     unsigned long int sizes[2];
@@ -122,7 +138,8 @@ struct Fixture{
 
     Fixture(char *configxml)
     {
-        cout << "MAIN: Setup Fixture" << endl;
+    	log = log4cxx::Logger::getLogger("main");
+    	LOG4CXX_DEBUG(log, "Setup Fixture");
         //fname = "smallframes.h5";
         config.loadxml(configxml);
         zero=0;
@@ -139,8 +156,7 @@ struct Fixture{
         MPI_Comm_rank(mpi_comm, &mpi_rank);
 
         MPI_Get_processor_name(mpi_name, &mpi_name_len);
-        cout << "MAIN: === TEST is parallel ==="<<endl;
-        cout << "MAIN:   MPI size: " << mpi_size << " MPI rank: " << mpi_rank << " host: " << mpi_name <<endl;
+        LOG4CXX_INFO(log, "==== MPI size: " << mpi_size << " MPI rank: " << mpi_rank << " host: " << mpi_name);
 
 
 #endif
@@ -152,7 +168,7 @@ struct Fixture{
         // Define the dimensions and number of frames to run here
         //numframes = NUM_FRAMES;
         numframes = config.num_frames;
-        cout << "MAIN: num_frames: " << numframes<<endl;
+        LOG4CXX_INFO(log, "num_frames: " << numframes);
 
         //sizes[0]=CHUNK_X; sizes[1]=CHUNK_Y * NUM_CHUNKS;
         sizes[0] = config.subframe.y;
@@ -167,11 +183,11 @@ struct Fixture{
         dsetdims[1]=sizes[0]*mpi_size;
         dsetdims[2]=sizes[1];
 
-        cout << "MAIN: dataset: " << dsetdims[0] << " " << dsetdims[1] << " " << dsetdims[2]<<endl;
+        LOG4CXX_INFO(log, "dataset: " << dsetdims[0] << " " << dsetdims[1] << " " << dsetdims[2]);
         fill_value = config.fill_value;
 
-        cout << "MAIN: chunks: " << chunks[0] << " " << chunks[1] << " " << chunks[2]<<endl;
-        cout << "MAIN: fill value: " << fill_value<<endl;
+        LOG4CXX_INFO(log, "chunks: " << chunks[0] << " " << chunks[1] << " " << chunks[2]);
+        LOG4CXX_INFO(log, "fill value: " << fill_value);
 
         for (   i=0UL;
         		i<chunks[0];
@@ -201,7 +217,7 @@ struct Fixture{
 
     ~Fixture()
     {
-        cout << "MAIN: teardown Fixture" << endl;
+    	LOG4CXX_DEBUG(log, "teardown Fixture");
         //std::vector<NDArray*>::const_iterator it;
         //NDArray* pnd;
         //for (it = frames.begin(); it != frames.end(); ++it)
@@ -216,7 +232,7 @@ struct Fixture{
         //frames.clear();
 
 #ifdef H5_HAVE_PARALLEL
-        cout << "MAIN: ==== MPI_Finalize  rank: " << mpi_rank << "=====" << endl;
+    	LOG4CXX_INFO(log, "==== MPI_Finalize  rank: " << mpi_rank << "=====");
         MPI_Finalize();
 #endif
 
@@ -227,20 +243,23 @@ struct Fixture{
 int main(int argc, char *argv[])
 {
     char * configfile = argv[1];
-    cout << "MAIN: using config file: " << configfile << endl;
+    log4cxx::xml::DOMConfigurator::configure("Log4cxxConfig.xml");
+    log4cxx::LoggerPtr log( log4cxx::Logger::getLogger("main") );
+
+    LOG4CXX_INFO(log, "using config file: " << configfile );
     struct Fixture fixt(configfile);
     NDArray * pndarray;
 
 
 #ifdef H5_HAVE_PARALLEL
 
-    cout << "MAIN: === TEST ParallelNoAttr is parallel ==="<<endl;
-    //cout << "MAIN: Creating NDArrayToHDF5 object."<<endl;
+    LOG4CXX_DEBUG(log, " === TEST ParallelNoAttr is parallel === ");
+    //LOG4CXX_DEBUG(log, "Creating NDArrayToHDF5 object.");
     NDArrayToHDF5 ndh(fixt.mpi_comm, MPI_INFO_NULL);
 
 #else
-    cout << "MAIN: === TEST ParallelNoAttr is *not* parallel ==="<<endl;
-    cout << "MAIN: Creating NDArrayToHDF5 object."<<endl;
+    LOG4CXX_DEBUG(log, "=== TEST ParallelNoAttr is *not* parallel ===");
+    LOG4CXX_DEBUG(log, "Creating NDArrayToHDF5 object.");
     NDArrayToHDF5 ndh;
 #endif
 
@@ -249,11 +268,13 @@ int main(int argc, char *argv[])
     ndh.get_conf_ref().io_collective(fixt.config.collective);
     ndh.get_conf_ref().io_mpiposix(fixt.config.ioposix);
     ndh.get_conf_ref().dset_extendible(fixt.config.extendible);
-    cout << "MAIN: WriteConfig: " << ndh.get_conf_ref() << endl;
-    //cout << "\n\tposix=" << fixt.config.ioposix << " collective=" << fixt.config.collective << " extendible=" << fixt.config.extendible << endl;
+    ndh.get_conf_ref().set_alloc_time(fixt.config.alloc_time);
+
+    LOG4CXX_DEBUG(log, "WriteConfig: " << ndh.get_conf_ref()._str_());
+    LOG4CXX_INFO(log, "posix=" << fixt.config.ioposix << " collective=" << fixt.config.collective << " extendible=" << fixt.config.extendible);
 
 
-    cout << "MAIN: Open file: " << fixt.fname<<endl;
+    LOG4CXX_INFO(log, "Open file: " << fixt.fname);
     ndh.h5_open(fixt.fname.c_str());
 
     int cacheframe = 0;
@@ -261,7 +282,7 @@ int main(int argc, char *argv[])
     for (int i = 0; i < fixt.numframes; i++) {
 
         cacheframe = i%fixt.frames.size();
-        cout << "MAIN: ===== Writing frame[" << cacheframe << "] no: " << i << endl;
+        LOG4CXX_INFO(log, "===== Writing frame[" << cacheframe << "] no: " << i);
         pndarray = fixt.frames[cacheframe];
         pndarray->pAttributeList->remove("h5_roi_origin_0");
         pndarray->pAttributeList->add("h5_roi_origin_0", "offset 0", NDAttrUInt32, (void*)&i );
@@ -272,7 +293,7 @@ int main(int argc, char *argv[])
 
     }
 
-    cout << "MAIN: Closing file" << endl;;
+    LOG4CXX_DEBUG(log, "Closing file");
     ndh.h5_close();
 }
 /** \endcond */
