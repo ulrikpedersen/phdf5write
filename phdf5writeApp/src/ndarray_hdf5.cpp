@@ -247,14 +247,7 @@ int NDArrayToHDF5::h5_open(const char *filename)
 int NDArrayToHDF5::h5_write(NDArray& ndarray)
 {
     int retcode = 0;
-
-    // Initialise performance measurements
-    this->writestep[0].dt_start();
-    timespec startstamp = this->writestep[0].get_start();
-    for (int i=1; i<NUM_WRITE_STEPS; i++)
-    {
-        this->writestep[i].dt_set_startstamp( startstamp );
-    }
+    this->dt_write.dt_start();
 
     this->conf.next_frame(ndarray);
     LOG4CXX_TRACE(log, this->conf._str_());
@@ -290,7 +283,8 @@ int NDArrayToHDF5::h5_write(NDArray& ndarray)
     }
 
     this->cache_ndattributes(ndarray.pAttributeList);
-
+    this->dt_write.dt_end();
+    this->timestamp.stamp_now();
     return retcode;
 }
 
@@ -301,16 +295,16 @@ int NDArrayToHDF5::h5_close()
     herr_t hdferr = 0;
     char fname[512] = "\0";
 
-    if (H5Iis_valid(this->h5file) == false) {
-    	LOG4CXX_ERROR(log, "h5file ID is not valid. File or library not open.");
-    	this->h5file = H5I_INVALID_HID;
-    	retcode = -1;
-    }
+//    if (H5Iis_valid(this->h5file) == false) {
+//    	LOG4CXX_ERROR(log, "h5file ID is not valid. File or library not open.");
+//    	this->h5file = H5I_INVALID_HID;
+//    	retcode = -1;
+//    }
 
     if (this->h5file != H5I_INVALID_HID) {
     	this->write_ndattributes();
-        //LOG4CXX_INFO(log, "Writing profile data");
-        //this->store_profiling();
+        LOG4CXX_INFO(log, "Writing profile data");
+        this->store_profiling();
         H5Fget_name(this->h5file, fname, 512-1 );
         closetime.reset();
         LOG4CXX_DEBUG(log, "Remaining open objects: "
@@ -1100,7 +1094,6 @@ int NDArrayToHDF5::store_profiling()
     profs.push_back(this->dt_write.vec_timestamps());
     profs.push_back(this->timestamp.vec_datarate());
     profs.push_back(this->dt_write.vec_datarate());
-    for (int i = 0; i<NUM_WRITE_STEPS; i++) profs.push_back(this->writestep[i].vec_timestamps());
 
     // Find the longest profiling dataset (they should all be same length)
     vector< vector<double> >::const_iterator it;
@@ -1121,6 +1114,7 @@ int NDArrayToHDF5::store_profiling()
     /* todo: fix hardcoded profiling dataset name */
     const char * dsetname = "profiling";
     LOG4CXX_INFO(log, "Creating dataset: " << dsetname );
+    print_arr("Profiling dataset: ", profiling_dims, ndims);
     dataset = H5Dcreate2( this->h5file, dsetname,
                           H5T_NATIVE_DOUBLE, dataspace,
                           H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
