@@ -7,8 +7,8 @@ WORK=/dls_sw/work/R3.14.12.3/support
 
 ASYN=$(SUPPORT)/asyn/4-21
 AREADETECTOR=$(SUPPORT)/areaDetector/1-9dls4
-#ADTRANSFER=$(SUPPORT)/adtransfer/1-1
-ADTRANSFER=$(WORK)/adtransfer
+ADTRANSFER=$(SUPPORT)/adtransfer/1-2
+#ADTRANSFER=$(WORK)/adtransfer
 #ADTRANSFER=/home/up45/workspaces/juno/adtransfer_local
 
 # EPICS_BASE usually appears last so other apps can override stuff:
