@@ -208,9 +208,9 @@ int DimensionDesc::num_dimensions()
 /** return the number of multiplications of this block fits inside
  (and possibly overlap if overlap==true) the container.
 */
-int DimensionDesc::num_fits(DimensionDesc &container, bool overlap)
+unsigned int DimensionDesc::num_fits(DimensionDesc &container, bool overlap)
 {
-    int result = 1;
+    unsigned int result = 1;
     double div_result = 0.0;
     vec_ds_t tmpdims = this->dims;
 

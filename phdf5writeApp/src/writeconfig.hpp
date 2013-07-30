@@ -60,7 +60,7 @@ public:
     bool is_io_collective() {return this->iocollective; };
     void set_alloc_time( int alloc_time) { this->alloc_time = alloc_time; };
 
-    long int istorek();
+    unsigned int istorek();
 
     HSIZE_T get_alignment();
     DimensionDesc min_chunk_cache();

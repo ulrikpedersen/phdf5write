@@ -54,7 +54,7 @@ public:
     long int data_num_elements();  /** return the total number of data elements in the dataset */
     int num_dimensions();          /** Return the number of dimensions in the block (rank) */
 
-    int num_fits(DimensionDesc &container, bool overlap = false); /** Calculate the number of times this object fits inside the container */
+    unsigned int num_fits(DimensionDesc &container, bool overlap = false); /** Calculate the number of times this object fits inside the container */
     size_t element_size; // number of bytes per element in the data blob
 
 private:

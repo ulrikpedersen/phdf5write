@@ -177,13 +177,18 @@ int NDArrayToHDF5::h5_open(const char *filename)
     if (hdfcode < 0) {
         LOG4CXX_WARN(log, " failed to set alignement");
     }
-    long int istorek = this->conf.istorek();
-    LOG4CXX_DEBUG(log, "Setting istorek: " << istorek);
     hid_t create_plist = H5Pcreate(H5P_FILE_CREATE);
-    hdfcode = H5Pset_istore_k(create_plist, istorek);
-    if (hdfcode < 0) {
-        LOG4CXX_WARN(log, " failed to set i_store_k");
+    unsigned int istorek = this->conf.istorek();
+    //long int istorek = 15000;
+    if (istorek > 32) {
+        LOG4CXX_DEBUG(log, "Setting istorek: " << istorek);
+        hdfcode = H5Pset_istore_k(create_plist, istorek);
+        if (hdfcode < 0) {
+            LOG4CXX_WARN(log, " failed to set i_store_k");
+        }
     }
+    H5Pget_istore_k(create_plist, &istorek);
+    LOG4CXX_DEBUG(log, "istorek set to: " << istorek);
 
     // Ensure file is closed even if objects are still open.
     hdfcode = H5Pset_fclose_degree(file_access_plist, H5F_CLOSE_STRONG);

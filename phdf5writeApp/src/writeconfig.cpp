@@ -226,16 +226,16 @@ void WriteConfig::get_fill_value(void *fill_value, size_t *max_size_bytes)
  * According to HDF5 forum an appropriate value is to use a value which is
  * half the number of chunks in the full dataset.
  */
-long int WriteConfig::istorek()
+unsigned int WriteConfig::istorek()
 {
-    int istore_k = 0;
-    int num_chunks_dset = 0;
+    unsigned int istore_k = 0;
+    unsigned int num_chunks_dset = 0;
     num_chunks_dset = this->dim_chunk.num_fits( this->dim_full_dataset, true);
     LOG4CXX_DEBUG(log,  "istorek num_chunks_dset: " << num_chunks_dset );
     // if invalid (i.e. the dataset size is not known or too small) we return error
-    if (num_chunks_dset <= 0) return -1;
+    if (num_chunks_dset <= 0) return 0;
 
-    istore_k = num_chunks_dset << 1;
+    istore_k = num_chunks_dset >> 1;
     return istore_k;
 }
 

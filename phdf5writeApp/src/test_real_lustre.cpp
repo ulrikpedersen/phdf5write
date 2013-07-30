@@ -232,7 +232,7 @@ struct Fixture{
         //frames.clear();
 
 #ifdef H5_HAVE_PARALLEL
-    	LOG4CXX_INFO(log, "==== MPI_Finalize  rank: " << mpi_rank << "=====");
+    	LOG4CXX_DEBUG(log, "==== MPI_Finalize  rank: " << mpi_rank << "=====");
         MPI_Finalize();
 #endif
 
@@ -249,8 +249,10 @@ int main(int argc, char *argv[])
     LOG4CXX_INFO(log, "using config file: " << configfile );
     struct Fixture fixt(configfile);
     NDArray * pndarray;
+    unsigned long nbytes = sizeof(short) * fixt.numframes * fixt.sizes[0]  * fixt.sizes[1];
 
-
+    Profiling opentime;
+    opentime.reset(nbytes);
 #ifdef H5_HAVE_PARALLEL
 
     LOG4CXX_DEBUG(log, " === TEST ParallelNoAttr is parallel === ");
@@ -276,20 +278,23 @@ int main(int argc, char *argv[])
 
     LOG4CXX_INFO(log, "Open file: " << fixt.fname);
     ndh.h5_open(fixt.fname.c_str());
+    double dt_open = opentime.stamp_now();
+
+    Profiling writetime;
+    writetime.reset(nbytes);
 
     int cacheframe = 0;
-
     for (int i = 0; i < fixt.numframes; i++) {
 
         cacheframe = i%fixt.frames.size();
-        LOG4CXX_INFO(log, "===== Writing frame[" << cacheframe << "] no: " << i);
+        LOG4CXX_DEBUG(log, "===== Writing frame[" << cacheframe << "] no: " << i);
         pndarray = fixt.frames[cacheframe];
         pndarray->pAttributeList->remove("h5_roi_origin_0");
         pndarray->pAttributeList->add("h5_roi_origin_0", "offset 0", NDAttrUInt32, (void*)&i );
         //pndarray->pAttributeList->report(100);
         ndh.h5_write( *pndarray );
     }
-
+    double dt_write = writetime.stamp_now();
 
     // Testing the H5close functions to shut down the hdf library
 //    herr_t hdfreturn;
@@ -301,6 +306,15 @@ int main(int argc, char *argv[])
 //    LOG4CXX_INFO(log, "Opened HDF5 library: " << hdfreturn );
 
     LOG4CXX_DEBUG(log, "Closing file");
+    Profiling closetime;
+
+    closetime.reset(nbytes);
     ndh.h5_close();
+    double dt_close = closetime.stamp_now();
+
+    double writerate = (nbytes/(1024. * 1024.)) / dt_write;
+    LOG4CXX_INFO(log, "    Open  time = " << dt_open << "s");
+    LOG4CXX_INFO(log, "    Write time = " << dt_write << "s" << " [" << writerate << "MB/s]");
+    LOG4CXX_INFO(log, "    Close  time = " << dt_close << "s");
 }
 /** \endcond */
