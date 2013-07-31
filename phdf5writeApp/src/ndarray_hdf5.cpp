@@ -181,6 +181,7 @@ int NDArrayToHDF5::h5_open(const char *filename)
     unsigned int istorek = this->conf.istorek();
     //long int istorek = 15000;
     if (istorek > 32) {
+    	if (istorek > 75000) istorek = 75000;
         LOG4CXX_DEBUG(log, "Setting istorek: " << istorek);
         hdfcode = H5Pset_istore_k(create_plist, istorek);
         if (hdfcode < 0) {
