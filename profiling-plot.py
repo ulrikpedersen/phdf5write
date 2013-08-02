@@ -4,7 +4,10 @@ import os, sys
 from pkg_resources import require
 require("matplotlib")
 require("numpy")
+require("cothread")
+
 import numpy
+from cothread.catools import *
 
 from pylab import *
 import h5py
@@ -68,11 +71,17 @@ def timestamps(filename, performance, column=DT_TIMESTAMP):
 
 def main():
     if len(sys.argv) < 2:
-        print "ERROR: not enough arguments. Specify HDF5 file as input arg."
-        sys.exit(-1)
-    result = ([],[])
-    fname = sys.argv[1]
-    
+        print "No input file specified. Attempting to use caget to get latest file from Excalibur"
+        #sys.exit(-1)
+        path=caget("BL13J-EA-EXCBR-01:CONFIG:PHDF:FilePath_RBV", datatype=DBR_CHAR_STR)
+        name=caget("BL13J-EA-EXCBR-01:CONFIG:PHDF:FileName_RBV", datatype=DBR_CHAR_STR)
+        number=caget("BL13J-EA-EXCBR-01:CONFIG:PHDF:FileNumber")
+        templ=caget("BL13J-EA-EXCBR-01:CONFIG:PHDF:FileTemplate_RBV", datatype=DBR_CHAR_STR)
+        fname = templ%(path,name,number)
+    else:
+        fname = sys.argv[1]
+
+    print "Opening file: %s" % str(fname)    
     hdffile = h5py.File(fname, 'r')
     performance = hdffile[TSNAME]
     dataset = hdffile[DSETNAME]
@@ -121,7 +130,7 @@ def main():
     plotArgs = []
     smoothed_periods = []
     frequency = 1/result[0].mean()
-    window_time = 5.0
+    window_time = 10.0
     window_length = window_time * frequency
     print "Smoothing window lenght: %.1fs, %i frames "%(window_time, window_length)
     for period_time in result:
