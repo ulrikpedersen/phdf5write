@@ -284,6 +284,8 @@ int main(int argc, char *argv[])
     writetime.reset(nbytes);
 
     int cacheframe = 0;
+    Profiling update_timer;
+    update_timer.reset(0);
     for (int i = 0; i < fixt.numframes; i++) {
 
         cacheframe = i%fixt.frames.size();
@@ -293,6 +295,10 @@ int main(int argc, char *argv[])
         pndarray->pAttributeList->add("h5_roi_origin_0", "offset 0", NDAttrUInt32, (void*)&i );
         //pndarray->pAttributeList->report(100);
         ndh.h5_write( *pndarray );
+        if (update_timer.stamp_now() > 5.0) {
+            LOG4CXX_INFO( log, "Frame #" << i);
+            update_timer.reset(0);
+        }
     }
     double dt_write = writetime.stamp_now();
 

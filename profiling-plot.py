@@ -87,12 +87,13 @@ def main():
     dataset = hdffile[DSETNAME]
     print "dataset dims: ", dataset.shape
     framesize = dataset.shape[1] * dataset.shape[2] * 2.0 / (1024. * 1024.)
-    process_framesize = framesize/6
+    process_framesize = framesize/len(performance[:,0,0])
     last_timestamps = performance[:, 0, -1]
     
     print "Overall avg datarate: ", framesize * dataset.shape[0] / max(last_timestamps)
 
     figure(1)
+    title(fname)
     
     ### First plot is the period time ####
     #subplot(211)
@@ -130,7 +131,7 @@ def main():
     plotArgs = []
     smoothed_periods = []
     frequency = 1/result[0].mean()
-    window_time = 10.0
+    window_time = 20.0
     window_length = window_time * frequency
     print "Smoothing window lenght: %.1fs, %i frames "%(window_time, window_length)
     for period_time in result:
