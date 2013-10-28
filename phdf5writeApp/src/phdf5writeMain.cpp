@@ -1,6 +1,7 @@
 /* phdf5writeMain.cpp */
 #include <cstdlib>
 #include <cstdio>
+#include <cstring>
 #include <iostream>
 #include <vector>
 #include <unistd.h>
