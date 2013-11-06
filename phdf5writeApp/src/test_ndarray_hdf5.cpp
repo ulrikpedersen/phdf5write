@@ -17,7 +17,7 @@
 #include <NDArray.h>
 #include "ndarray_hdf5.h"
 
-
+using namespace phdf5;
 
 void util_fill_ndarr_dims(NDArray &ndarr, unsigned long int *sizes, int ndims)
 {

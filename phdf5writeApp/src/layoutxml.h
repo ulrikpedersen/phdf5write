@@ -11,6 +11,8 @@
 #include <libxml/xmlreader.h>
 #include <log4cxx/logger.h>
 
+namespace phdf5 {
+
 // forward declarations
 class HdfGroup;
 class HdfRoot;
@@ -23,6 +25,20 @@ int main_xml(const char *fname);
 
 class LayoutXML {
 public:
+
+  static const std::string ATTR_ELEMENT_NAME;
+  static const std::string ATTR_GROUP;
+  static const std::string ATTR_DATASET;
+  static const std::string ATTR_ATTRIBUTE;
+
+  static const std::string ATTR_SOURCE;
+  static const std::string ATTR_SRC_DETECTOR;
+  static const std::string ATTR_SRC_NDATTR;
+  static const std::string ATTR_SRC_CONST;
+  static const std::string ATTR_SRC_CONST_VALUE;
+  static const std::string ATTR_SRC_CONST_TYPE;
+  static const std::string ATTR_GRP_NDATTR_DEFAULT;
+
     LayoutXML();
     ~LayoutXML();
 
@@ -47,5 +63,7 @@ private:
     HdfElement *ptr_curr_element;
     xmlTextReaderPtr xmlreader;
 };
+
+} // phdf5
 
 #endif /* LAYOUTXML_H_ */

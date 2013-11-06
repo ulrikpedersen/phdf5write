@@ -175,13 +175,13 @@ void phdf5_run_writer(phdf5_options_t *ptr_options)
 			sleep(2);
 		}
     }
-    NDArrayToHDF5 h5writer;
+    phdf5::NDArrayToHDF5 h5writer;
 #endif
 
     int port = ptr_options->base_port + mpi_rank;
 
     LOG4CXX_INFO(log, "=== Starting server on port: " << port);
-    Server server(port);
+    phdf5::Server server(port);
     server.register_hdf_writer( &h5writer );
 
     server.run();
@@ -210,3 +210,5 @@ int main(int argc,char *argv[])
     phdf5_run_writer(&options);
     return 0;
 }
+
+

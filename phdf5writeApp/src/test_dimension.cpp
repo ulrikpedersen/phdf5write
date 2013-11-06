@@ -15,6 +15,8 @@
 #include <NDArray.h>
 #include "dimension.h"
 
+using namespace phdf5;
+
 void util_fill_ndarr_dims(NDArray &ndarr, dimsize_t *sizes, int ndims)
 {
     int i=0;

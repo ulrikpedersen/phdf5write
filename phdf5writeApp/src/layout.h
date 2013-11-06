@@ -13,6 +13,8 @@
 #include <map>
 #include <set>
 
+namespace phdf5 {
+
 typedef enum {
 	phdf_notset,
 	phdf_detector,
@@ -212,6 +214,7 @@ public:
     								std::set<std::string>& used_ndattribute_srcs);
 };
 
+} // phdf5
 
 
 #endif /* LAYOUT_H_ */

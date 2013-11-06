@@ -14,6 +14,8 @@
 #include <NDArray.h>
 #include "dimension.h"
 
+namespace phdf5 {
+
 /*================================================================================
     DimensionDesc Class implementation
 */
@@ -292,6 +294,8 @@ int test_dimensiondesc_simple()
     delete dim3;
     return 0;
 }
+
+} // phdf5
 
 
 

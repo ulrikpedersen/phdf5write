@@ -21,7 +21,7 @@
 #include <log4cxx/logger.h>
 #include <log4cxx/xml/domconfigurator.h>
 
-
+using namespace phdf5;
 using namespace std;
 
 typedef struct dims_t{

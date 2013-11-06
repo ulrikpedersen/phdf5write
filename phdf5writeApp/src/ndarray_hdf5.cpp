@@ -12,6 +12,8 @@
 #include "ndarray_hdf5.h"
 
 
+namespace phdf5 {
+
 
 #define METADATA_NDIMS 2
 
@@ -1265,4 +1267,7 @@ void NDArrayToHDF5::write_h5attr_number(hid_t element, const std::string& attr_n
 	// Close the dataspace.
 	h5_err = H5Sclose(h5_dspace);
 }
+
+} // phdf5
+
 

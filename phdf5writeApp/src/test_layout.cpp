@@ -14,6 +14,8 @@
 //#include <NDArray.h>
 #include "layout.h"
 
+using namespace phdf5;
+
 BOOST_AUTO_TEST_SUITE( constructors )
 
 BOOST_AUTO_TEST_CASE(hdf_element)

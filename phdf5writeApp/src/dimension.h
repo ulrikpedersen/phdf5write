@@ -16,6 +16,8 @@
 
 class NDArray; // forward declaration
 
+namespace phdf5 {
+
 typedef unsigned long long dimsize_t;
 typedef std::vector<dimsize_t> vec_ds_t;
 
@@ -68,5 +70,6 @@ private:
 
 int test_dimensiondesc_simple();
 
+} // phdf5
 
 #endif /* DIMENSION_H_ */

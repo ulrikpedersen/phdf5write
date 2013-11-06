@@ -16,6 +16,8 @@
 #include "Channel.h"
 #include "server.h"
 
+namespace phdf5 {
+
 void Server::signal_socket_open(int status)
 {
     LOG4CXX_INFO(log, "signal_socket_open()");
@@ -107,4 +109,5 @@ void Server::signal_completed_response(int status)
     LOG4CXX_TRACE(log, "signal_completed_response(" << status << ")");
 }
 
+} // phdf5
 

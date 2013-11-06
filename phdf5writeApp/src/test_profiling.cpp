@@ -13,6 +13,8 @@
 #include <time.h>
 #include "profiling.h"
 
+using namespace phdf5;
+
 BOOST_AUTO_TEST_SUITE( ProfilingClass )
 
 BOOST_AUTO_TEST_CASE(constructors)

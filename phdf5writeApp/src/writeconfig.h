@@ -13,11 +13,10 @@
 
 #include "dimension.h"
 
-#define ATTR_CHUNK_SIZE  "h5_chunk_size_"
-#define ATTR_ROI_ORIGIN  "h5_roi_origin_"
-#define ATTR_DSET_SIZE   "h5_dset_size_"
-#define ATTR_FILL_VAL    "h5_fill_val"
-#define ATTR_COMPRESSION "h5_compression"
+class NDArray; // forward declaration
+class NDAttributeList;
+
+namespace phdf5 {
 
 typedef unsigned long long HSIZE_T;
 
@@ -25,11 +24,16 @@ typedef unsigned long long HSIZE_T;
 #define H5_DEFAULT_ALIGN 1048576
 #define H5_DEFAULT_ISTOREK 16000
 
-class NDArray; // forward declaration
-class NDAttributeList;
-
 class WriteConfig {
 public:
+
+    // Constants
+    static const std::string ATTR_CHUNK_SIZE;
+    static const std::string ATTR_ROI_ORIGIN;
+    static const std::string ATTR_DSET_SIZE;
+    static const std::string ATTR_FILL_VAL;
+    static const std::string ATTR_COMPRESSION;
+
     // Constructors
     WriteConfig();
     WriteConfig(NDArray& ndarray, int mpi_rank=0, int mpi_proc=1);
@@ -113,5 +117,7 @@ private:
 
 // utility functions
 bool is_prime(unsigned int long number);
+
+} // phdf5
 
 #endif /* WRITECONFIG_HPP_ */

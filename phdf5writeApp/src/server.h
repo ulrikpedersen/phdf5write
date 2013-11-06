@@ -12,6 +12,8 @@
 #include <adtransferserver.h>
 #include "ndarray_hdf5.h"
 
+namespace phdf5 {
+
 class Server: public AdTransferServer {
 public:
     Server(int port):AdTransferServer(port),port(port),hdf(NULL){ log = log4cxx::Logger::getLogger("Server"); };
@@ -37,5 +39,6 @@ private:
     NDArrayToHDF5 * hdf;
 };
 
+} // phdf5
 
 #endif /* SERVER_HPP_ */

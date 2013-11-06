@@ -14,18 +14,20 @@
 #include "layout.h"
 #include "layoutxml.h"
 
-#define XML_ATTR_ELEMENT_NAME "name"
-#define XML_ATTR_GROUP "group"
-#define XML_ATTR_DATASET "dataset"
-#define XML_ATTR_ATTRIBUTE "attribute"
+namespace phdf5 {
 
-#define XML_ATTR_SOURCE "source"
-#define XML_ATTR_SRC_DETECTOR "detector"
-#define XML_ATTR_SRC_NDATTR "ndattribute"
-#define XML_ATTR_SRC_CONST "constant"
-#define XML_ATTR_SRC_CONST_VALUE "value"
-#define XML_ATTR_SRC_CONST_TYPE "type"
-#define XML_ATTR_GRP_NDATTR_DEFAULT "ndattr_default"
+const std::string LayoutXML::ATTR_ELEMENT_NAME       = "name";
+const std::string LayoutXML::ATTR_GROUP              = "group";
+const std::string LayoutXML::ATTR_DATASET            = "dataset";
+const std::string LayoutXML::ATTR_ATTRIBUTE          = "attribute";
+
+const std::string LayoutXML::ATTR_SOURCE             = "source";
+const std::string LayoutXML::ATTR_SRC_DETECTOR       = "detector";
+const std::string LayoutXML::ATTR_SRC_NDATTR         = "ndattribute";
+const std::string LayoutXML::ATTR_SRC_CONST          = "constant";
+const std::string LayoutXML::ATTR_SRC_CONST_VALUE    = "value";
+const std::string LayoutXML::ATTR_SRC_CONST_TYPE     = "type";
+const std::string LayoutXML::ATTR_GRP_NDATTR_DEFAULT = "ndattr_default";
 
 LayoutXML::LayoutXML() :
 ptr_tree(NULL), ptr_curr_element(NULL)
@@ -100,11 +102,11 @@ int LayoutXML::process_node()
         // Elements can be either 'group', 'dataset' or 'attribute'
         case XML_READER_TYPE_ELEMENT:
             //LOG4CXX_DEBUG(log, "process_node: \'" << name << "\' (" << xmlname << ")" );
-            if ( name == XML_ATTR_GROUP )
+            if ( name == LayoutXML::ATTR_GROUP )
                 ret = this->new_group();
-            else if ( name == XML_ATTR_DATASET )
+            else if ( name == LayoutXML::ATTR_DATASET )
                 ret = this->new_dataset();
-            else if ( name == XML_ATTR_ATTRIBUTE )
+            else if ( name == LayoutXML::ATTR_ATTRIBUTE )
                 ret = this->new_attribute();
             if (ret != 0)
                 LOG4CXX_WARN(log, "adding new node: " << name << " failed..." );
@@ -114,7 +116,7 @@ int LayoutXML::process_node()
         case XML_READER_TYPE_END_ELEMENT:
             if (this->ptr_tree == NULL) break;
 
-            if (name == XML_ATTR_GROUP || name == XML_ATTR_DATASET)
+            if (name == LayoutXML::ATTR_GROUP || name == LayoutXML::ATTR_DATASET)
             {
                 //LOG4CXX_DEBUG(log, "END ELEMENT name: " << name << " curr: " << this->ptr_curr_element->get_full_name() );
                 if (this->ptr_curr_element != NULL)
@@ -141,19 +143,19 @@ int LayoutXML::process_dset_xml_attribute(HdfDataSource& out)
     xmlChar *attr_src = NULL;
     std::string str_attr_src;
 
-    attr_src = xmlTextReaderGetAttribute(this->xmlreader, (const xmlChar*)XML_ATTR_SOURCE);
+    attr_src = xmlTextReaderGetAttribute(this->xmlreader, (const xmlChar*)LayoutXML::ATTR_SOURCE.c_str());
     if (attr_src == NULL) return ret;
     str_attr_src = (char*)attr_src;
 
-    if (str_attr_src == XML_ATTR_SRC_DETECTOR) {
+    if (str_attr_src == LayoutXML::ATTR_SRC_DETECTOR) {
         out = HdfDataSource( phdf_detector );
         ret = 0;
     }
-    if (str_attr_src == XML_ATTR_SRC_NDATTR) {
+    if (str_attr_src == LayoutXML::ATTR_SRC_NDATTR) {
         out = HdfDataSource( phdf_ndattribute );
         ret = 0;
     }
-    if (str_attr_src == XML_ATTR_SRC_CONST) {
+    if (str_attr_src == LayoutXML::ATTR_SRC_CONST) {
         out = HdfDataSource( phdf_constant );
         ret = 0;
     }
@@ -169,7 +171,7 @@ int LayoutXML::process_attribute_xml_attribute(HdfAttribute& out)
     xmlChar *attr_src = NULL;
     std::string str_attr_src;
 
-    attr_src = xmlTextReaderGetAttribute(this->xmlreader, (const xmlChar*)XML_ATTR_SOURCE);
+    attr_src = xmlTextReaderGetAttribute(this->xmlreader, (const xmlChar*)LayoutXML::ATTR_SOURCE.c_str());
     if (attr_src == NULL) return ret;
     str_attr_src = (char*)attr_src;
 
@@ -180,8 +182,8 @@ int LayoutXML::process_attribute_xml_attribute(HdfAttribute& out)
 
     // If the tag is: source="ndattribute"
     // Then setup the data source as a phdf_ndattribute with the name of the NDAttribute as argument value
-    if (str_attr_src == XML_ATTR_SRC_NDATTR) {
-    	attr_val = xmlTextReaderGetAttribute(this->xmlreader, (const xmlChar*)XML_ATTR_SRC_NDATTR);
+    if (str_attr_src == LayoutXML::ATTR_SRC_NDATTR) {
+    	attr_val = xmlTextReaderGetAttribute(this->xmlreader, (const xmlChar*)LayoutXML::ATTR_SRC_NDATTR.c_str());
     	if (attr_val != NULL) str_attr_val = (char*)attr_val;
     	out.source = HdfDataSource( phdf_ndattribute, str_attr_val );
     }
@@ -190,11 +192,11 @@ int LayoutXML::process_attribute_xml_attribute(HdfAttribute& out)
     // Todo: a constant currently is only supported as a string type. This is
     // probably Good Enough (TM) for most use but should really be made work for
     // at least a int and float as well.
-    else if (str_attr_src == XML_ATTR_SRC_CONST) {
-    	attr_val = xmlTextReaderGetAttribute(this->xmlreader, (const xmlChar*)XML_ATTR_SRC_CONST_VALUE);
+    else if (str_attr_src == LayoutXML::ATTR_SRC_CONST) {
+    	attr_val = xmlTextReaderGetAttribute(this->xmlreader, (const xmlChar*)LayoutXML::ATTR_SRC_CONST_VALUE.c_str());
     	if (attr_val != NULL) str_attr_val = (char*)attr_val;
     	out.source = HdfDataSource( phdf_constant, str_attr_val );
-    	attr_type = xmlTextReaderGetAttribute(this->xmlreader, (const xmlChar*)XML_ATTR_SRC_CONST_TYPE);
+    	attr_type = xmlTextReaderGetAttribute(this->xmlreader, (const xmlChar*)LayoutXML::ATTR_SRC_CONST_TYPE.c_str());
     	if (attr_type != NULL) {
     		str_attr_type = (char*)attr_type;
     		PHDF_DataType_t dtype = phdf_string;
@@ -217,7 +219,7 @@ int LayoutXML::new_group()
 
     xmlChar * group_name = NULL;
     group_name = xmlTextReaderGetAttribute(this->xmlreader,
-                                           (const xmlChar *)XML_ATTR_ELEMENT_NAME);
+                                           (const xmlChar *)LayoutXML::ATTR_ELEMENT_NAME.c_str());
     //LOG4CXX_DEBUG(log, "  new_group: " << group_name );
     if (group_name == NULL) return -1;
 
@@ -243,7 +245,7 @@ int LayoutXML::new_group()
     	// NDAttribute meta-data in
     	xmlChar * ndattr_default;
     	ndattr_default = xmlTextReaderGetAttribute(this->xmlreader,
-                                                  (const xmlChar *)XML_ATTR_GRP_NDATTR_DEFAULT);
+                                                  (const xmlChar *)LayoutXML::ATTR_GRP_NDATTR_DEFAULT.c_str());
     	if (ndattr_default != NULL)
     	{
         	std::string str_ndattr_default((char*)ndattr_default);
@@ -268,7 +270,7 @@ int LayoutXML::new_dataset()
 
     xmlChar *dset_name = NULL;
     dset_name = xmlTextReaderGetAttribute(this->xmlreader,
-                                          (const xmlChar *)XML_ATTR_ELEMENT_NAME);
+                                          (const xmlChar *)LayoutXML::ATTR_ELEMENT_NAME.c_str());
     //LOG4CXX_DEBUG(log, "  new_dataset: " << dset_name );
     if (dset_name == NULL) return -1;
 
@@ -296,7 +298,7 @@ int LayoutXML::new_attribute()
 
     xmlChar *ndattr_name = NULL;
     ndattr_name = xmlTextReaderGetAttribute(this->xmlreader,
-                                            (const xmlChar*)XML_ATTR_ELEMENT_NAME);
+                                            (const xmlChar*)LayoutXML::ATTR_ELEMENT_NAME.c_str());
     //LOG4CXX_DEBUG(log, "  new_attribute: " << ndattr_name << " attached to: " << this->ptr_curr_element->get_full_name() );
     if (ndattr_name == NULL) return -1;
 
@@ -307,5 +309,7 @@ int LayoutXML::new_attribute()
     ret = this->ptr_curr_element->add_attribute(ndattr);
     return ret;
 }
+
+} // phdf5
 
 

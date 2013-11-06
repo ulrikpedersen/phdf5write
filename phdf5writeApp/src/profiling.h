@@ -12,6 +12,8 @@
 #include <vector>
 #include <time.h>
 
+namespace phdf5 {
+
 class Profiling {
 public:
     Profiling(int frame_bytes = 0);
@@ -47,5 +49,7 @@ private:
     std::vector<double> timestamps;
     std::vector<double> datarate;
 };
+
+} // phdf5
 
 #endif /* PROFILING_H_ */

@@ -13,6 +13,8 @@
 
 #include "layout.h"
 
+namespace phdf5 {
+
 /* ================== HdfAttribute Class public methods ==================== */
 HdfAttribute::HdfAttribute(const HdfAttribute& src)
 {
@@ -718,3 +720,7 @@ void HdfDataset::_copy(const HdfDataset& src)
     this->data_ptr = calloc( this->data_nelements, this->datasource.datatype_size() );
 
 }
+
+} // phdf5
+
+

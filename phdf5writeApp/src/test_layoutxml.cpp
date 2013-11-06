@@ -12,6 +12,8 @@
 #include "layout.h"
 #include "layoutxml.h"
 
+using namespace phdf5;
+
 BOOST_AUTO_TEST_SUITE( simple )
 
 /*

@@ -9,6 +9,8 @@
 
 #include "profiling.h"
 
+namespace phdf5 {
+
 Profiling::Profiling(int frame_bytes)
 {
     double mbytes = -1.0;
@@ -171,3 +173,6 @@ double Profiling::tsdiff (timespec& start, timespec& end)
 
     return retval;
 }
+
+} // phdf5
+

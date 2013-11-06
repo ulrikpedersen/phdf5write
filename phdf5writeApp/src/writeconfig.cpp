@@ -17,7 +17,15 @@
 #include "dimension.h"
 #include "writeconfig.h"
 
+namespace phdf5 {
+
 #define FILL_VALUE_SIZE 8
+
+const std::string WriteConfig::ATTR_CHUNK_SIZE  = "h5_chunk_size_";
+const std::string WriteConfig::ATTR_ROI_ORIGIN  = "h5_roi_origin_";
+const std::string WriteConfig::ATTR_DSET_SIZE   = "h5_dset_size_";
+const std::string WriteConfig::ATTR_FILL_VAL    = "h5_fill_val";
+const std::string WriteConfig::ATTR_COMPRESSION = "h5_compression";
 
 /*========================================================================
  *
@@ -121,7 +129,7 @@ void WriteConfig::inc_position(NDArray& ndarray)
     vec_ds_t roi_frame_dims = this->dim_roi_frame.dim_size_vec();
     int num_img_dims = this->dim_roi_frame.num_dimensions();
 
-    attr_name = ATTR_ROI_ORIGIN;
+    attr_name = WriteConfig::ATTR_ROI_ORIGIN;
     ret = this->get_attr_array(attr_name, list, attr_origins);
     if (ret == this->dim_full_dataset.num_dimensions()) {
         // Origins/Offsets from the NDArray attribute if they are available for every dimension.
@@ -379,7 +387,7 @@ int WriteConfig::get_attr_fill_val(NDAttributeList *ptr_attr_list)
     // By default we set the fillvalue to 0
     memset(this->ptr_fill_value, 0, FILL_VALUE_SIZE);
 
-    ptr_ndattr = ptr_attr_list->find(ATTR_FILL_VAL);
+    ptr_ndattr = ptr_attr_list->find(WriteConfig::ATTR_FILL_VAL.c_str());
     // Check whether the attribute exist in the list
     if (ptr_ndattr == NULL) return -1;
 
@@ -449,7 +457,7 @@ void WriteConfig::parse_ndarray_attributes(NDArray& ndarray)
     }
 
     // Get the chunking size from the NDArray attributes
-    attr_name = ATTR_CHUNK_SIZE;
+    attr_name = WriteConfig::ATTR_CHUNK_SIZE;
     tmpdims.clear();
     ret = this->get_attr_array(attr_name, list, tmpdims);
     if (ret > 0) {
@@ -459,7 +467,7 @@ void WriteConfig::parse_ndarray_attributes(NDArray& ndarray)
     //LOG4CXX_DEBUG(log,  "Chunk size: " << this->dim_chunk );
 
     // Get the full dataset size from the NDArray attributes
-    attr_name = ATTR_DSET_SIZE;
+    attr_name = WriteConfig::ATTR_DSET_SIZE;
     tmpdims.clear();
     ret = this->get_attr_array(attr_name, list, tmpdims);
     if (ret > 0) {
@@ -530,3 +538,6 @@ bool is_prime(unsigned int long number)
     //if no divisor greater than 1 is found, it is a prime number
     return divisor == 1;
 }
+
+} // phdf5
+

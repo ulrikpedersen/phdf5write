@@ -25,6 +25,8 @@
 
 #define NUM_WRITE_STEPS 2
 
+namespace phdf5 {
+
 typedef struct {
 	vec_ds_t dims_dset_size;
 	vec_ds_t dims_frame_size;
@@ -143,5 +145,7 @@ private:
     size_t rdcc_nslots;
     size_t rdcc_nbytes;
 };
+
+} // phdf5
 
 #endif /* NDARRAY_HDF5_H_ */

@@ -16,6 +16,8 @@
 
 #include "dimension.h"
 
+using namespace phdf5;
+
 /*BOOST_AUTO_TEST_SUITE( dimension_test_suite )*/
 
 BOOST_AUTO_TEST_CASE_EXPECTED_FAILURES( test1, 1 )
