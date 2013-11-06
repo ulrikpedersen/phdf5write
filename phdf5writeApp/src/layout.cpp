@@ -11,8 +11,6 @@
 #include <algorithm>
 #include <cstring>
 
-using namespace std;
-
 #include "layout.h"
 
 /* ================== HdfAttribute Class public methods ==================== */
@@ -31,7 +29,7 @@ HdfAttribute& HdfAttribute::operator=(const HdfAttribute& src)
 	this->_copy(src);
 	return *this;
 }
-string HdfAttribute::get_name() {return this->name;}
+std::string HdfAttribute::get_name() {return this->name;}
 
 
 // constructors
@@ -132,22 +130,22 @@ HdfElement::HdfElement(const HdfElement& src)
 	this->_copy(src);
 }
 
-HdfElement::HdfElement(const string& name)
+HdfElement::HdfElement(const std::string& name)
 {
     this->name = name;
     this->parent = NULL;
 }
 
-string HdfElement::get_full_name()
+std::string HdfElement::get_full_name()
 {
-	string fname = this->get_path(true);
+	std::string fname = this->get_path(true);
 	fname += this->name;
     return fname;
 }
 
-string HdfElement::get_path(bool trailing_slash)
+std::string HdfElement::get_path(bool trailing_slash)
 {
-	string path;
+	std::string path;
 	path.append("/");
 	if (this->parent != NULL) {
 		path.insert(0, this->parent->get_name());
@@ -166,7 +164,7 @@ HdfElement& HdfElement::operator=(const HdfElement& src)
     return *this;
 }
 
-const string& HdfElement::get_name()
+const std::string& HdfElement::get_name()
 {
 	return this->name;
 }
@@ -184,14 +182,14 @@ HdfElement::MapAttributes_t& HdfElement::get_attributes()
 int HdfElement::add_attribute(HdfAttribute& attr)
 {
     if (this->attributes.count(attr.get_name()) != 0) return -1;
-    pair<map<string,HdfAttribute>::iterator,bool> ret;
-    ret = this->attributes.insert( pair<string, HdfAttribute>(attr.get_name(), attr) );
+    std::pair<std::map<std::string,HdfAttribute>::iterator,bool> ret;
+    ret = this->attributes.insert( std::pair<std::string, HdfAttribute>(attr.get_name(), attr) );
     // Check for successful insertion.
     if (ret.second == false) return -1;
     return 0;
 }
 
-bool HdfElement::has_attribute(const string& attr_name)
+bool HdfElement::has_attribute(const std::string& attr_name)
 {
     return this->attributes.count(attr_name)>0 ? true : false;
 }
@@ -200,7 +198,7 @@ int HdfElement::tree_level()
 {
     int level = 0;
     size_t pos = 0;
-    while( pos != string::npos ){
+    while( pos != std::string::npos ){
         pos = this->get_full_name().find('/', pos+1);
         level++;
     }
@@ -265,8 +263,8 @@ HdfDataset* HdfGroup::new_dset(const std::string& name)
     ds->parent = this;
 
     // Insert the string, HdfDataset pointer pair in the datasets map.
-    pair<map<string,HdfDataset*>::iterator,bool> ret;
-    ret = this->datasets.insert( pair<string, HdfDataset*>(name, ds) );
+    std::pair<std::map<std::string,HdfDataset*>::iterator,bool> ret;
+    ret = this->datasets.insert( std::pair<std::string, HdfDataset*>(name, ds) );
 
     // Check for successful insertion.
     if (ret.second == false) return NULL;
@@ -275,7 +273,7 @@ HdfDataset* HdfGroup::new_dset(const std::string& name)
 
 HdfDataset* HdfGroup::new_dset(const char* name)
 {
-    string str_name(name);
+    std::string str_name(name);
     return this->new_dset(str_name);
 }
 
@@ -296,8 +294,8 @@ HdfGroup* HdfGroup::new_group(const std::string& name)
     grp->parent = this;
 
     // Insert the string, HdfDataset pointer pair in the datasets map.
-    pair<map<string,HdfGroup*>::iterator,bool> ret;
-    ret = this->groups.insert( pair<string, HdfGroup*>(name, grp) );
+    std::pair<std::map<std::string,HdfGroup*>::iterator,bool> ret;
+    ret = this->groups.insert( std::pair<std::string, HdfGroup*>(name, grp) );
     // Check for successful insertion.
     if (ret.second == false) return NULL;
     return grp;
@@ -305,21 +303,21 @@ HdfGroup* HdfGroup::new_group(const std::string& name)
 
 HdfGroup* HdfGroup::new_group(const char * name)
 {
-    string str_name(name);
+    std::string str_name(name);
     return this->new_group(str_name);
 }
 
 int HdfGroup::find_dset_ndattr(const char * ndattr_name, HdfDataset** dset)
 {
-	string str_name(ndattr_name);
+	std::string str_name(ndattr_name);
 	return this->find_dset_ndattr(str_name, dset);
 }
 
 
-int HdfGroup::find_dset_ndattr(const string& ndattr_name, HdfDataset** dset)
+int HdfGroup::find_dset_ndattr(const std::string& ndattr_name, HdfDataset** dset)
 {
     // check first whether this group has a dataset with this attribute
-    map<string, HdfDataset*>::iterator it_dsets;
+    std::map<std::string, HdfDataset*>::iterator it_dsets;
     for (it_dsets = this->datasets.begin();
          it_dsets != this->datasets.end();
          ++it_dsets)
@@ -332,7 +330,7 @@ int HdfGroup::find_dset_ndattr(const string& ndattr_name, HdfDataset** dset)
     }
 
     // Now check if any children has a dataset with this attribute
-    map<string, HdfGroup*>::iterator it_groups;
+    std::map<std::string, HdfGroup*>::iterator it_groups;
     for (it_groups = this->groups.begin();
          it_groups != this->groups.end();
          ++it_groups)
@@ -347,13 +345,13 @@ int HdfGroup::find_dset_ndattr(const string& ndattr_name, HdfDataset** dset)
 
 int HdfGroup::find_dset( const char* dsetname, HdfDataset** dest)
 {
-	string str_dsetname = dsetname;
+	std::string str_dsetname = dsetname;
 	return this->find_dset(str_dsetname, dest);
 }
 
-int HdfGroup::find_dset( string& dsetname, HdfDataset** dest )
+int HdfGroup::find_dset( std::string& dsetname, HdfDataset** dest )
 {
-    map<string, HdfDataset*>::const_iterator it_dsets;
+    std::map<std::string, HdfDataset*>::const_iterator it_dsets;
     it_dsets = this->datasets.find(dsetname);
     if (it_dsets != this->datasets.end())
     {
@@ -361,7 +359,7 @@ int HdfGroup::find_dset( string& dsetname, HdfDataset** dest )
         return 0;
     }
 
-    map<string, HdfGroup*>::iterator it_groups;
+    std::map<std::string, HdfGroup*>::iterator it_groups;
     int retcode = 0;
     for (it_groups = this->groups.begin();
             it_groups != this->groups.end();
@@ -401,16 +399,16 @@ int HdfGroup::num_groups()
     return this->groups.size();
 }
 
-string HdfGroup::_str_()
+std::string HdfGroup::_str_()
 {
-    stringstream out(stringstream::out);
+    std::stringstream out(std::stringstream::out);
     out << "< HdfGroup: \'" << this->get_full_name() << "\'";
     out << " groups=" << this->num_groups();
     out << " dsets=" << this->num_datasets();
     out << " attr=" << this->attributes.size() << ">";
     //out << " level=" << this->tree_level();
 
-    map<string, HdfGroup*>::iterator it_groups;
+    std::map<std::string, HdfGroup*>::iterator it_groups;
     for (it_groups = this->groups.begin();
             it_groups != this->groups.end();
             ++it_groups)
@@ -444,7 +442,7 @@ void HdfGroup::find_dsets(HdfDataSrc_t source, MapDatasets_t& results)
 	{
 		if (it->second->data_source().is_src(source))
 		{
-			results.insert(pair<string, HdfDataset*>(it->second->get_full_name(), it->second));
+			results.insert(std::pair<std::string, HdfDataset*>(it->second->get_full_name(), it->second));
 		}
 	}
 
@@ -470,7 +468,7 @@ void HdfGroup::merge_ndattributes(MapNDAttrSrc_t::const_iterator it_begin,
 		it_dset = this->datasets.find(it->first);
 		if (it_dset != this->datasets.end())
 		{
-			cout << " found dataset: " << it->first << endl;
+			std::cout << " found dataset: " << it->first << std::endl;
 			HdfDataSource data_src(*it->second);
 			it_dset->second->set_data_source(data_src);
 			used_ndattribute_srcs.insert(it->first);
@@ -520,7 +518,7 @@ HdfRoot::HdfRoot(const char *name)
 
 void HdfRoot::merge_ndattributes(MapNDAttrSrc_t::const_iterator it_begin,
     								MapNDAttrSrc_t::const_iterator it_end,
-    								set<string>& used_ndattribute_srcs)
+    								std::set<std::string>& used_ndattribute_srcs)
 {
 	// first call the base class method
 	HdfGroup::merge_ndattributes(it_begin, it_end, used_ndattribute_srcs);
@@ -534,7 +532,7 @@ void HdfRoot::merge_ndattributes(MapNDAttrSrc_t::const_iterator it_begin,
 	if (def_grp == NULL) return; // if there are no default group: then nothing left to do
 
 	MapNDAttrSrc_t::const_iterator it;
-	string name;
+	std::string name;
 	for (it = it_begin; it != it_end; ++it)
 	{
 		// Check if an attribute is not in the 'used' list - i.e. it has not been
@@ -593,11 +591,11 @@ HdfDataset& HdfDataset::operator =(const HdfDataset& src)
     return *this;
 }
 
-string HdfDataset::_str_()
+std::string HdfDataset::_str_()
 {
 	unsigned int i = 0;
 	PHDF_DataType_t dtype;
-    stringstream out(stringstream::out);
+    std::stringstream out(std::stringstream::out);
     out << "< HdfDataset: \'" << this->get_full_name() << "\'";
     out << " datatype: " << this->datasource.get_datatype();
     if (this->datasource.is_src_ndattribute())

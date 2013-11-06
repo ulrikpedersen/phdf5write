@@ -14,7 +14,7 @@
 #include <vector>
 #include <string>
 #include <NDArray.h>
-#include "writeconfig.hpp"
+#include "writeconfig.h"
 
 void util_fill_ndarr_dims(NDArray &ndarr, unsigned long int *sizes, int ndims)
 {

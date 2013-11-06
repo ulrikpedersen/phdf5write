@@ -9,8 +9,6 @@
 #include <iostream>
 #include <string>
 
-using namespace std;
-
 #include "ndarray_hdf5.h"
 
 
@@ -50,7 +48,7 @@ int NDArrayToHDF5::load_layout_xml() {
     return this->load_layout_xml("layout.xml");
 }
 
-int NDArrayToHDF5::load_layout_xml(string& xmlfile) {
+int NDArrayToHDF5::load_layout_xml(std::string& xmlfile) {
     return this->load_layout_xml( xmlfile.c_str() );
 }
 
@@ -355,7 +353,7 @@ void NDArrayToHDF5::cache_ndattributes( NDAttributeList * ndattr_list )
     NDAttrDataType_t ndattr_type = NDAttrUndefined;
     HdfGroup::MapDatasets_t ndattr_dsets;
     HdfDataset *dset;
-    string name;
+    std::string name;
 
     this->layout.get_hdftree()->find_dsets(phdf_ndattribute, ndattr_dsets);
     for (HdfGroup::MapDatasets_t::iterator it = ndattr_dsets.begin();
@@ -440,7 +438,7 @@ void NDArrayToHDF5::write_ndattributes()
 int NDArrayToHDF5::write_dataset(HdfDataset* dset, DatasetWriteParams_t *params)
 {
 	int retval = 0;
-	string fullname("");
+	std::string fullname("");
     hid_t h5_plist_dset_access = -1;
 	hid_t h5_dataset;
     hid_t h5_file_dataspace = -1;
@@ -450,7 +448,7 @@ int NDArrayToHDF5::write_dataset(HdfDataset* dset, DatasetWriteParams_t *params)
     hid_t h5_err = -1;
     vec_ds_t dims_frame;
     hid_t dset_dtype;
-    string smsg;
+    std::string smsg;
 
     fullname = dset->get_full_name();
     size_t num_dimensions = params->dims_dset_size.size();
@@ -749,7 +747,7 @@ int NDArrayToHDF5::create_file_layout()
 // utility method to help during debugging
 void NDArrayToHDF5::print_arr (const char * msg, const hsize_t* sizes, size_t n)
 {
-	stringstream out(stringstream::out);
+	std::stringstream out(std::stringstream::out);
     out << msg << " [ ";
     for (unsigned int i=0; i<n; i++)
     {
@@ -758,9 +756,9 @@ void NDArrayToHDF5::print_arr (const char * msg, const hsize_t* sizes, size_t n)
     out << "]";
     LOG4CXX_DEBUG(log, out.str());
 }
-string NDArrayToHDF5::str_arr (const char * msg, const hsize_t* sizes, size_t n)
+std::string NDArrayToHDF5::str_arr (const char * msg, const hsize_t* sizes, size_t n)
 {
-	stringstream out(stringstream::out);
+	std::stringstream out(std::stringstream::out);
     out << msg << " [ ";
     for (unsigned int i=0; i<n; i++)
     {
@@ -779,7 +777,7 @@ int NDArrayToHDF5::create_tree(HdfGroup* root, hid_t h5handle)
     int retcode = 0;
     if (root == NULL) return -1; // sanity check
 
-    string name = root->get_name();
+    std::string name = root->get_name();
     //First make the current group inside the given hdf handle.
     hid_t new_group = H5Gcreate(h5handle, name.c_str(),
     							H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
@@ -831,14 +829,14 @@ void NDArrayToHDF5::configure_ndattr_dsets(NDAttributeList *pAttributeList)
 	HdfGroup::MapNDAttrSrc_t map_ndattr;
 	while((ndattr = pAttributeList->next(ndattr)) != NULL)
 	{
-		string ndattr_name = ndattr->pName;
+		std::string ndattr_name = ndattr->pName;
 		PHDF_DataType_t datatype = NDArrayToHDF5::from_ndattr_to_phdf_datatype(ndattr->dataType);
 		map_ndattr[ndattr_name] = new HdfDataSource(phdf_ndattribute, datatype);
 	}
 
 	// Create a string set to contain the names of the NDAttributes which has
 	// been allocated a space.
-	set<string> ndattribute_names;
+	std::set<std::string> ndattribute_names;
 	// Run through the HDF tree and update any NDAttribute data sources
 	root->merge_ndattributes(map_ndattr.begin(), map_ndattr.end(),
 							 ndattribute_names);
@@ -1094,7 +1092,7 @@ int NDArrayToHDF5::store_profiling()
     const int ndims = 3;
 
     // For each profiling object, write to the correct column...
-    vector< vector<double> > profs;
+    std::vector< std::vector<double> > profs;
     profs.push_back(this->timestamp.vec_timestamps());
     profs.push_back(this->timestamp.vec_deltatime());
     profs.push_back(this->dt_write.vec_timestamps());
@@ -1102,7 +1100,7 @@ int NDArrayToHDF5::store_profiling()
     profs.push_back(this->dt_write.vec_datarate());
 
     // Find the longest profiling dataset (they should all be same length)
-    vector< vector<double> >::const_iterator it;
+    std::vector< std::vector<double> >::const_iterator it;
     hsize_t maxlen = 0;
     for (it = profs.begin(); it != profs.end(); ++it)
     {
@@ -1135,7 +1133,7 @@ int NDArrayToHDF5::store_profiling()
     int i = 0;
     for (it = profs.begin(); it != profs.end(); ++it, i++)
     {
-        vector<double> pf = *it;
+        std::vector<double> pf = *it;
         hsize_t start[ndims] = { this->mpi_rank, i, 0 };
         hsize_t count[ndims] = { 1, 1, pf.size() };
         hdferr = H5Sselect_hyperslab( file_dataspace, H5S_SELECT_SET,
@@ -1198,8 +1196,8 @@ void NDArrayToHDF5::write_hdf_attributes( hid_t h5_handle, HdfElement* element)
 }
 
 void NDArrayToHDF5::write_h5attr_str(hid_t element,
-		const string &attr_name,
-		const string &str_attr_value) const
+		const std::string &attr_name,
+		const std::string &str_attr_value) const
 {
 	herr_t hdfstatus = -1;
 	hid_t hdfdatatype = -1;
@@ -1230,7 +1228,7 @@ void NDArrayToHDF5::write_h5attr_str(hid_t element,
 	return;
 }
 
-void NDArrayToHDF5::write_h5attr_number(hid_t element, const string& attr_name,
+void NDArrayToHDF5::write_h5attr_number(hid_t element, const std::string& attr_name,
 		DimensionDesc dims,
 		PHDF_DataType_t datatype, void * data) const
 {

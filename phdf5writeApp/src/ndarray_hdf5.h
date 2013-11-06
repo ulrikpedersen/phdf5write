@@ -19,7 +19,7 @@
 #include "dimension.h"
 #include "layoutxml.h"
 #include "layout.h"
-#include "writeconfig.hpp"
+#include "writeconfig.h"
 #include "profiling.h"
 #include <NDArray.h>
 

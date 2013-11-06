@@ -1,5 +1,5 @@
 /*
- * writeconfig.hpp
+ * writeconfig.h
  *
  *  Created on: 11 Jan 2012
  *      Author: up45

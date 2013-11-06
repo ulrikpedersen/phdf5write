@@ -14,8 +14,6 @@
 #include <NDArray.h>
 #include "dimension.h"
 
-using namespace std;
-
 /*================================================================================
     DimensionDesc Class implementation
 */
@@ -119,9 +117,9 @@ void DimensionDesc::copy( const DimensionDesc& src)
 }
 
 
-string DimensionDesc::DimensionDesc::_str_()
+std::string DimensionDesc::DimensionDesc::_str_()
 {
-    stringstream out(stringstream::out);
+    std::stringstream out(std::stringstream::out);
     out << "<DimensionDesc:";
     out << " n="<< this->dims.size();
     out << " [ ";
@@ -216,8 +214,8 @@ unsigned int DimensionDesc::num_fits(DimensionDesc &container, bool overlap)
 
     // sanity check: the container cannot have a smaller number of dimensions than this object...
     if (container.num_dimensions() < this->num_dimensions()) {
-        cerr << "### ERROR: num fits problem: container:" << container;
-        cerr << " this: " << *this << endl;
+        std::cerr << "### ERROR: num fits problem: container:" << container;
+        std::cerr << " this: " << *this << std::endl;
         return -1;
     } else {
         // for each dimension that the container is bigger than this->dims we
@@ -264,32 +262,32 @@ int test_dimensiondesc_simple()
     ndarr.report(2);
 
     DimensionDesc *dim1 = new DimensionDesc(ndarr);
-    cout << *dim1 << endl;
+    std::cout << *dim1 << std::endl;
     DimensionDesc *dim2 = new DimensionDesc(3, sizes, sizeof(int));
-    cout << *dim2 << endl;
+    std::cout << *dim2 << std::endl;
 
     fits = dim1->num_fits(*dim2, true);
-    cout << "dim1 fits " << fits << " times in dim2" << endl;
+    std::cout << "dim1 fits " << fits << " times in dim2" << std::endl;
 
     // use of copy constructor
-    cout << "using copy constructor" << endl;
+    std::cout << "using copy constructor" << std::endl;
     DimensionDesc *dim3 =  new DimensionDesc(*dim2);
-    cout << *dim3 << endl;
+    std::cout << *dim3 << std::endl;
 
     // Delete the original object and check the copied ones still work
     // (i.e. a real deep copy has been performed rather than just a shallow one)
-    cout << "deleting the original object" << endl;
+    std::cout << "deleting the original object" << std::endl;
     delete dim2;
-    cout << *dim3 << endl;
+    std::cout << *dim3 << std::endl;
 
     // use of the assignment operator
-    cout << "using the assingment operator to assign dim1 to dim3" << endl;
+    std::cout << "using the assingment operator to assign dim1 to dim3" << std::endl;
     *dim3 = *dim1;
-    cout << *dim3 << endl;
+    std::cout << *dim3 << std::endl;
 
-    cout << "deleting the original dim1" << endl;
+    std::cout << "deleting the original dim1" << std::endl;
     delete dim1;
-    cout << *dim3 << endl;
+    std::cout << *dim3 << std::endl;
 
     delete dim3;
     return 0;

@@ -20,12 +20,10 @@
 #include "PrintHandler.h"
 #include "Channel.h"
 
-#include "server.hpp"
+#include "server.h"
 #include "ndarray_hdf5.h"
 
 #include "dimension.h"
-
-using namespace std;
 
 const char *program_name;
 

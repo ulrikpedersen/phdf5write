@@ -10,8 +10,6 @@
 #include <string>
 #include <iostream>
 
-using namespace std;
-
 #include <libxml/xmlreader.h>
 #include "layout.h"
 #include "layoutxml.h"
@@ -46,11 +44,11 @@ LayoutXML::~LayoutXML()
     delete this->ptr_tree;
 }
 
-int LayoutXML::load_xml(const char * filename)
+int LayoutXML::load_xml(const std::string& filename)
 {
     int ret = 0;
 
-    this->xmlreader = xmlReaderForFile(filename, NULL, 0);
+    this->xmlreader = xmlReaderForFile(filename.c_str(), NULL, 0);
     if (this->xmlreader == NULL) {
         LOG4CXX_ERROR(log, "Unable to open XML file: " << filename );
         this->xmlreader = NULL;
@@ -84,17 +82,18 @@ HdfRoot* LayoutXML::get_hdftree()
 /** Process one XML node and create the necessary HDF5 element if necessary
  *
  */
-void LayoutXML::process_node()
+int LayoutXML::process_node()
 {
     xmlReaderTypes type = (xmlReaderTypes)xmlTextReaderNodeType(this->xmlreader);
     int ret = 0;
     const xmlChar* xmlname = NULL;
-    string name;
+    //string name;
 
     xmlname = xmlTextReaderConstName(this->xmlreader);
-    if (xmlname == NULL) return;
-    name.clear();
-    name.append((const char*)xmlname);
+    if (xmlname == NULL) return ret;
+    //name.clear();
+    //name.append((const char*)xmlname);
+    std::string name((const char*)xmlname);
 
     switch( type )
     {
@@ -128,6 +127,7 @@ void LayoutXML::process_node()
         default:
             break;
     }
+    return ret;
 }
 
 /** Process a datasets XML attributes
@@ -139,7 +139,7 @@ int LayoutXML::process_dset_xml_attribute(HdfDataSource& out)
     if (not xmlTextReaderHasAttributes(this->xmlreader) ) return ret;
 
     xmlChar *attr_src = NULL;
-    string str_attr_src;
+    std::string str_attr_src;
 
     attr_src = xmlTextReaderGetAttribute(this->xmlreader, (const xmlChar*)XML_ATTR_SOURCE);
     if (attr_src == NULL) return ret;
@@ -167,15 +167,15 @@ int LayoutXML::process_attribute_xml_attribute(HdfAttribute& out)
     if (not xmlTextReaderHasAttributes(this->xmlreader) ) return ret;
 
     xmlChar *attr_src = NULL;
-    string str_attr_src;
+    std::string str_attr_src;
 
     attr_src = xmlTextReaderGetAttribute(this->xmlreader, (const xmlChar*)XML_ATTR_SOURCE);
     if (attr_src == NULL) return ret;
     str_attr_src = (char*)attr_src;
 
-    string str_attr_val = "";
+    std::string str_attr_val = "";
     xmlChar *attr_val = NULL;
-    string str_attr_type = "";
+    std::string str_attr_type = "";
     xmlChar *attr_type = NULL;
 
     // If the tag is: source="ndattribute"
@@ -221,7 +221,7 @@ int LayoutXML::new_group()
     //LOG4CXX_DEBUG(log, "  new_group: " << group_name );
     if (group_name == NULL) return -1;
 
-    string str_group_name((char*)group_name);
+    std::string str_group_name((char*)group_name);
     free(group_name);
 
     // Initialise the tree if it has not already been done.
@@ -246,7 +246,7 @@ int LayoutXML::new_group()
                                                   (const xmlChar *)XML_ATTR_GRP_NDATTR_DEFAULT);
     	if (ndattr_default != NULL)
     	{
-        	string str_ndattr_default((char*)ndattr_default);
+        	std::string str_ndattr_default((char*)ndattr_default);
         	free(ndattr_default);
         	// if the group has tag: ndattr_default="true" (true in lower case)
         	// then set the group as the default container for NDAttributes.
@@ -272,7 +272,7 @@ int LayoutXML::new_dataset()
     //LOG4CXX_DEBUG(log, "  new_dataset: " << dset_name );
     if (dset_name == NULL) return -1;
 
-    string str_dset_name((char*)dset_name);
+    std::string str_dset_name((char*)dset_name);
 
     HdfGroup *parent = (HdfGroup *)this->ptr_curr_element;
     HdfDataset *dset = NULL;
@@ -300,7 +300,7 @@ int LayoutXML::new_attribute()
     //LOG4CXX_DEBUG(log, "  new_attribute: " << ndattr_name << " attached to: " << this->ptr_curr_element->get_full_name() );
     if (ndattr_name == NULL) return -1;
 
-    string str_ndattr_name((char*)ndattr_name);
+    std::string str_ndattr_name((char*)ndattr_name);
     HdfAttribute ndattr(str_ndattr_name);
     this->process_attribute_xml_attribute(ndattr);
 

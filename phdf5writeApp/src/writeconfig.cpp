@@ -12,11 +12,10 @@
 #include <cstring>
 //#include <stdio.h>
 //#include <stdlib.h>
-using namespace std;
 
 #include <NDArray.h>
 #include "dimension.h"
-#include "writeconfig.hpp"
+#include "writeconfig.h"
 
 #define FILL_VALUE_SIZE 8
 
@@ -75,7 +74,7 @@ WriteConfig& WriteConfig::operator =(const WriteConfig& src)
 }
 
 
-string WriteConfig::file_name()
+std::string WriteConfig::file_name()
 {
     return this->str_file_name;
 }
@@ -113,7 +112,7 @@ long int WriteConfig::num_frames()
 void WriteConfig::inc_position(NDArray& ndarray)
 {
     NDAttributeList * list = ndarray.pAttributeList;
-    string attr_name;
+    std::string attr_name;
     vec_ds_t attr_origins;
     vec_ds_t::iterator it_origen;
     int idim = 0;
@@ -274,13 +273,13 @@ unsigned long int WriteConfig::cache_num_slots( DimensionDesc& cache_block )
     unsigned long int start_range =  10*num_chunks;
     unsigned long int end_range   = 100*num_chunks;
     LOG4CXX_DEBUG(log,  "start_range: " << start_range );
-    vector<unsigned int long> range (end_range-start_range, 0);
+    std::vector<unsigned int long> range (end_range-start_range, 0);
 
     // Range of numbers from 10 to 100 times the number of chunks in the cache block
     for (unsigned long int i=start_range; i<end_range; i++) range[i-start_range] = i;
 
     // find the first prime in the range
-    vector<unsigned int long>::iterator it_first_prime;
+    std::vector<unsigned int long>::iterator it_first_prime;
     it_first_prime = find_if(range.begin(), range.end(), is_prime);
 
     if (*it_first_prime <= 0) return 10*num_chunks;
@@ -288,9 +287,9 @@ unsigned long int WriteConfig::cache_num_slots( DimensionDesc& cache_block )
     return *it_first_prime;
 }
 
-string WriteConfig::_str_()
+std::string WriteConfig::_str_()
 {
-    stringstream out(stringstream::out);
+    std::stringstream out(std::stringstream::out);
     out << "<WriteConfig:";
     //out << " filename=  " << this->file_name();
     out << " rank=" << this->proc_rank << " nproc=" << this->proc_size;
@@ -399,7 +398,7 @@ int WriteConfig::get_alloc_time()
 /**
  * Parse a a series of attributes formatted: "h5_nnnn_%d"
  */
-int WriteConfig::get_attr_array(string& attr_name, NDAttributeList *ptr_attr_list,
+int WriteConfig::get_attr_array(std::string& attr_name, NDAttributeList *ptr_attr_list,
                                 vec_ds_t& dst)
 {
     unsigned int i = 0;
@@ -407,7 +406,7 @@ int WriteConfig::get_attr_array(string& attr_name, NDAttributeList *ptr_attr_lis
     int attr_value = 0;
     while (retcode >= 0)
     {
-        stringstream ss_attr(stringstream::out);
+        std::stringstream ss_attr(std::stringstream::out);
         ss_attr << attr_name << i;
         retcode = this->get_attr_value(ss_attr.str(), ptr_attr_list, &attr_value);
         //LOG4CXX_DEBUG(log,  "get_attr_values (" << ss_attr.str() << ")return: " << attr_value );
@@ -425,7 +424,7 @@ int WriteConfig::get_attr_array(string& attr_name, NDAttributeList *ptr_attr_lis
 void WriteConfig::parse_ndarray_attributes(NDArray& ndarray)
 {
     NDAttributeList * list = ndarray.pAttributeList;
-    string attr_name;
+    std::string attr_name;
     vec_ds_t tmpdims;
     int ret=0;
 
@@ -486,7 +485,7 @@ void WriteConfig::parse_ndarray_attributes(NDArray& ndarray)
     //LOG4CXX_DEBUG(log,  *this );
 }
 
-int WriteConfig::get_attr_value(const string& attr_name, NDAttributeList *ptr_attr_list, int *attr_value)
+int WriteConfig::get_attr_value(const std::string& attr_name, NDAttributeList *ptr_attr_list, int *attr_value)
 {
     long int retval = 0;
     int retcode = 0;

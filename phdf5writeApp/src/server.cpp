@@ -14,9 +14,7 @@
 #include "PVDataTiny.h"
 #include "PrintHandler.h"
 #include "Channel.h"
-#include "server.hpp"
-
-using namespace std;
+#include "server.h"
 
 void Server::signal_socket_open(int status)
 {

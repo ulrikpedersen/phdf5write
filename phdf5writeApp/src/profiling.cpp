@@ -7,8 +7,6 @@
 #include <iostream>
 #include <sstream>
 
-using namespace std;
-
 #include "profiling.h"
 
 Profiling::Profiling(int frame_bytes)
@@ -38,14 +36,14 @@ Profiling& Profiling::operator =(const Profiling& src)
     return *this;
 }
 
-string Profiling::_str()
+std::string Profiling::_str()
 {
-    stringstream out(stringstream::out);
+    std::stringstream out(std::stringstream::out);
     out << "<Profiling  nstamps=" << this->timestamps.size();
     out << " size=" << this->framesize << "MB";
-    vector<double>::const_iterator it=this->timestamps.begin();
-    vector<double> delta = this->vec_deltatime();
-    vector<double>::const_iterator dit = delta.begin();
+    std::vector<double>::const_iterator it=this->timestamps.begin();
+    std::vector<double> delta = this->vec_deltatime();
+    std::vector<double>::const_iterator dit = delta.begin();
     for (int i=0;
             it != this->timestamps.end();
             ++it, ++dit, i++)
@@ -110,7 +108,7 @@ int Profiling::count()
     return (int)this->timestamps.size();
 }
 
-vector<double> Profiling::vec_timestamps()
+std::vector<double> Profiling::vec_timestamps()
 {
     return this->timestamps;
 }
@@ -121,10 +119,10 @@ const double *Profiling::ptr_timestamps(size_t& nelements)
     return &this->timestamps.front();
 }
 
-vector<double> Profiling::vec_deltatime()
+std::vector<double> Profiling::vec_deltatime()
 {
-    vector<double> delta;
-    vector<double>::const_iterator it = this->timestamps.begin();
+    std::vector<double> delta;
+    std::vector<double>::const_iterator it = this->timestamps.begin();
     double prev = 0.0;
 
     for (it = this->timestamps.begin();
@@ -138,7 +136,7 @@ vector<double> Profiling::vec_deltatime()
     return delta;
 }
 
-vector<double> Profiling::vec_datarate()
+std::vector<double> Profiling::vec_datarate()
 {
     return this->datarate;
 }

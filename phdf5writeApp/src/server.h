@@ -1,5 +1,5 @@
 /*
- * server.hpp
+ * server.h
  *
  *  Created on: 6 Jan 2012
  *      Author: up45

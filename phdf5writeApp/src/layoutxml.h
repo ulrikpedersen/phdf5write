@@ -26,14 +26,14 @@ public:
     LayoutXML();
     ~LayoutXML();
 
-    int load_xml(std::string& filename){ return this->load_xml(filename.c_str()); };
-    int load_xml(const char* filename);
+//    int load_xml(std::string& filename){ return this->load_xml(filename.c_str()); };
+    int load_xml(const std::string& filename);
 
     HdfRoot* get_hdftree();
 
 
 private:
-    void process_node();
+    int process_node();
 
     int process_dset_xml_attribute(HdfDataSource& out);
     int process_attribute_xml_attribute(HdfAttribute& out);
