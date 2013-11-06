@@ -56,6 +56,16 @@ USR_CXXFLAGS += -I$(LOG4CXXDIR)/include
 USR_INCLUDES += -I/usr/include/libxml2
 
 # -----------------------------------------------------------------------
+#  Build the library for XML configuration
+# -----------------------------------------------------------------------
+LIBRARY_IOC += hdf5XmlConfig
+
+hdf5XmlConfig_SRCS += layout.cpp
+hdf5XmlConfig_SRCS += layoutxml.cpp
+#hdf5XmlConfig_SYS_LIBS += xml2 dl nsl util m dl z
+hdf5XmlConfig_SYS_LIBS += xml2
+
+# -----------------------------------------------------------------------
 #  Build a unit test application if we have boost installed somewhere
 # -----------------------------------------------------------------------
 ifdef BOOSTDIR
@@ -65,8 +75,8 @@ ifdef MPIDIR
 PROD_IOC += test_mpi_ndarray_hdf5
 test_mpi_ndarray_hdf5_INCLUDES = -I$(BOOSTDIR)/include
 test_mpi_ndarray_hdf5_SRCS_DEFAULT += test_mpi_ndarray_hdf5.cpp
-test_mpi_ndarray_hdf5_OBJS += ndarray_hdf5 dimension writeconfig layout layoutxml profiling
-test_mpi_ndarray_hdf5_LIBS += adtransferPlugin asyn ADBase NDPlugin Com
+test_mpi_ndarray_hdf5_OBJS += ndarray_hdf5 dimension writeconfig profiling phdf5util
+test_mpi_ndarray_hdf5_LIBS += adtransferPlugin asyn ADBase NDPlugin Com hdf5XmlConfig
 test_mpi_ndarray_hdf5_LIBS += boost_unit_test_framework
 test_mpi_ndarray_hdf5_LDFLAGS += -L$(BOOSTDIR)/lib
 test_mpi_ndarray_hdf5_LIBS += mpi_cxx mpi open-rte open-pal 
@@ -77,8 +87,8 @@ test_mpi_ndarray_hdf5_LIBS +=  $(HDF5LIB) sz
 PROD_IOC += test_real_lustre
 test_real_lustre_INCLUDES = -I$(BOOSTDIR)/include
 test_real_lustre_SRCS_DEFAULT += test_real_lustre.cpp
-test_real_lustre_OBJS += ndarray_hdf5 dimension writeconfig layout layoutxml profiling
-test_real_lustre_LIBS += adtransferPlugin asyn ADBase NDPlugin Com
+test_real_lustre_OBJS += ndarray_hdf5 dimension writeconfig profiling phdf5util
+test_real_lustre_LIBS += adtransferPlugin asyn ADBase NDPlugin Com hdf5XmlConfig
 #test_real_lustre_LIBS += boost_unit_test_framework
 #test_real_lustre_LDFLAGS += -L$(BOOSTDIR)/lib
 test_real_lustre_LIBS += mpi_cxx mpi open-rte open-pal 
@@ -99,7 +109,7 @@ test_dimension_LDFLAGS += -L$(BOOSTDIR)/lib
 PROD_IOC += test_writeconfig
 test_writeconfig_INCLUDES = -I$(BOOSTDIR)/include
 test_writeconfig_SRCS_DEFAULT += test_writeconfig.cpp
-test_writeconfig_OBJS += dimension writeconfig
+test_writeconfig_OBJS += dimension writeconfig phdf5util
 test_writeconfig_LIBS += adtransferPlugin asyn ADBase NDPlugin Com
 test_writeconfig_LIBS += boost_unit_test_framework
 test_writeconfig_LIBS += log4cxx
@@ -108,8 +118,8 @@ test_writeconfig_LDFLAGS += -L$(BOOSTDIR)/lib
 PROD_IOC += test_ndarray_hdf5
 test_ndarray_hdf5_INCLUDES = -I$(BOOSTDIR)/include 
 test_ndarray_hdf5_SRCS_DEFAULT += test_ndarray_hdf5.cpp
-test_ndarray_hdf5_OBJS += ndarray_hdf5 dimension writeconfig layout layoutxml profiling
-test_ndarray_hdf5_LIBS += adtransferPlugin asyn ADBase NDPlugin Com
+test_ndarray_hdf5_OBJS += ndarray_hdf5 dimension writeconfig profiling phdf5util
+test_ndarray_hdf5_LIBS += adtransferPlugin asyn ADBase NDPlugin Com hdf5XmlConfig
 test_ndarray_hdf5_LIBS += boost_unit_test_framework
 test_ndarray_hdf5_LDFLAGS += -L$(BOOSTDIR)/lib
 test_ndarray_hdf5_SYS_LIBS += xml2 dl nsl util m dl z
@@ -120,16 +130,14 @@ test_ndarray_hdf5_LIBS += $(HDF5LIB) sz
 PROD_IOC += test_layout
 test_layout_INCLUDES = -I$(BOOSTDIR)/include
 test_layout_SRCS_DEFAULT += test_layout.cpp
-test_layout_OBJS += layout
-test_layout_LIBS += boost_unit_test_framework
+test_layout_LIBS += boost_unit_test_framework hdf5XmlConfig
 test_layout_LIBS += log4cxx
 test_layout_LDFLAGS += -L$(BOOSTDIR)/lib
 
 PROD_IOC += test_layoutxml
 test_layoutxml_INCLUDES = -I$(BOOSTDIR)/include -I/usr/include/libxml2
 test_layoutxml_SRCS_DEFAULT += test_layoutxml.cpp
-test_layoutxml_OBJS += layoutxml layout
-test_layoutxml_LIBS += boost_unit_test_framework
+test_layoutxml_LIBS += boost_unit_test_framework hdf5XmlConfig
 test_layoutxml_LIBS += log4cxx
 test_layoutxml_SYS_LIBS += xml2 m z
 test_layoutxml_LDFLAGS += -L$(BOOSTDIR)/lib
@@ -158,8 +166,7 @@ phdf5write_SRCS += server.cpp
 phdf5write_SRCS += dimension.cpp
 phdf5write_SRCS += writeconfig.cpp
 phdf5write_SRCS += ndarray_hdf5.cpp
-phdf5write_SRCS += layout.cpp
-phdf5write_SRCS += layoutxml.cpp
+phdf5write_SRCS += phdf5util.cpp
 phdf5write_SRCS += profiling.cpp
 
 # The following adds object code from base/src/vxWorks
@@ -175,6 +182,7 @@ endif
 phdf5write_SYS_LIBS += xml2 dl nsl util m dl z
 phdf5write_LIBS +=  $(HDF5LIB) sz
 phdf5write_LIBS += log4cxx
+phdf5write_LIBS += hdf5XmlConfig
 
 
 # The adtransferPlugin has the ADTransferServer class
