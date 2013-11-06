@@ -73,7 +73,7 @@ bool HdfDataSource::is_src_ndattribute() {
 }
 bool HdfDataSource::is_src(HdfDataSrc_t src)
 {
-	return this->data_src == src;
+	return this->data_src == src ? true : false;
 }
 
 std::string HdfDataSource::get_src_def()
@@ -111,7 +111,7 @@ size_t HdfDataSource::datatype_size()
 	return retval;
 }
 
-void HdfDataSource::set_const_value(PHDF_DataType_t dtype, const std::string& str_val)
+void HdfDataSource::set_const_datatype_value(PHDF_DataType_t dtype, const std::string& str_val)
 {
 	if (this->data_src != phdf_constant) return;
 	this->set_datatype(dtype);
@@ -127,7 +127,6 @@ HdfElement::HdfElement()
 }
 
 HdfElement::HdfElement(const HdfElement& src)
-: parent(NULL)
 {
 	this->_copy(src);
 }

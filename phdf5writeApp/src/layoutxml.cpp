@@ -203,7 +203,7 @@ int LayoutXML::process_attribute_xml_attribute(HdfAttribute& out)
     		if (str_attr_type == "int") dtype = phdf_int32;
     		else if (str_attr_type == "float") dtype = phdf_float64;
     		else if (str_attr_type == "string") dtype = phdf_string;
-    		out.source.set_const_value(dtype, str_attr_val);
+    		out.source.set_const_datatype_value(dtype, str_attr_val);
     	}
     }
     ret = 0;

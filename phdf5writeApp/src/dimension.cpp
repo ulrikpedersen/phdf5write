@@ -58,7 +58,7 @@ DimensionDesc::DimensionDesc(const vec_ds_t& sizes, size_t element_size)
 
 DimensionDesc::DimensionDesc( const DimensionDesc& src)
 {
-    this->copy(src);
+    this->_copy(src);
 }
 
 DimensionDesc::~DimensionDesc()
@@ -72,7 +72,7 @@ DimensionDesc& DimensionDesc::operator =(const DimensionDesc& src)
     if (this == &src)
         return *this;
     // perform the copy
-    this->copy(src);
+    this->_copy(src);
     return *this;
 }
 
@@ -111,7 +111,7 @@ bool DimensionDesc::is_equal(const DimensionDesc& compare)
 /** Copy the src into the private data of this object.
  * Essentially a deep-copy from src to this object.
  */
-void DimensionDesc::copy( const DimensionDesc& src)
+void DimensionDesc::_copy( const DimensionDesc& src)
 {
     this->dims.clear();
     this->dims = vec_ds_t(src.dims);

@@ -61,7 +61,7 @@ public:
 
 private:
     bool is_equal(const DimensionDesc& compare);
-    void copy(const DimensionDesc& src);
+    void _copy(const DimensionDesc& src);
 
     // list of dimension sizes
     vec_ds_t dims;

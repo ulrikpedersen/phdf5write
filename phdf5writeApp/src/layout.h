@@ -56,7 +56,7 @@ public:
     std::string get_src_def(); /** return the string that define the source: either name of NDAttribute or constant value */
     PHDF_DataType_t get_datatype();
     size_t datatype_size();
-    void set_const_value(PHDF_DataType_t dtype, const std::string& str_val);
+    void set_const_datatype_value(PHDF_DataType_t dtype, const std::string& str_val);
 
 private:
     HdfDataSrc_t data_src;

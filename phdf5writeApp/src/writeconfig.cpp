@@ -16,6 +16,7 @@
 #include <NDArray.h>
 #include "dimension.h"
 #include "writeconfig.h"
+#include "phdf5util.h"
 
 namespace phdf5 {
 
@@ -89,9 +90,12 @@ std::string WriteConfig::file_name()
 
 void WriteConfig::proc_rank_size(int rank, int size)
 {
+    // Limit the proc_rank value to a maximum of size-1
+    // If the rank value is less than size then use rank
     if (rank < size) this->proc_rank = rank;
     else this->proc_rank = size-1;
 
+    // Limit the proc_size value to a minimum of 1
     if (size < 1) this->proc_size = 1;
     else this->proc_size = size;
     //LOG4CXX_DEBUG(log,  "WriteConfig: setting rank=" << this->proc_rank << " proc_size=" << this->proc_size );
@@ -521,22 +525,6 @@ bool WriteConfig::delay_dim_config()
 {
     if (this->dim_roi_frame.num_dimensions() <= 0) return false;
     else return true;
-}
-
-/** find out whether or not the input is a prime number.
- * Returns true if number is a prime. False if not.
- */
-bool is_prime(unsigned int long number)
-{
-    //0 and 1 are prime numbers
-    if(number == 0 || number == 1) return true;
-
-    //find divisor that divides without a remainder
-    int divisor;
-    for(divisor = (number/2); (number%divisor) != 0; --divisor){;}
-
-    //if no divisor greater than 1 is found, it is a prime number
-    return divisor == 1;
 }
 
 } // phdf5

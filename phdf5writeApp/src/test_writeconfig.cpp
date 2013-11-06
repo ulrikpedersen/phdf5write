@@ -15,6 +15,7 @@
 #include <string>
 #include <NDArray.h>
 #include "writeconfig.h"
+#include "phdf5util.h"
 
 using namespace phdf5;
 

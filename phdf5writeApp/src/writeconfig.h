@@ -115,9 +115,6 @@ private:
     std::string str_file_name;
 };
 
-// utility functions
-bool is_prime(unsigned int long number);
-
 } // phdf5
 
 #endif /* WRITECONFIG_HPP_ */
