@@ -158,7 +158,7 @@ void phdf5_run_writer(phdf5_options_t *ptr_options)
 		MPI_Barrier(MPI_COMM_WORLD );
 	}
 
-    NDArrayToHDF5 h5writer(comm,info);
+    phdf5::NDArrayToHDF5 h5writer(comm,info);
     if (ptr_options->config_xml != NULL) {
         h5writer.load_layout_xml(ptr_options->config_xml);
     }
