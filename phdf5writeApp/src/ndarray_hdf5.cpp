@@ -573,11 +573,6 @@ int NDArrayToHDF5::write_dataset(HdfDataset* dset, DatasetWriteParams_t *params)
     return retval;
 }
 
-WriteConfig NDArrayToHDF5::get_conf()
-{
-    return this->conf;
-}
-
 WriteConfig& NDArrayToHDF5::get_conf_ref()
 {
     return this->conf;

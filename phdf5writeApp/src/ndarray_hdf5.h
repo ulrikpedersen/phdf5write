@@ -63,7 +63,6 @@ public:
     int h5_write(NDArray &ndarray);
     int h5_close();
     int h5_reset();
-    WriteConfig get_conf();
     WriteConfig& get_conf_ref();
 
     PHDF_DataType_t from_ndarr_to_phdf_datatype(NDDataType_t in) const;

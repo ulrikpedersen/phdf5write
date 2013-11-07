@@ -240,7 +240,7 @@ BOOST_AUTO_TEST_CASE(mpi_parallel_run)
         BOOST_TEST_MESSAGE("BOOST: Writing frame no: " << i << " rank: " << mpi_rank);
         BOOST_REQUIRE_EQUAL( ndh.h5_write( ndarr[i]), 0);
         test_offsets[DIMFRAME]=i;
-        BOOST_REQUIRE_NO_THROW( wc = ndh.get_conf() );
+        BOOST_REQUIRE_NO_THROW( wc = ndh.get_conf_ref() );
         //BOOST_TEST_MESSAGE( "BOOST: WriteConfig: " << wc._str_() );
         BOOST_REQUIRE( wc.get_offsets() == test_offsets );
         BOOST_REQUIRE( wc.get_dset_dims() == test_dset_dims );
@@ -384,7 +384,7 @@ BOOST_AUTO_TEST_CASE(mpi_parallel_run)
         BOOST_TEST_MESSAGE("Writing frame no: " << i << " rank: " << mpi_rank);
         BOOST_REQUIRE_EQUAL( ndh.h5_write( ndarr[i]), 0);
         test_offsets[2]=i;
-        wc = ndh.get_conf();
+        wc = ndh.get_conf_ref();
         BOOST_CHECK_EQUAL( wc.get_offsets()[0], test_offsets[0] );
         BOOST_CHECK_EQUAL( wc.get_offsets()[1], test_offsets[1] );
         BOOST_CHECK_EQUAL( wc.get_offsets()[2], test_offsets[2] );
