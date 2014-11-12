@@ -59,9 +59,11 @@ file(GLOB phdf5write_SOURCES *.cpp)
 set(phdf5write_SOURCES  
                        layoutxml.cpp 
                        profiling.cpp 
-                       layout.cpp)
-#                       dimension.cpp
-#                       writeconfig.cpp
+                       layout.cpp
+                       dimension.cpp
+                       NDAttribute.cpp
+                       NDArray.cpp
+                       writeconfig.cpp)
 #                       ndarray_hdf5.cpp
 #                       server.cpp )
 
