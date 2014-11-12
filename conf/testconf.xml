@@ -9,7 +9,7 @@
 <!--   <filename>/mnt/lustre01/i13-1/data/2013/cm5938-3/tmp/benchmark/stripe8/excalibur_22.h5</filename>-->
 <!--<filename>/mnt/lustre03/testdir/excalibur/excalibur_01.h5</filename>-->
 
-<filename>/mnt/lustre03/testdir/tmp/stripe4MB/large_excalibur_001.h5</filename>
+<filename>testing_001.h5</filename>
     <chunking>
         <x>2048</x>
         <y>256</y>
@@ -19,7 +19,7 @@
         <x>2048</x>
         <y>256</y>
     </subframe>
-    <numframes>200000</numframes>
+    <numframes>20</numframes>
     <fillvalue>0</fillvalue>
     <collective>0</collective>
     <ioposix>0</ioposix>
