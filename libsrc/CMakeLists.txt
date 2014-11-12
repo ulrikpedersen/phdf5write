@@ -40,6 +40,7 @@ message("HDF5 libs:           " ${HDF5_LIBRARIES} ${HDF5HL_LIBRARIES})
 find_package(Log4CXX 0.10.0 REQUIRED)
 find_package(ZLIB REQUIRED)
 find_package(LibXml2 REQUIRED)
+find_package(MPI REQUIRED)
 
 # librt is really only required if glibc =< 2.16
 FIND_LIBRARY(REALTIME_LIBRARY
@@ -50,9 +51,16 @@ FIND_LIBRARY(REALTIME_LIBRARY
 # Include the directory itself as a path to include directories
 set(CMAKE_INCLUDE_CURRENT_DIR ON)
 
-include_directories(${HDF5_INCLUDE_DIRS} ${LOG4CXX_INCLUDE_DIRS}/.. ${LIBXML2_INCLUDE_DIR})
+include_directories(${HDF5_INCLUDE_DIRS} 
+                    ${LOG4CXX_INCLUDE_DIRS}/.. 
+                    ${LIBXML2_INCLUDE_DIR} 
+                    ${MPI_CXX_INCLUDE_PATH})
+                    
 add_definitions(${HDF5_DEFINITIONS})
 add_definitions(${LIBXML2_DEFINITIONS})
+
+set(CMAKE_CXX_COMPILE_FLAGS ${CMAKE_CXX_COMPILE_FLAGS} ${MPI_CXX_COMPILE_FLAGS})
+set(CMAKE_CXX_LINK_FLAGS ${CMAKE_CXX_LINK_FLAGS} ${MPI_CXX_LINK_FLAGS})
 
 # create a list of .cpp files from this directory
 file(GLOB phdf5write_SOURCES *.cpp)
@@ -63,8 +71,8 @@ set(phdf5write_SOURCES
                        dimension.cpp
                        NDAttribute.cpp
                        NDArray.cpp
-                       writeconfig.cpp)
-#                       ndarray_hdf5.cpp
+                       writeconfig.cpp
+                       ndarray_hdf5.cpp)
 #                       server.cpp )
 
 
@@ -73,7 +81,12 @@ set(phdf5write_SOURCES
 # the cmake variable BUILD_SHARED_LIBS=ON
 add_library(phdf5write ${phdf5write_SOURCES})
 
-target_link_libraries(phdf5write ${LOG4CXX_LIBRARIES} ${LIBXML2_LIBRARIES} ${HDF5_LIBRARIES} ${HDF5HL_LIBRARIES} ${REALTIME_LIBRARY} )
+target_link_libraries(phdf5write ${LOG4CXX_LIBRARIES} 
+  ${LIBXML2_LIBRARIES} 
+  ${HDF5_LIBRARIES} 
+  ${HDF5HL_LIBRARIES} 
+  ${MPI_CXX_LIBRARIES}
+  ${REALTIME_LIBRARY} )
 
 INSTALL(TARGETS phdf5write
   RUNTIME DESTINATION bin
