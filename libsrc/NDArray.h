@@ -25,6 +25,8 @@
 /** The maximum number of dimensions in an NDArray */
 #define ND_ARRAY_MAX_DIMS 10
 
+typedef std::map<std::string, NDAttribute*> NDAttributeList;
+
 /** Enumeration of color modes for NDArray attribute "colorMode" */
 typedef enum
 {
