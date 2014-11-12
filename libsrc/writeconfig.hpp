@@ -26,6 +26,7 @@ typedef unsigned long long HSIZE_T;
 #define H5_DEFAULT_ISTOREK 16000
 
 class NDArray; // forward declaration
+class NDAttribute;
 
 class WriteConfig {
 public:
