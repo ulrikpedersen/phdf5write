@@ -26,7 +26,6 @@ typedef unsigned long long HSIZE_T;
 #define H5_DEFAULT_ISTOREK 16000
 
 class NDArray; // forward declaration
-class NDAttributeList;
 
 class WriteConfig {
 public:
@@ -85,12 +84,12 @@ private:
     void _default_init();
     void _copy(const WriteConfig& src);
     DimensionDesc get_detector_dims();
-    int get_attr_fill_val(NDAttributeList *ptr_attr_list);
+    int get_attr_fill_val(const std::map<std::string, NDAttribute*>& ptr_attr_list);
     int get_attr_array(std::string& attr_name,
-                       NDAttributeList *ptr_attr_list,
+    		           const std::map<std::string, NDAttribute*>& ptr_attr_list,
                        vec_ds_t& dst);
     void parse_ndarray_attributes(NDArray& ndarray); // go through a list of attributes and turn them into dimensions
-    int get_attr_value(const std::string& attr_name, NDAttributeList *ptr_attr_list, int *attr_value);
+    int get_attr_value(const std::string& attr_name, const std::map<std::string, NDAttribute*>& ptr_attr_list, int *attr_value);
 
     bool extendible;
     bool mpiposix;

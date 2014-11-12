@@ -112,7 +112,7 @@ long int WriteConfig::num_frames()
 
 void WriteConfig::inc_position(NDArray& ndarray)
 {
-    NDAttributeList * list = ndarray.pAttributeList;
+	std::map<std::string, NDAttribute*> list = ndarray.pAttributeList;
     string attr_name;
     vec_ds_t attr_origins;
     vec_ds_t::iterator it_origen;
@@ -371,7 +371,7 @@ vec_ds_t WriteConfig::get_dset_maxdims()
 }
 
 
-int WriteConfig::get_attr_fill_val(NDAttributeList *ptr_attr_list)
+int WriteConfig::get_attr_fill_val(const std::map<std::string, NDAttribute*>& ptr_attr_list)
 {
     NDAttribute *ptr_ndattr = NULL;
     NDAttrDataType_t attr_data_t;
@@ -380,7 +380,8 @@ int WriteConfig::get_attr_fill_val(NDAttributeList *ptr_attr_list)
     // By default we set the fillvalue to 0
     memset(this->ptr_fill_value, 0, FILL_VALUE_SIZE);
 
-    ptr_ndattr = ptr_attr_list->find(ATTR_FILL_VAL);
+    std::map<std::string, NDAttribute*>::const_iterator it = ptr_attr_list.find(ATTR_FILL_VAL);
+    ptr_ndattr = it->second;
     // Check whether the attribute exist in the list
     if (ptr_ndattr == NULL) return -1;
 
@@ -399,7 +400,7 @@ int WriteConfig::get_alloc_time()
 /**
  * Parse a a series of attributes formatted: "h5_nnnn_%d"
  */
-int WriteConfig::get_attr_array(string& attr_name, NDAttributeList *ptr_attr_list,
+int WriteConfig::get_attr_array(string& attr_name, const std::map<std::string, NDAttribute*>& ptr_attr_list,
                                 vec_ds_t& dst)
 {
     unsigned int i = 0;
@@ -424,7 +425,7 @@ int WriteConfig::get_attr_array(string& attr_name, NDAttributeList *ptr_attr_lis
  */
 void WriteConfig::parse_ndarray_attributes(NDArray& ndarray)
 {
-    NDAttributeList * list = ndarray.pAttributeList;
+	const std::map<std::string, NDAttribute*>&  list = ndarray.pAttributeList;
     string attr_name;
     vec_ds_t tmpdims;
     int ret=0;
@@ -486,15 +487,16 @@ void WriteConfig::parse_ndarray_attributes(NDArray& ndarray)
     //LOG4CXX_DEBUG(log,  *this );
 }
 
-int WriteConfig::get_attr_value(const string& attr_name, NDAttributeList *ptr_attr_list, int *attr_value)
+int WriteConfig::get_attr_value(const string& attr_name, const std::map<std::string, NDAttribute*>& ptr_attr_list, int *attr_value)
 {
     long int retval = 0;
     int retcode = 0;
     NDAttribute *ptr_ndattr;
     //LOG4CXX_DEBUG(log,  "getting attribute: " << attr_name );
-    ptr_ndattr = ptr_attr_list->find(attr_name.c_str());
+    std::map<std::string, NDAttribute*>::const_iterator it = ptr_attr_list.find(attr_name.c_str());
+    ptr_ndattr = it->second;
     if (ptr_ndattr == NULL) return -1;
-    if (ptr_ndattr->dataType ==  NDAttrString ) return -1;
+    if (ptr_ndattr->getDataType() ==  NDAttrString ) return -1;
 
     retcode = ptr_ndattr->getValue(NDAttrUInt32, (void*)attr_value, sizeof(long int));
     if (retcode == ND_ERROR) {
