@@ -260,11 +260,11 @@ int NDArrayToHDF5::h5_write(NDArray& ndarray)
 
     // debug
     NDAttribute *roi1;
-    epicsInt32 roi1_val=0;
+    int32_t roi1_val=0;
 
-    roi1 = ndarray.pAttributeList->find("h5_roi_origin_0");
+    roi1 = ndarray.pAttributeList["h5_roi_origin_0"];
     if (roi1 != NULL) {
-    	roi1->getValue(NDAttrInt32, &roi1_val, sizeof(epicsInt32));
+    	roi1->getValue(NDAttrInt32, &roi1_val, sizeof(int32_t));
     	LOG4CXX_TRACE(log, "origin offset: " << roi1_val );
     }
 
@@ -346,7 +346,7 @@ int NDArrayToHDF5::h5_reset()
 }
 
 
-void NDArrayToHDF5::cache_ndattributes( NDAttributeList * ndattr_list )
+void NDArrayToHDF5::cache_ndattributes( NDAttributeList& ndattr_list )
 {
     // Run through all the NDAttributes and cache their values
     NDAttribute* ndattr = NULL;
@@ -367,7 +367,7 @@ void NDArrayToHDF5::cache_ndattributes( NDAttributeList * ndattr_list )
     	ndattr_type = NDAttrUndefined;
     	name = dset->get_name();
 
-    	ndattr = ndattr_list->find(name.c_str());
+    	ndattr = ndattr_list[name];
     	if (ndattr == NULL) continue; // skip on to next if no NDAttribute of this name is in the list
 
     	ndattr->getValueInfo(&ndattr_type, &ndattr_type_size);
@@ -821,19 +821,19 @@ int NDArrayToHDF5::create_tree(HdfGroup* root, hid_t h5handle)
 /** Run through the NDAttributeList from the detector and find or generate
  * corresponding entries in the HDFGroup tree.
  */
-void NDArrayToHDF5::configure_ndattr_dsets(NDAttributeList *pAttributeList)
+void NDArrayToHDF5::configure_ndattr_dsets(NDAttributeList& pAttributeList)
 {
-	NDAttribute* ndattr = NULL;
+	PHDF_DataType_t datatype;
 	HdfRoot * root = this->layout.get_hdftree();
 	if (root == NULL) return;
 
 	// first convert the NDAttributeList to a more practical std map.
 	HdfGroup::MapNDAttrSrc_t map_ndattr;
-	while((ndattr = pAttributeList->next(ndattr)) != NULL)
+	NDAttributeList::iterator attr_list_iter = pAttributeList.begin();
+	for (attr_list_iter = pAttributeList.begin(); attr_list_iter != pAttributeList.end(); ++attr_list_iter)
 	{
-		string ndattr_name = ndattr->pName;
-		PHDF_DataType_t datatype = NDArrayToHDF5::from_ndattr_to_phdf_datatype(ndattr->dataType);
-		map_ndattr[ndattr_name] = new HdfDataSource(phdf_ndattribute, datatype);
+		datatype = NDArrayToHDF5::from_ndattr_to_phdf_datatype(attr_list_iter->second->getDataType());
+		map_ndattr[attr_list_iter->second->getName()] = new HdfDataSource(phdf_ndattribute, datatype);
 	}
 
 	// Create a string set to contain the names of the NDAttributes which has
