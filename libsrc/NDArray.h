@@ -7,17 +7,20 @@
  * University of Chicago
  * May 10, 2008
  *
+ * Ulrik Pedersen, Diamond Light Source
+ * 11. November 2014
+ *  - modified to use C++ STL containers
  */
 
 #ifndef NDArray_H
 #define NDArray_H
 
-#include <epicsMutex.h>
-#include <epicsTime.h>
-#include <stdio.h>
+#include <cstdio>
+#include <map>
+#include <string>
 
 #include "NDAttribute.h"
-#include "NDAttributeList.h"
+//#include "NDAttributeList.h"
 
 /** The maximum number of dimensions in an NDArray */
 #define ND_ARRAY_MAX_DIMS 10
@@ -87,7 +90,7 @@ typedef struct NDArrayInfo {
 /** N-dimensional array class; each array has a set of dimensions, a data type, pointer to data, and optional attributes. 
   * An NDArray also has a uniqueId and timeStamp that to identify it. NDArray objects can be allocated
   * by an NDArrayPool object, which maintains a free list of NDArrays for efficient memory management. */
-class epicsShareClass NDArray {
+class NDArray {
 public:
     /* Methods */
     NDArray();
@@ -97,19 +100,13 @@ public:
     int          reserve();
     int          release();
     int          report(FILE *fp, int details);
-    friend class NDArrayPool;
     
-private:
-    ELLNODE      node;              /**< This must come first because ELLNODE must have the same address as NDArray object */
-    int          referenceCount;    /**< Reference count for this NDArray=number of clients who are using it */
-
 public:
-    class NDArrayPool *pNDArrayPool; /**< The NDArrayPool object that created this array */
     int           uniqueId;     /**< A number that must be unique for all NDArrays produced by a driver after is has started */
     double        timeStamp;    /**< The time stamp in seconds for this array; seconds since Epoch (00:00:00 UTC, January 1, 1970)
                                   * is recommended, but some drivers may use a different start time.*/
-    epicsTimeStamp epicsTS;     /**< The epicsTimeStamp; this is set with pasynManager->updateTimeStamp(), 
-                                  * and can come from a user-defined timestamp source. */
+    //epicsTimeStamp epicsTS;     /**< The epicsTimeStamp; this is set with pasynManager->updateTimeStamp(),
+    //                              * and can come from a user-defined timestamp source. */
     int           ndims;        /**< The number of dimensions in this array; minimum=1. */
     NDDimension_t dims[ND_ARRAY_MAX_DIMS]; /**< Array of dimension sizes for this array; first ndims values are meaningful. */
     NDDataType_t  dataType;     /**< Data type for this array. */
@@ -118,45 +115,8 @@ public:
     void          *pData;       /**< Pointer to the array data.
                                   * The data is assumed to be stored in the order of dims[0] changing fastest, and 
                                   * dims[ndims-1] changing slowest. */
-    NDAttributeList *pAttributeList;  /**< Linked list of attributes */
-};
-
-/** The NDArrayPool class manages a free list (pool) of NDArray objects.
-  * Drivers allocate NDArray objects from the pool, and pass these objects to plugins.
-  * Plugins increase the reference count on the object when they place the object on
-  * their queue, and decrease the reference count when they are done processing the
-  * array. When the reference count reaches 0 again the NDArray object is placed back
-  * on the free list. This mechanism minimizes the copying of array data in plugins.
-  */
-class epicsShareClass NDArrayPool {
-public:
-    NDArrayPool  (int maxBuffers, size_t maxMemory);
-    NDArray*     alloc     (int ndims, size_t *dims, NDDataType_t dataType, size_t dataSize, void *pData);
-    NDArray*     copy      (NDArray *pIn, NDArray *pOut, int copyData);
-
-    int          reserve   (NDArray *pArray);
-    int          release   (NDArray *pArray);
-    int          convert   (NDArray *pIn,
-                            NDArray **ppOut,
-                            NDDataType_t dataTypeOut,
-                            NDDimension_t *outDims);
-    int          convert   (NDArray *pIn,
-                            NDArray **ppOut,
-                            NDDataType_t dataTypeOut);
-    int          report     (FILE  *fp, int details);
-    int          maxBuffers ();
-    int          numBuffers ();
-    size_t       maxMemory  ();
-    size_t       memorySize ();
-    int          numFree    ();
-private:
-    ELLLIST      freeList_;      /**< Linked list of free NDArray objects that form the pool */
-    epicsMutexId listLock_;      /**< Mutex to protect the free list */
-    int          maxBuffers_;    /**< Maximum number of buffers this object is allowed to allocate; -1=unlimited */
-    int          numBuffers_;    /**< Number of buffers this object has currently allocated */
-    size_t       maxMemory_;     /**< Maximum bytes of memory this object is allowed to allocate; -1=unlimited */
-    size_t       memorySize_;    /**< Number of bytes of memory this object has currently allocated */
-    int          numFree_;       /**< Number of NDArray objects in the free list */
+    //NDAttributeList *pAttributeList;  /**< Linked list of attributes */
+    std::map<std::string, NDAttribute*> pAttributeList;
 };
 
 #endif

@@ -11,32 +11,19 @@
  *
  */
 
-#include <string.h>
-#include <stdio.h>
-#include <ellLib.h>
-
-#include <epicsMutex.h>
-#include <epicsTypes.h>
-#include <epicsString.h>
-#include <ellLib.h>
-#include <cantProceed.h>
-
-#include <epicsExport.h>
+#include <cstring>
+#include <cstdio>
+#include <cstdlib>
 
 #include "NDArray.h"
 
 /** NDArray constructor, no parameters.
   * Initializes all fields to 0.  Creates the attribute linked list and linked list mutex. */
 NDArray::NDArray()
-  : referenceCount(0), pNDArrayPool(NULL),  
-    uniqueId(0), timeStamp(0.0), ndims(0), dataType(NDInt8),
+  : uniqueId(0), timeStamp(0.0), ndims(0), dataType(NDInt8),
     dataSize(0),  pData(NULL)
 {
-  this->epicsTS.secPastEpoch = 0;
-  this->epicsTS.nsec = 0;
   memset(this->dims, 0, sizeof(this->dims));
-  memset(&this->node, 0, sizeof(this->node));
-  this->pAttributeList = new NDAttributeList();
 }
 
 /** NDArray destructor 
@@ -44,7 +31,6 @@ NDArray::NDArray()
 NDArray::~NDArray()
 {
   if (this->pData) free(this->pData);
-  delete this->pAttributeList;
 }
 
 /** Convenience method returns information about an NDArray, including the total number of elements, 
@@ -57,28 +43,28 @@ int NDArray::getInfo(NDArrayInfo_t *pInfo)
 
   switch(this->dataType) {
     case NDInt8:
-      pInfo->bytesPerElement = sizeof(epicsInt8);
+      pInfo->bytesPerElement = sizeof(int8_t);
       break;
     case NDUInt8:
-      pInfo->bytesPerElement = sizeof(epicsUInt8);
+      pInfo->bytesPerElement = sizeof(uint8_t);
       break;
     case NDInt16:
-      pInfo->bytesPerElement = sizeof(epicsInt16);
+      pInfo->bytesPerElement = sizeof(int16_t);
       break;
     case NDUInt16:
-      pInfo->bytesPerElement = sizeof(epicsUInt16);
+      pInfo->bytesPerElement = sizeof(uint16_t);
       break;
     case NDInt32:
-      pInfo->bytesPerElement = sizeof(epicsInt32);
+      pInfo->bytesPerElement = sizeof(int32_t);
       break;
     case NDUInt32:
-      pInfo->bytesPerElement = sizeof(epicsUInt32);
+      pInfo->bytesPerElement = sizeof(uint32_t);
       break;
     case NDFloat32:
-      pInfo->bytesPerElement = sizeof(epicsFloat32);
+      pInfo->bytesPerElement = sizeof(float);
       break;
     case NDFloat64:
-      pInfo->bytesPerElement = sizeof(epicsFloat64);
+      pInfo->bytesPerElement = sizeof(double);
       break;
     default:
       return(ND_ERROR);
@@ -88,7 +74,8 @@ int NDArray::getInfo(NDArrayInfo_t *pInfo)
   for (i=0; i<this->ndims; i++) pInfo->nElements *= this->dims[i].size;
   pInfo->totalBytes = pInfo->nElements * pInfo->bytesPerElement;
   pInfo->colorMode = NDColorModeMono;
-  pAttribute = this->pAttributeList->find("ColorMode");
+  std::map<std::string, NDAttribute*>::iterator it =  this->pAttributeList.find("ColorMode");
+  pAttribute = it->second;
   if (pAttribute) pAttribute->getValue(NDAttrInt32, &pInfo->colorMode);
   pInfo->xDim        = 0;
   pInfo->yDim        = 0;
@@ -163,30 +150,6 @@ int NDArray::initDimension(NDDimension_t *pDimension, size_t size)
   return ND_SUCCESS;
 }
 
-/** Calls NDArrayPool::reserve() for this NDArray object; increases the reference count for this array. */
-int NDArray::reserve()
-{
-  const char *functionName = "NDArray::reserve";
-
-  if (!pNDArrayPool) {
-    printf("%s: ERROR, no owner\n", functionName);
-    return(ND_ERROR);
-  }
-  return(pNDArrayPool->reserve(this));
-}
-
-/** Calls NDArrayPool::release() for this object; decreases the reference count for this array. */
-int NDArray::release()
-{
-  const char *functionName = "NDArray::release";
-
-  if (!pNDArrayPool) {
-    printf("%s: ERROR, no owner\n", functionName);
-    return(ND_ERROR);
-  }
-  return(pNDArrayPool->release(this));
-}
-
 /** Reports on the properties of the array.
   * \param[in] fp File pointer for the report output.
   * \param[in] details Level of report details desired; if >5 calls NDAttributeList::report().
@@ -205,10 +168,10 @@ int NDArray::report(FILE *fp, int details)
         this->dataType, (int)this->dataSize, this->pData);
   fprintf(fp, "  uniqueId=%d, timeStamp=%f\n",
         this->uniqueId, this->timeStamp);
-  fprintf(fp, "  number of attributes=%d\n", this->pAttributeList->count());
-  if (details > 5) {
-    this->pAttributeList->report(fp, details);
-  }
+  fprintf(fp, "  number of attributes=%d\n", this->pAttributeList.size());
+  //if (details > 5) {
+  //  this->pAttributeList->report(fp, details);
+  //}
   return ND_SUCCESS;
 }
 

@@ -9,11 +9,10 @@
 #ifndef NDAttribute_H
 #define NDAttribute_H
 
-#include <stdio.h>
-#include <string.h>
-
-#include <ellLib.h>
-#include <epicsTypes.h>
+#include <cstdio>
+#include <cstring>
+#include <stdint.h>
+#include <string>
 
 #define MAX_ATTRIBUTE_STRING_SIZE 256
 
@@ -62,32 +61,25 @@ typedef enum
 
 /** Union defining the values in an NDAttribute object */
 typedef union {
-    epicsInt8    i8;    /**< Signed 8-bit integer */
-    epicsUInt8   ui8;   /**< Unsigned 8-bit integer */
-    epicsInt16   i16;   /**< Signed 16-bit integer */
-    epicsUInt16  ui16;  /**< Unsigned 16-bit integer */
-    epicsInt32   i32;   /**< Signed 32-bit integer */
-    epicsUInt32  ui32;  /**< Unsigned 32-bit integer */
-    epicsFloat32 f32;   /**< 32-bit float */
-    epicsFloat64 f64;   /**< 64-bit float */
+    int8_t    i8;    /**< Signed 8-bit integer */
+    uint8_t   ui8;   /**< Unsigned 8-bit integer */
+    int16_t   i16;   /**< Signed 16-bit integer */
+    uint16_t  ui16;  /**< Unsigned 16-bit integer */
+    int32_t   i32;   /**< Signed 32-bit integer */
+    uint32_t  ui32;  /**< Unsigned 32-bit integer */
+    float f32;   /**< 32-bit float */
+    double f64;   /**< 64-bit float */
 } NDAttrValue;
-
-/** Structure used by the EPICS ellLib library for linked lists of C++ objects.
-  * This is needed for ellLists of C++ objects, for which making the first data element the ELLNODE 
-  * does not work if the class has virtual functions or derived classes. */
-typedef struct NDAttributeListNode {
-    ELLNODE node;
-    class NDAttribute *pNDAttribute;
-} NDAttributeListNode;
 
 /** NDAttribute class; an attribute has a name, description, source type, source string,
   * data type, and value.
   */
-class epicsShareClass NDAttribute {
+class NDAttribute {
 public:
     /* Methods */
-    NDAttribute(const char *pName, const char *pDescription, 
-                NDAttrSource_t sourceType, const char *pSource, NDAttrDataType_t dataType, void *pValue);
+	NDAttribute(const std::string& pName, const std::string& pDescription,
+	            NDAttrSource_t sourceType, const std::string& pSource,
+	            NDAttrDataType_t dataType, void *pValue);
     NDAttribute(NDAttribute& attribute);
     virtual ~NDAttribute();
     virtual NDAttribute* copy(NDAttribute *pAttribute);
@@ -99,23 +91,20 @@ public:
     virtual int getValueInfo(NDAttrDataType_t *pDataType, size_t *pDataSize);
     virtual int getValue(NDAttrDataType_t dataType, void *pValue, size_t dataSize=0);
     virtual int setDataType(NDAttrDataType_t dataType);
-    virtual int setValue(void *pValue);
+    virtual int setValue(const void *pValue);
     virtual int updateValue();
     virtual int report(FILE *fp, int details);
     friend class NDArray;
-    friend class NDAttributeList;
-
 
 private:
-    char *pName;                   /**< Name string */
-    char *pDescription;            /**< Description string */
+    std::string pName;                   /**< Name string */
+    std::string pDescription;            /**< Description string */
     NDAttrDataType_t dataType;     /**< Data type of attribute */
     NDAttrValue value;             /**< Value of attribute except for strings */
-    char *pString;                 /**< Value of attribute for strings */
-    char *pSource;                 /**< Source string - EPICS PV name or DRV_INFO string */
+    std::string pString;                 /**< Value of attribute for strings */
+    std::string pSource;                 /**< Source string - EPICS PV name or DRV_INFO string */
     NDAttrSource_t sourceType;     /**< Source type */
-    char *pSourceTypeString;       /**< Source type string */
-    NDAttributeListNode listNode;  /**< Used for NDAttributeList */
+    std::string pSourceTypeString;       /**< Source type string */
 };
 
 #endif
