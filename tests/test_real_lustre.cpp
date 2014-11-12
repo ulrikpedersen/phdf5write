@@ -136,7 +136,7 @@ struct Fixture{
     sim_config config;
 
 
-    Fixture(char *configxml)
+    Fixture(const string& configxml)
     {
     	log = log4cxx::Logger::getLogger("main");
     	LOG4CXX_DEBUG(log, "Setup Fixture");
@@ -252,11 +252,20 @@ struct Fixture{
 
 int main(int argc, char *argv[])
 {
-    char * configfile = argv[1];
-    log4cxx::xml::DOMConfigurator::configure("Log4cxxConfig.xml");
+    if (argc < 4) {
+		cerr << "Not enough arguments supplied. " << endl
+		     << "Must provide 3 configuration files: " << endl
+		     << "    testconfig.xml layout.xml and log4cxxconfig.xml" << endl;
+		exit(-1);
+	}
+    string configfile(argv[1]);
+    string layoutfile(argv[2]);
+    string logconfigfile(argv[3]);
+
+    log4cxx::xml::DOMConfigurator::configure(logconfigfile);
     log4cxx::LoggerPtr log( log4cxx::Logger::getLogger("main") );
 
-    LOG4CXX_INFO(log, "using config file: " << configfile );
+    LOG4CXX_INFO(log, "Using config file: " << configfile );
     struct Fixture fixt(configfile);
     NDArray * pndarray;
     unsigned long nbytes = sizeof(short) * fixt.numframes * fixt.sizes[0]  * fixt.sizes[1];
@@ -274,6 +283,7 @@ int main(int argc, char *argv[])
     LOG4CXX_DEBUG(log, "Creating NDArrayToHDF5 object.");
     NDArrayToHDF5 ndh;
 #endif
+    ndh.load_layout_xml(layoutfile);
 
     ndh.h5_configure(*fixt.frames[0]);
     //fixt.frames[0]->report(100);

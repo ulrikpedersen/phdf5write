@@ -52,7 +52,6 @@ public:
     NDArrayToHDF5();
     virtual ~NDArrayToHDF5(){this->h5_close();};
 
-    int load_layout_xml();
     int load_layout_xml(std::string& xmlfile);
     int load_layout_xml(const char * xmlfile);
 

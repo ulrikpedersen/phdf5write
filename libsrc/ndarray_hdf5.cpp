@@ -27,7 +27,6 @@ NDArrayToHDF5::NDArrayToHDF5()
     // load the default HDF5 layout
     this->mpi_rank = 0;
     this->mpi_size = 1;
-    this->load_layout_xml();
 }
 
 #ifdef H5_HAVE_PARALLEL
@@ -35,20 +34,11 @@ NDArrayToHDF5::NDArrayToHDF5( MPI_Comm comm, MPI_Info info)
 : mpi_comm(comm),mpi_info(info),h5file(H5I_INVALID_HID),rdcc_nslots(0),rdcc_nbytes(0)
 {
 	log = log4cxx::Logger::getLogger("NDArrayToHDF5");
-    this->load_layout_xml();
     MPI_Comm_size(comm,&this->mpi_size);
     MPI_Comm_rank(comm,&this->mpi_rank);
 
 }
 #endif
-
-/** Load the default XML layout configuration
- * as defined in the 'layout.xml' file
- * TODO: currently the file must be present in current dir which is not good.
- */
-int NDArrayToHDF5::load_layout_xml() {
-    return this->load_layout_xml("layout.xml");
-}
 
 int NDArrayToHDF5::load_layout_xml(string& xmlfile) {
     return this->load_layout_xml( xmlfile.c_str() );
