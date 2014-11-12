@@ -195,19 +195,29 @@ struct Fixture{
         {
             NDArray *pnd = new NDArray();
             pnd->dataType = NDUInt16;
-            pnd->pAttributeList->add("h5_chunk_size_0", "dimension 0", NDAttrUInt32, (void*)(chunks) );
-            pnd->pAttributeList->add("h5_chunk_size_1", "dimension 1", NDAttrUInt32, (void*)(chunks+1) );
-            pnd->pAttributeList->add("h5_chunk_size_2", "dimension 2", NDAttrUInt32, (void*)(chunks+2) );
+            pnd->pAttributeList["h5_chunk_size_0"] = new NDAttribute(std::string("dimension 0"),
+            		std::string(""), NDAttrSourceDriver, std::string(""),NDAttrUInt32, (void*)(chunks));
+            pnd->pAttributeList["h5_chunk_size_1"] = new NDAttribute(std::string("dimension 1"),
+            		std::string(""), NDAttrSourceDriver, std::string(""), NDAttrUInt32, (void*)(chunks+1) );
+            pnd->pAttributeList["h5_chunk_size_2"] = new NDAttribute(std::string("dimension 2"),
+            		std::string(""), NDAttrSourceDriver, std::string(""), NDAttrUInt32, (void*)(chunks+2) );
 
-            pnd->pAttributeList->add("h5_dset_size_0", "dset 0", NDAttrUInt32, (void*)(dsetdims) );
-            pnd->pAttributeList->add("h5_dset_size_1", "dset 1", NDAttrUInt32, (void*)(dsetdims+1) );
-            pnd->pAttributeList->add("h5_dset_size_2", "dset 2", NDAttrUInt32, (void*)(dsetdims+2) );
+            pnd->pAttributeList["h5_dset_size_0"] = new NDAttribute(std::string("dset 0"),
+            		std::string(""), NDAttrSourceDriver, std::string(""), NDAttrUInt32, (void*)(dsetdims) );
+            pnd->pAttributeList["h5_dset_size_1"] = new NDAttribute(std::string("dset 1"),
+            		std::string(""), NDAttrSourceDriver, std::string(""), NDAttrUInt32, (void*)(dsetdims+1) );
+            pnd->pAttributeList["h5_dset_size_2"] = new NDAttribute(std::string("dset 2"),
+            		std::string(""), NDAttrSourceDriver, std::string(""), NDAttrUInt32, (void*)(dsetdims+2) );
 
-            pnd->pAttributeList->add("h5_roi_origin_0", "offset 0", NDAttrUInt32, (void*)&zero );
-            pnd->pAttributeList->add("h5_roi_origin_1", "offset 1", NDAttrUInt32, (void*)&yoffset );
-            pnd->pAttributeList->add("h5_roi_origin_2", "offset 2", NDAttrUInt32, (void*)&zero );
+            pnd->pAttributeList["h5_roi_origin_0"] = new NDAttribute(std::string("offset 0"),
+            		std::string(""), NDAttrSourceDriver, std::string(""), NDAttrUInt32, (void*)&zero );
+            pnd->pAttributeList["h5_roi_origin_1"] = new NDAttribute(std::string("offset 1"),
+            		std::string(""), NDAttrSourceDriver, std::string(""), NDAttrUInt32, (void*)&yoffset );
+            pnd->pAttributeList["h5_roi_origin_2"] = new NDAttribute(std::string("offset 2"),
+            		std::string(""), NDAttrSourceDriver, std::string(""), NDAttrUInt32, (void*)&zero );
 
-            pnd->pAttributeList->add("h5_fill_val", "fill value", NDAttrUInt32, (void*)(&fill_value) );
+            pnd->pAttributeList["h5_fill_val"] = new NDAttribute(std::string("fill value"),
+            		std::string(""), NDAttrSourceDriver, std::string(""), NDAttrUInt32, (void*)(&fill_value) );
             frames.push_back( pnd );
             util_fill_ndarr_dims( *frames[i], sizes, 2);
 
@@ -291,8 +301,9 @@ int main(int argc, char *argv[])
         cacheframe = i%fixt.frames.size();
         LOG4CXX_DEBUG(log, "===== Writing frame[" << cacheframe << "] no: " << i);
         pndarray = fixt.frames[cacheframe];
-        pndarray->pAttributeList->remove("h5_roi_origin_0");
-        pndarray->pAttributeList->add("h5_roi_origin_0", "offset 0", NDAttrUInt32, (void*)&i );
+        pndarray->pAttributeList.erase(pndarray->pAttributeList.find("h5_roi_origin_0"));
+        pndarray->pAttributeList["h5_roi_origin_0"] = new NDAttribute(std::string("offset 0"),
+        		std::string(""), NDAttrSourceDriver, std::string(""), NDAttrUInt32, (void*)&i );
         //pndarray->pAttributeList->report(100);
         ndh.h5_write( *pndarray );
         if (update_timer.stamp_now() > 5.0) {
