@@ -367,8 +367,8 @@ void NDArrayToHDF5::cache_ndattributes( NDAttributeList& ndattr_list )
     	ndattr_type = NDAttrUndefined;
     	name = dset->get_name();
 
-    	ndattr = ndattr_list[name];
-    	if (ndattr == NULL) continue; // skip on to next if no NDAttribute of this name is in the list
+    	if (ndattr_list.count(name)) ndattr = ndattr_list[name];
+    	else continue; // skip on to next if no NDAttribute of this name is in the list
 
     	ndattr->getValueInfo(&ndattr_type, &ndattr_type_size);
     	if (NDArrayToHDF5::from_ndattr_to_phdf_datatype(ndattr_type) !=
