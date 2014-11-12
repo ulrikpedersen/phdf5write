@@ -39,7 +39,6 @@ NDArray::~NDArray()
 int NDArray::getInfo(NDArrayInfo_t *pInfo)
 {
   int i;
-  NDAttribute *pAttribute;
 
   switch(this->dataType) {
     case NDInt8:
@@ -75,8 +74,9 @@ int NDArray::getInfo(NDArrayInfo_t *pInfo)
   pInfo->totalBytes = pInfo->nElements * pInfo->bytesPerElement;
   pInfo->colorMode = NDColorModeMono;
   std::map<std::string, NDAttribute*>::iterator it =  this->pAttributeList.find("ColorMode");
-  pAttribute = it->second;
-  if (pAttribute) pAttribute->getValue(NDAttrInt32, &pInfo->colorMode);
+  if (it != this->pAttributeList.end()) {
+    it->second->getValue(NDAttrInt32, &pInfo->colorMode);;
+  }
   pInfo->xDim        = 0;
   pInfo->yDim        = 0;
   pInfo->colorDim    = 0;
