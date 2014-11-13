@@ -24,6 +24,12 @@ void util_fill_ndarr_dims(NDArray &ndarr, unsigned long int *sizes, int ndims)
         ndarr.initDimension(&(ndarr.dims[i]), sizes[i]);
 }
 
+// NDAttribute factory which is really just a convenience thing...
+NDAttribute* create_attribute(const std::string& desc, NDAttrDataType_t dtype, void* ptr)
+{
+	return new NDAttribute(desc, "", NDAttrSourceDriver, "", dtype, ptr);
+}
+
 //============================================================================
 /** Suite to test the features of the DimensionDesc class.
  *
@@ -60,24 +66,24 @@ struct DefaultFixture
         dim_2d = DimensionDesc(ndarr_2d);
         dim_3d = DimensionDesc(ndarr_3d);
 
-        ndarr_2d.pAttributeList->add("h5_chunk_size_0", "dimension 0", NDAttrUInt32, (void*)(chunks) );
-        ndarr_2d.pAttributeList->add("h5_chunk_size_1", "dimension 1", NDAttrUInt32, (void*)(chunks+1) );
-        ndarr_2d.pAttributeList->add("h5_chunk_size_2", "dimension 2", NDAttrUInt32, (void*)(chunks+2) );
+        ndarr_2d.pAttributeList["h5_chunk_size_0"] = create_attribute("dimension 0", NDAttrUInt32, (void*)(chunks) );
+        ndarr_2d.pAttributeList["h5_chunk_size_1"] = create_attribute("dimension 1", NDAttrUInt32, (void*)(chunks+1) );
+        ndarr_2d.pAttributeList["h5_chunk_size_2"] = create_attribute("dimension 2", NDAttrUInt32, (void*)(chunks+2) );
 
-        ndarr_2d.pAttributeList->add("h5_dset_size_0", "dimension 0", NDAttrUInt32, (void*)(dsetdims) );
-        ndarr_2d.pAttributeList->add("h5_dset_size_1", "dimension 1", NDAttrUInt32, (void*)(dsetdims+1) );
-        ndarr_2d.pAttributeList->add("h5_dset_size_2", "dimension 2", NDAttrUInt32, (void*)(dsetdims+2) );
+        ndarr_2d.pAttributeList["h5_dset_size_0"] = create_attribute("dimension 0", NDAttrUInt32, (void*)(dsetdims) );
+        ndarr_2d.pAttributeList["h5_dset_size_1"] = create_attribute("dimension 1", NDAttrUInt32, (void*)(dsetdims+1) );
+        ndarr_2d.pAttributeList["h5_dset_size_2"] = create_attribute("dimension 2", NDAttrUInt32, (void*)(dsetdims+2) );
 
-        ndarr_3d.pAttributeList->add("h5_chunk_size_0", "dimension 0", NDAttrUInt32, (void*)(chunks) );
-        ndarr_2d.pAttributeList->add("h5_chunk_size_1", "dimension 1", NDAttrUInt32, (void*)(chunks+1) );
-        ndarr_2d.pAttributeList->add("h5_chunk_size_2", "dimension 2", NDAttrUInt32, (void*)(chunks+2) );
+        ndarr_3d.pAttributeList["h5_chunk_size_0"] = create_attribute("dimension 0", NDAttrUInt32, (void*)(chunks) );
+        ndarr_2d.pAttributeList["h5_chunk_size_1"] = create_attribute("dimension 1", NDAttrUInt32, (void*)(chunks+1) );
+        ndarr_2d.pAttributeList["h5_chunk_size_2"] = create_attribute("dimension 2", NDAttrUInt32, (void*)(chunks+2) );
 
-        ndarr_3d.pAttributeList->add("h5_dset_size_0", "dimension 0", NDAttrUInt32, (void*)(dsetdims) );
-        ndarr_3d.pAttributeList->add("h5_dset_size_1", "dimension 1", NDAttrUInt32, (void*)(dsetdims+1) );
-        ndarr_3d.pAttributeList->add("h5_dset_size_2", "dimension 2", NDAttrUInt32, (void*)(dsetdims+2) );
+        ndarr_3d.pAttributeList["h5_dset_size_0"] = create_attribute("dimension 0", NDAttrUInt32, (void*)(dsetdims) );
+        ndarr_3d.pAttributeList["h5_dset_size_1"] = create_attribute("dimension 1", NDAttrUInt32, (void*)(dsetdims+1) );
+        ndarr_3d.pAttributeList["h5_dset_size_2"] = create_attribute("dimension 2", NDAttrUInt32, (void*)(dsetdims+2) );
 
         intfillvalue = 23;
-        ndarr_2d.pAttributeList->add("h5_fill_val", "fill value integer", NDAttrInt32, (void*)&intfillvalue);
+        ndarr_2d.pAttributeList["h5_fill_val"] = create_attribute("fill value integer", NDAttrInt32, (void*)&intfillvalue);
         //ndarr_2d.pAttributeList->report(11);
     }
 
@@ -157,13 +163,13 @@ struct DynamicFixture{
         for (int i=0; i<3; i++)
         {
             util_fill_ndarr_dims( frames[i], sizes, 2);
-            frames[i].pAttributeList->add("h5_chunk_size_0", "dimension 0", NDAttrUInt32, (void*)(chunks) );
-            frames[i].pAttributeList->add("h5_chunk_size_1", "dimension 1", NDAttrUInt32, (void*)(chunks+1) );
-            frames[i].pAttributeList->add("h5_chunk_size_2", "dimension 2", NDAttrUInt32, (void*)(chunks+2) );
+            frames[i].pAttributeList["h5_chunk_size_0"] = create_attribute("dimension 0", NDAttrUInt32, (void*)(chunks) );
+            frames[i].pAttributeList["h5_chunk_size_1"] = create_attribute("dimension 1", NDAttrUInt32, (void*)(chunks+1) );
+            frames[i].pAttributeList["h5_chunk_size_2"] = create_attribute("dimension 2", NDAttrUInt32, (void*)(chunks+2) );
 
-            frames[i].pAttributeList->add("h5_dset_size_0", "dset 0", NDAttrUInt32, (void*)(dsetdims) );
-            frames[i].pAttributeList->add("h5_dset_size_1", "dset 1", NDAttrUInt32, (void*)(dsetdims+1) );
-            frames[i].pAttributeList->add("h5_dset_size_2", "dset 2", NDAttrUInt32, (void*)(dsetdims+2) );
+            frames[i].pAttributeList["h5_dset_size_0"] = create_attribute("dset 0", NDAttrUInt32, (void*)(dsetdims) );
+            frames[i].pAttributeList["h5_dset_size_1"] = create_attribute("dset 1", NDAttrUInt32, (void*)(dsetdims+1) );
+            frames[i].pAttributeList["h5_dset_size_2"] = create_attribute("dset 2", NDAttrUInt32, (void*)(dsetdims+2) );
 
             //frames[i].report(11);
         }
@@ -181,9 +187,9 @@ BOOST_AUTO_TEST_CASE(frames_attr_offset)
 {
     for (int i=0; i<3; i++)
     {
-        frames[i].pAttributeList->add("h5_roi_origin_0", "offset 0", NDAttrUInt32, (void*)&zero );
-        frames[i].pAttributeList->add("h5_roi_origin_1", "offset 1", NDAttrUInt32, (void*)&zero );
-        frames[i].pAttributeList->add("h5_roi_origin_2", "offset 2", NDAttrUInt32, (void*)&i );
+        frames[i].pAttributeList["h5_roi_origin_0"] = create_attribute("offset 0", NDAttrUInt32, (void*)&zero );
+        frames[i].pAttributeList["h5_roi_origin_1"] = create_attribute("offset 1", NDAttrUInt32, (void*)&zero );
+        frames[i].pAttributeList["h5_roi_origin_2"] = create_attribute("offset 2", NDAttrUInt32, (void*)&i );
     }
 
     WriteConfig wc(frames[0]);
