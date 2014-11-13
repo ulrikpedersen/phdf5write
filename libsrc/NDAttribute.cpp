@@ -363,7 +363,7 @@ int NDAttribute::report(FILE *fp, int details)
       break;
     case NDAttrString:
       fprintf(fp, "  dataType=NDAttrString\n"); 
-      fprintf(fp, "  value=%s\n", this->pString);
+      fprintf(fp, "  value=%s\n", this->pString.c_str());
       break;
     case NDAttrUndefined:
       fprintf(fp, "  dataType=NDAttrUndefined\n");
