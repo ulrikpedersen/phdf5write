@@ -2,7 +2,7 @@ language: cpp
 compiler: gcc
 install:
   - sudo apt-get update -qq
-  - sudo apt-get install -qq liblog4cxx10-dev zlib1g-dev libboost-dev libhdf5-openmpi-dev
+  - sudo apt-get install -qq liblog4cxx10-dev zlib1g-dev libboost-all-dev libhdf5-openmpi-dev
   - mkdir build
   - cd build && cmake -DBoost_NO_BOOST_CMAKE=ON ..
   - make VERBOSE=1
