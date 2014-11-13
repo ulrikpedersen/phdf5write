@@ -1,9 +1,8 @@
 phdf5write
 ==========
+[![Build Status](https://travis-ci.org/ulrikpedersen/phdf5write.svg?branch=cmake)](https://travis-ci.org/ulrikpedersen/phdf5write)
 
 A parallel HDF5 file writer service application with benchmarking.
-
-[![Build Status](https://travis-ci.org/ulrikpedersen/phdf5write.svg?branch=cmake)](https://travis-ci.org/ulrikpedersen/phdf5write)
 
 Building
 --------
