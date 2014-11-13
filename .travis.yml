@@ -5,7 +5,7 @@ install:
   - sudo apt-get install -qq liblog4cxx10-dev zlib1g-dev libboost-all-dev libhdf5-openmpi-dev
   - mkdir build
   - cd build && cmake -DBoost_NO_BOOST_CMAKE=ON ..
-  - make VERBOSE=1
+  - make VERBOSE=1 && cd ..
 script: 
   - ldd build/bin/benchmark
   - build/bin/benchmark conf/testconf.xml conf/layout.xml conf/Log4cxxConfig.xml
