@@ -1,5 +1,5 @@
 /** \cond
- * test_real_lustre.cpp
+ * benchmark.cpp
  *
  *  Created on: 14 Feb 2012
  *      Author: up45

@@ -28,10 +28,10 @@ target_link_libraries(test_layoutxml phdf5write ${Boost_LIBRARIES})
 add_executable(test_profiling test_profiling.cpp)
 target_link_libraries(test_profiling phdf5write ${Boost_LIBRARIES})
 
-add_executable(test_real_lustre test_real_lustre.cpp)
-target_link_libraries(test_real_lustre phdf5write ${Boost_LIBRARIES})
+add_executable(benchmark benchmark.cpp)
+target_link_libraries(benchmark phdf5write)
 
-INSTALL(TARGETS test_layout test_layoutxml test_profiling test_real_lustre
+INSTALL(TARGETS test_layout test_layoutxml test_profiling benchmark
   RUNTIME DESTINATION bin
   LIBRARY DESTINATION lib
   ARCHIVE DESTINATION lib

@@ -7,6 +7,6 @@ install:
   - cd build && cmake -DBoost_NO_BOOST_CMAKE=ON ..
   - make VERBOSE=1
 script: 
-  - ldd build/bin/test_real_lustre
-  - build/bin/test_real_lustre conf/testconf.xml conf/layout.xml conf/Log4cxxConfig.xml
+  - ldd build/bin/benchmark
+  - build/bin/benchmark conf/testconf.xml conf/layout.xml conf/Log4cxxConfig.xml
   
