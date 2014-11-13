@@ -771,8 +771,8 @@ int NDArrayToHDF5::create_tree(HdfGroup* root, hid_t h5handle)
 
     string name = root->get_name();
     //First make the current group inside the given hdf handle.
-    hid_t new_group = H5Gcreate(h5handle, name.c_str(),
-    							H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+    hid_t new_group = H5Gcreate2(h5handle, name.c_str(),
+    							 H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
 	if (new_group < 0)
 	{
 		LOG4CXX_ERROR(log, "failed to create group: " << name);
