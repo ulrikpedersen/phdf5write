@@ -123,10 +123,11 @@ int NDArrayToHDF5::h5_open(const char *filename)
         LOG4CXX_DEBUG(log, "---- HURRAH! WE ARE PARALLEL: and MPI has been initialized!");
 
         // Configure the file access property list to use MPI communicator
-        if (this->conf.is_io_mpiposix()) {
-            LOG4CXX_DEBUG(log, " Configuring I/O: MPI + posix");
-            hdfcode = H5Pset_fapl_mpiposix( file_access_plist, this->mpi_comm, 0 );
-        } else {
+//        if (this->conf.is_io_mpiposix()) {
+//            LOG4CXX_DEBUG(log, " Configuring I/O: MPI + posix");
+//            hdfcode = H5Pset_fapl_mpiposix( file_access_plist, this->mpi_comm, 0 );
+//        } else
+        {
             LOG4CXX_DEBUG(log, " Configuring I/O: MPI-I/O");
             hdfcode = H5Pset_fapl_mpio( file_access_plist, this->mpi_comm, this->mpi_info );
         }
@@ -220,8 +221,8 @@ int NDArrayToHDF5::h5_open(const char *filename)
     //	LOG4CXX_DEBUG(log, "    Split");
     } else if (h5_driver == H5FD_MPIO) {
     	LOG4CXX_DEBUG(log, "    Parallel MPIIO");
-    } else if (h5_driver == H5FD_MPIPOSIX) {
-    	LOG4CXX_DEBUG(log, "    Parallel POSIX");
+    //} else if (h5_driver == H5FD_MPIPOSIX) {
+    //	LOG4CXX_DEBUG(log, "    Parallel POSIX");
     //else if (h5_driver == H5FD_STREAM)  {
     //	LOG4CXX_DEBUG(log, "    Stream");
     }
