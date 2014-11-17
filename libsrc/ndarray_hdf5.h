@@ -88,9 +88,9 @@ private:
     int mpi_rank;
     int mpi_size;
     int create_file_layout();
-    int create_dataset(hid_t group, HdfDataset* dset);
-    int create_dataset_detector(hid_t group, HdfDataset* dset);
-    int create_dataset_metadata(hid_t group, HdfDataset* dset);
+    hid_t create_dataset(hid_t group, HdfDataset* dset);
+    hid_t create_dataset_detector(hid_t group, HdfDataset* dset);
+    hid_t create_dataset_metadata(hid_t group, HdfDataset* dset);
 
     int create_tree(HdfGroup *root, hid_t h5handle);
     void configure_ndattr_dsets(NDAttributeList& ndattr_list);
