@@ -9,7 +9,7 @@ find_package( Boost 1.41.0
 # Include the directory itself as a path to include directories
 set(CMAKE_INCLUDE_CURRENT_DIR ON)
 
-include_directories(${HDF5_INCLUDE_DIRS} ${LOG4CXX_INCLUDE_DIRS}/.. ${LIBXML2_INCLUDE_DIR})
+include_directories(${HDF5_INCLUDE_DIRS} ${LOG4CXX_INCLUDE_DIRS} ${LIBXML2_INCLUDE_DIR})
 include_directories(${Boost_INCLUDE_DIRS} ../libsrc )
 include_directories(${MPI_CXX_INCLUDE_PATH})
 add_definitions(${HDF5_DEFINITIONS})
