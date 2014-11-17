@@ -37,8 +37,21 @@ message("HDF5 libs:           " ${HDF5_LIBRARIES} ${HDF5HL_LIBRARIES})
 
 
 ##### Find other dependencies ############
+FIND_LIBRARY(REALTIME_LIBRARY
+             NAMES rt)
+FIND_LIBRARY(REALTIME_LIBRARY
+             NAMES dl)
+FIND_LIBRARY(REALTIME_LIBRARY
+             NAMES z)
+FIND_LIBRARY(REALTIME_LIBRARY
+             NAMES nsl)
+FIND_LIBRARY(REALTIME_LIBRARY
+             NAMES util)
+
+
+
 find_package(Log4CXX 0.10.0 REQUIRED)
-find_package(ZLIB REQUIRED)
+#find_package(ZLIB REQUIRED)
 find_package(LibXml2 REQUIRED)
 find_package(MPI REQUIRED)
 
