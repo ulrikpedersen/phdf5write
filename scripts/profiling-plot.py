@@ -131,7 +131,7 @@ def main():
     plotArgs = []
     smoothed_periods = []
     frequency = 1/result[0].mean()
-    window_time = 20.0
+    window_time = 10.0
     window_length = window_time * frequency
     print "Smoothing window lenght: %.1fs, %i frames "%(window_time, window_length)
     for period_time in result:
