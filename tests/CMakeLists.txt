@@ -18,20 +18,20 @@ add_definitions(${LIBXML2_DEFINITIONS})
 set(CMAKE_CXX_COMPILE_FLAGS ${CMAKE_CXX_COMPILE_FLAGS} ${MPI_CXX_COMPILE_FLAGS})
 set(CMAKE_CXX_LINK_FLAGS ${CMAKE_CXX_LINK_FLAGS} ${MPI_CXX_LINK_FLAGS})
 
-add_executable(test_dimension test_dimension.cpp)
-target_link_libraries(test_dimension phdf5write ${Boost_LIBRARIES})
+#add_executable(test_dimension test_dimension.cpp)
+#target_link_libraries(test_dimension phdf5write ${Boost_LIBRARIES})
 
-add_executable(test_layout test_layout.cpp)
-target_link_libraries(test_layout phdf5write ${Boost_LIBRARIES})
+#add_executable(test_layout test_layout.cpp)
+#target_link_libraries(test_layout phdf5write ${Boost_LIBRARIES})
 
-add_executable(test_layoutxml test_layoutxml.cpp)
-target_link_libraries(test_layoutxml phdf5write ${Boost_LIBRARIES})
+#add_executable(test_layoutxml test_layoutxml.cpp)
+#target_link_libraries(test_layoutxml phdf5write ${Boost_LIBRARIES})
 
-add_executable(test_profiling test_profiling.cpp)
-target_link_libraries(test_profiling phdf5write ${Boost_LIBRARIES})
+#add_executable(test_profiling test_profiling.cpp)
+#target_link_libraries(test_profiling phdf5write ${Boost_LIBRARIES})
 
-add_executable(test_writeconfig test_writeconfig.cpp)
-target_link_libraries(test_writeconfig phdf5write ${Boost_LIBRARIES})
+#add_executable(test_writeconfig test_writeconfig.cpp)
+#target_link_libraries(test_writeconfig phdf5write ${Boost_LIBRARIES})
 
 #add_executable(test_ndarray_hdf5 test_ndarray_hdf5.cpp)
 #target_link_libraries(test_ndarray_hdf5 phdf5write ${Boost_LIBRARIES})
@@ -42,7 +42,7 @@ target_link_libraries(test_writeconfig phdf5write ${Boost_LIBRARIES})
 add_executable(benchmark benchmark.cpp)
 target_link_libraries(benchmark phdf5write)
 
-INSTALL(TARGETS test_layout test_layoutxml test_profiling benchmark
+INSTALL(TARGETS benchmark
   RUNTIME DESTINATION bin
   LIBRARY DESTINATION lib
   ARCHIVE DESTINATION lib
