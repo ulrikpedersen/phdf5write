@@ -42,7 +42,11 @@ set(CMAKE_CXX_LINK_FLAGS ${CMAKE_CXX_LINK_FLAGS} ${MPI_CXX_LINK_FLAGS})
 add_executable(benchmark benchmark.cpp)
 target_link_libraries(benchmark phdf5write)
 
-INSTALL(TARGETS benchmark
+add_executable(h5_extend h5_extend.c)
+target_link_libraries(h5_extend ${HDF5_LIBRARIES} ${MPI_CXX_LIBRARIES} )
+
+
+INSTALL(TARGETS benchmark h5_extend
   RUNTIME DESTINATION bin
   LIBRARY DESTINATION lib
   ARCHIVE DESTINATION lib
