@@ -30,7 +30,7 @@
 #define DIM1 1024
 #define DIM2 1024
 #define NTIM 4000
-#define PARALLEL
+//#define PARALLEL
 
 int
 main (int argc, char **argv)

@@ -53,7 +53,7 @@ FIND_LIBRARY(REALTIME_LIBRARY
 find_package(Log4CXX 0.10.0 REQUIRED)
 #find_package(ZLIB REQUIRED)
 find_package(LibXml2 REQUIRED)
-find_package(MPI REQUIRED)
+### find_package(MPI REQUIRED)
 
 # librt is really only required if glibc =< 2.16
 FIND_LIBRARY(REALTIME_LIBRARY
@@ -73,8 +73,8 @@ include_directories(${HDF5_INCLUDE_DIRS}
 add_definitions(${HDF5_DEFINITIONS})
 add_definitions(${LIBXML2_DEFINITIONS})
 
-set(CMAKE_CXX_COMPILE_FLAGS ${CMAKE_CXX_COMPILE_FLAGS} ${MPI_CXX_COMPILE_FLAGS})
-set(CMAKE_CXX_LINK_FLAGS ${CMAKE_CXX_LINK_FLAGS} ${MPI_CXX_LINK_FLAGS})
+### set(CMAKE_CXX_COMPILE_FLAGS ${CMAKE_CXX_COMPILE_FLAGS} ${MPI_CXX_COMPILE_FLAGS})
+### set(CMAKE_CXX_LINK_FLAGS ${CMAKE_CXX_LINK_FLAGS} ${MPI_CXX_LINK_FLAGS})
 
 # create a list of .cpp files from this directory
 file(GLOB phdf5write_SOURCES *.cpp)
@@ -99,8 +99,8 @@ target_link_libraries(phdf5write ${LOG4CXX_LIBRARIES}
   ${LIBXML2_LIBRARIES} 
   ${HDF5_LIBRARIES} 
   ${HDF5HL_LIBRARIES} 
-  ${REALTIME_LIBRARY}
-  ${MPI_CXX_LIBRARIES} )
+  ${REALTIME_LIBRARY})
+###   ${MPI_CXX_LIBRARIES} )
 
 INSTALL(TARGETS phdf5write
   RUNTIME DESTINATION bin
