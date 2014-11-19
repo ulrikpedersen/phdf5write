@@ -66,8 +66,9 @@ set(CMAKE_INCLUDE_CURRENT_DIR ON)
 
 include_directories(${HDF5_INCLUDE_DIRS} 
                     ${LOG4CXX_INCLUDE_DIRS}/.. 
-                    ${LIBXML2_INCLUDE_DIR} 
-                    ${MPI_CXX_INCLUDE_PATH})
+                    ${LIBXML2_INCLUDE_DIR})
+                     
+### ${MPI_CXX_INCLUDE_PATH}
                     
 add_definitions(${HDF5_DEFINITIONS})
 add_definitions(${LIBXML2_DEFINITIONS})
@@ -98,8 +99,8 @@ target_link_libraries(phdf5write ${LOG4CXX_LIBRARIES}
   ${LIBXML2_LIBRARIES} 
   ${HDF5_LIBRARIES} 
   ${HDF5HL_LIBRARIES} 
-  ${MPI_CXX_LIBRARIES}
-  ${REALTIME_LIBRARY} )
+  ${REALTIME_LIBRARY}
+  ${MPI_CXX_LIBRARIES} )
 
 INSTALL(TARGETS phdf5write
   RUNTIME DESTINATION bin
