@@ -65,6 +65,8 @@ main (int argc, char **argv)
 
     double t1, t2, ttol;
     double mb;
+    plist_id = H5Pcreate(H5P_FILE_ACCESS);
+
 #ifdef PARALLEL 
     /*
      * MPI variables
@@ -83,8 +85,8 @@ main (int argc, char **argv)
     /*
      * Set up file access property list with parallel I/O access
      */
-    plist_id = H5Pcreate(H5P_FILE_ACCESS);
     H5Pset_fapl_mpio(plist_id, comm, info);
+    plist_id = H5Pcreate(H5P_FILE_ACCESS);
 #endif
 
     for (j = 0; j < dims[0]; j++)
@@ -99,15 +101,14 @@ main (int argc, char **argv)
         }
     }
 
-
     /* Create the data space with unlimited dimensions. */
     dataspace = H5Screate_simple (RANK, dims, maxdims); 
 
+    status = H5Pset_alignment( plist_id, 64*1024, 4*1024*1024);
+
     /* Create a new file. If file exists its contents will be overwritten. */
     file = H5Fcreate (FILENAME, H5F_ACC_TRUNC, H5P_DEFAULT, plist_id);
-#ifdef PARALLEL 
     H5Pclose(plist_id);
-#endif
 
     /* Modify dataset creation properties, i.e. enable chunking  */
     prop = H5Pcreate (H5P_DATASET_CREATE);
@@ -115,8 +116,12 @@ main (int argc, char **argv)
 
     /* Create a new dataset within the file using chunk 
        creation properties.  */
+    hid_t dset_acc_plist = H5Pcreate(H5P_DATASET_ACCESS);
+    H5Pset_chunk_cache(dset_acc_plist, 10, DIM1*DIM2*sizeof(int), 1.0);
+
     dataset = H5Dcreate2 (file, DATASETNAME, H5T_NATIVE_INT, dataspace,
-                          H5P_DEFAULT, prop, H5P_DEFAULT);
+                          H5P_DEFAULT, prop, dset_acc_plist);
+    H5Pclose(dset_acc_plist);
 
     /* Write data to dataset */
     status = H5Dwrite(dataset, H5T_NATIVE_INT, H5S_ALL, H5S_ALL,
@@ -162,6 +167,11 @@ main (int argc, char **argv)
         /* Write the data to the extended portion of dataset  */
         status = H5Dwrite (dataset, H5T_NATIVE_INT, memspace, filespace,
                            H5P_DEFAULT, dataext);
+
+        if (t == NTIM-1) {
+            printf("Flushing dataset...\n");
+            H5Fflush(dataset, H5F_SCOPE_LOCAL);
+        }
 #ifdef PARALLEL
         t2 = MPI_Wtime();
         ttol = ttol + (t2 - t1);
