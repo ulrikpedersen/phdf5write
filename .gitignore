@@ -1,5 +1,9 @@
 .cproject
 .project
+.pydev*
 .settings/
 build/
+
+*~
+*.swp
 
