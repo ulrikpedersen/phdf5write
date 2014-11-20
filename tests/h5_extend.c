@@ -156,7 +156,7 @@ main (int argc, char **argv)
                                       dimsext, NULL);
 
         /* Define memory space */
-        memspace = H5Screate_simple (RANK, dimsext, NULL);
+        memspace = H5Screate_simple (RANK, dims, NULL);
 
 #ifdef PARALLEL
         t1 = MPI_Wtime();
@@ -192,7 +192,6 @@ main (int argc, char **argv)
 
     /* Close resources */
     status = H5Dclose (dataset);
-    status = H5Sclose (memspace);
     status = H5Sclose (filespace);
     status = H5Pclose (prop);
     status = H5Sclose (dataspace);
