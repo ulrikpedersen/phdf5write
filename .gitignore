@@ -3,6 +3,8 @@
 .pydev*
 .settings/
 build/
+buildmpi/
+buildserial/
 
 *~
 *.swp
