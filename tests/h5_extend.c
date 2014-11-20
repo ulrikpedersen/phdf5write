@@ -27,10 +27,9 @@
 #define FILENAME    "extend.h5"
 #define DATASETNAME "ExtendibleArray"
 #define RANK         3
-#define DIM1 6
-#define DIM2 4
-#define NTIM 2
-
+#define DIM1 1024
+#define DIM2 1024
+#define NTIM 4000
 
 int
 main (int argc, char **argv)
@@ -38,13 +37,12 @@ main (int argc, char **argv)
     hid_t        file;                          /* handles */
     hid_t        dataspace, dataset;  
     hid_t        filespace, memspace;
-    hid_t        prop;                     
+    hid_t        prop, dataxfer_plist_id;                     
 
-    hsize_t      dims[3]  = {1, DIM1, DIM2};           /* dataset dimensions at creation time */
+    hsize_t      dims[3]  = {1, DIM1, DIM2};     /* dataset dimensions at creation time */
     hsize_t      maxdims[3] = {H5S_UNLIMITED, DIM1, DIM2};
     herr_t       status;                             
     hsize_t      chunk_dims[3] = {1, DIM1, DIM2};
-    int          data[1][DIM1][DIM2];  /* data to write */
 
 
 
@@ -66,12 +64,12 @@ main (int argc, char **argv)
     double t1, t2, ttol;
     double mb;
     plist_id = H5Pcreate(H5P_FILE_ACCESS);
-
+    dataxfer_plist_id = H5P_DEFAULT;
+    int mpi_size=1, mpi_rank=0;
 #ifdef PARALLEL 
     /*
      * MPI variables
      */
-    int mpi_size, mpi_rank;
     MPI_Comm comm  = MPI_COMM_WORLD;
     MPI_Info info  = MPI_INFO_NULL;
 
@@ -82,12 +80,23 @@ main (int argc, char **argv)
     MPI_Comm_size(comm, &mpi_size);
     MPI_Comm_rank(comm, &mpi_rank);
 
+    MPI_Info_create(&info);
+/*     MPI_Info_set(info, "IBM_largeblock_io", "true"); */
+/*     MPI_Info_set(info,"stripping_unit","4194304"); */
+/*     MPI_Info_set(info,"cb_buffer_size","4194304", error); */
+      
+    char mpi_name[100];
+    int mpi_name_len;
+    MPI_Get_processor_name(mpi_name, &mpi_name_len);
+
     /*
      * Set up file access property list with parallel I/O access
      */
     H5Pset_fapl_mpio(plist_id, comm, info);
-    plist_id = H5Pcreate(H5P_FILE_ACCESS);
-    printf("We are fully MPI parallel...\n");
+    printf("We are fully MPI parallel... %s\n", mpi_name);
+
+    //dataxfer_plist_id = H5Pcreate(H5P_DATASET_XFER);
+    //H5Pset_dxpl_mpio(dataxfer_plist_id, H5FD_MPIO_INDEPENDENT);
 
     dimsext[1] = DIM1 * mpi_size;
     maxdims[1] = DIM1 * mpi_size;
@@ -116,29 +125,22 @@ main (int argc, char **argv)
                           H5P_DEFAULT, prop, dset_acc_plist);
     H5Pclose(dset_acc_plist);
 
-    /* Write data to dataset */
-    //status = H5Dwrite(dataset, H5T_NATIVE_INT, H5S_ALL, H5S_ALL,
-    //                  H5P_DEFAULT, data);
-
     ttol = 0.;
     icnt = 0;
     srand(time(NULL));
     for (i = 0; i < dims[1]; i++) {
         for (k = 0; k < dims[2]; k++) {
-            dataext[i][k] = rand() % 100 + 1;
+	  dataext[i][k] = (int) mpi_rank;
         }
     }
 
-#ifdef PARALLEL
-    dataext[0][0] = (int) mpi_size;
-    dataext[0][1] = (int) mpi_rank;
-#endif
+    for  (t = 0; t < NTIM; t++) {
 
-    for  (t = 1; t < NTIM; t++) {
-
+      if(t % 100 == 0 && mpi_rank == 0) 
+	printf("slice number %lld, time %f \n", t, ttol);
 
         /* Extend the dataset. */
-        size[0] = t;
+        size[0] = t+1;
         size[1] = dims[1];
 #ifdef PARALLEL
         size[1] = dims[1]*mpi_size;
@@ -148,19 +150,15 @@ main (int argc, char **argv)
 
         /* Select a hyperslab in extended portion of dataset  */
         filespace = H5Dget_space (dataset);
-        offset[0] = t-1;
+        offset[0] = t;
         offset[1] = 0;
 #ifdef PARALLEL
         offset[1] = dims[1]*mpi_rank;
-        printf("Offset: %lld\n", offset[1]);
 #endif
         offset[2] = 0;
         dimsext[0] = 1;
-        printf("dims:   %lld, %lld, %lld\n", dims[0], dims[1], dims[2]);
-        printf("offset: %lld, %lld, %lld\n", offset[0], offset[1], offset[2]);
         status = H5Sselect_hyperslab (filespace, H5S_SELECT_SET, offset, NULL,
                                       dims, NULL);
-
         /* Define memory space */
         memspace = H5Screate_simple (RANK, dims, NULL);
 
@@ -169,11 +167,9 @@ main (int argc, char **argv)
 #else
         clock_t t1 = clock();
 #endif
-
-
         /* Write the data to the extended portion of dataset  */
         status = H5Dwrite (dataset, H5T_NATIVE_INT, memspace, filespace,
-                           H5P_DEFAULT, dataext);
+                           dataxfer_plist_id, dataext);
         status = H5Sclose (memspace);
 
         if (t == NTIM-1) {
@@ -182,16 +178,15 @@ main (int argc, char **argv)
         }
 #ifdef PARALLEL
         t2 = MPI_Wtime();
-        ttol = ttol + (t2 - t1);
+        ttol += (t2 - t1);
 #else
         clock_t t2 = clock();
-        ttol = ttol + (double)(t2 - t1)/ CLOCKS_PER_SEC;
+        ttol += (double)(t2 - t1)/ CLOCKS_PER_SEC;
 #endif
 
         /* 	printf( "Elapsed time is %f\n", ttol );  */
         icnt += 1;
     }
-
 
     mb= (double)sizeof(int)*(double)(DIM1*DIM2)*icnt/1048576.;
 
@@ -201,6 +196,7 @@ main (int argc, char **argv)
     status = H5Dclose (dataset);
     status = H5Sclose (filespace);
     status = H5Pclose (prop);
+    status = H5Pclose (dataxfer_plist_id);
     status = H5Sclose (dataspace);
     status = H5Fclose (file);
 
