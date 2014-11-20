@@ -90,17 +90,6 @@ main (int argc, char **argv)
     printf("We are fully MPI parallel...\n");
 #endif
 
-    for (j = 0; j < dims[0]; j++)
-    {
-        for (i = 0; i < dims[1]; i++)
-        {
-            for (k = 0; k < dims[2]; k++)
-            {
-                data[j][i][k]=1;
-                dataext[i][k]=2;
-            }
-        }
-    }
 
     /* Create the data space with unlimited dimensions. */
     dataspace = H5Screate_simple (RANK, dims, maxdims); 
