@@ -50,31 +50,36 @@ FIND_LIBRARY(REALTIME_LIBRARY
 
 
 
-find_package(Log4CXX 0.10.0 REQUIRED)
+#find_package(Log4CXX 0.10.0 REQUIRED)
 #find_package(ZLIB REQUIRED)
 find_package(LibXml2 REQUIRED)
-### find_package(MPI REQUIRED)
+
 
 # librt is really only required if glibc =< 2.16
 FIND_LIBRARY(REALTIME_LIBRARY
              NAMES rt)
 ##### End of dependency search ###########
 
+##### If building with MPI ###############
+if (WITH_MPI)
+  message("Searching for MPI...")
+  find_package(MPI REQUIRED)
+  include_directories(${MPI_CXX_INCLUDE_PATH})
+  set(CMAKE_CXX_COMPILE_FLAGS ${CMAKE_CXX_COMPILE_FLAGS} ${MPI_CXX_COMPILE_FLAGS})
+  set(CMAKE_CXX_LINK_FLAGS ${CMAKE_CXX_LINK_FLAGS} ${MPI_CXX_LINK_FLAGS})
+else(WITH_MPI)
+  message("Not building with MPI...")
+endif(WITH_MPI)
 
 # Include the directory itself as a path to include directories
 set(CMAKE_INCLUDE_CURRENT_DIR ON)
 
 include_directories(${HDF5_INCLUDE_DIRS} 
-                    ${LOG4CXX_INCLUDE_DIRS}/.. 
+                    ${LOG4CXX_INCLUDE_DIRS}/..
                     ${LIBXML2_INCLUDE_DIR})
-                     
-### ${MPI_CXX_INCLUDE_PATH}
                     
 add_definitions(${HDF5_DEFINITIONS})
 add_definitions(${LIBXML2_DEFINITIONS})
-
-### set(CMAKE_CXX_COMPILE_FLAGS ${CMAKE_CXX_COMPILE_FLAGS} ${MPI_CXX_COMPILE_FLAGS})
-### set(CMAKE_CXX_LINK_FLAGS ${CMAKE_CXX_LINK_FLAGS} ${MPI_CXX_LINK_FLAGS})
 
 # create a list of .cpp files from this directory
 file(GLOB phdf5write_SOURCES *.cpp)
@@ -89,7 +94,6 @@ set(phdf5write_SOURCES
                        ndarray_hdf5.cpp)
 #                       server.cpp )
 
-
 # Create a library file called helloworld from sources.
 # By default it will be static. User can change this by setting
 # the cmake variable BUILD_SHARED_LIBS=ON
@@ -99,8 +103,10 @@ target_link_libraries(phdf5write ${LOG4CXX_LIBRARIES}
   ${LIBXML2_LIBRARIES} 
   ${HDF5_LIBRARIES} 
   ${HDF5HL_LIBRARIES} 
-  ${REALTIME_LIBRARY})
-###   ${MPI_CXX_LIBRARIES} )
+  ${REALTIME_LIBRARY} )
+if (WITH_MPI)
+  target_link_libraries(phdf5write ${MPI_CXX_LIBRARIES})
+endif (WITH_MPI)
 
 INSTALL(TARGETS phdf5write
   RUNTIME DESTINATION bin

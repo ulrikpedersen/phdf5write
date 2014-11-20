@@ -24,15 +24,29 @@ Clone/checkout the phdf5writer from github.
     cmake ..
     make
 
-Building on the DLS RHEL6 environment caused some trouble. Currently we can build it with the following tweaks:
+Building on the DLS RHEL6 environment caused some trouble. Currently we can build it with the following tweaks for a parallel build:
 
-    cmake -DHDF5_ROOT=/dls_sw/work/tools/RHEL6-x86_64/phdf5/prefix \
-          -DLOG4CXX_ROOT_DIR=/dls_sw/prod/tools/RHEL6-x86_64/log4cxx/0-10-0/prefix \
-          -DLOG4CXX_INCLUDE_DIRS:PATH=/dls_sw/prod/tools/RHEL6-x86_64/log4cxx/0-10-0/prefix/include \
-          -DHDF5_USE_STATIC_LIBRARIES=ON \
-          -DMPI_CC_COMPILER=/dls_sw/work/tools/RHEL6-x86_64/openmpi/prefix/bin/mpicc \
-          -DMPI_CXX_COMPILER=/dls_sw/work/tools/RHEL6-x86_64/openmpi/prefix/bin/mpic++ \
-          ..
+    export CC=/dls_sw/work/tools/RHEL6-x86_64/openmpi/prefix/bin/mpicc
+    export CXX=/dls_sw/work/tools/RHEL6-x86_64/openmpi/prefix/bin/mpic++
+    /dls_sw/work/tools/RHEL6-x86_64/cmake/prefix/bin/cmake \
+        -DHDF5_ROOT=/dls_sw/work/tools/RHEL6-x86_64/phdf5/prefix \
+        -DLOG4CXX_ROOT_DIR=/dls_sw/prod/tools/RHEL6-x86_64/log4cxx/0-10-0/prefix \
+        -DHDF5_USE_STATIC_LIBRARIES=ON \
+        -DMPI_CC_COMPILER=/dls_sw/work/tools/RHEL6-x86_64/openmpi/prefix/bin/mpicc \
+        -DMPI_CXX_COMPILER=/dls_sw/work/tools/RHEL6-x86_64/openmpi/prefix/bin/mpic++ \
+        ..
+
+For building a simple non-parallel version without any MPI:
+
+    unset CC
+    unset CXX
+    /dls_sw/work/tools/RHEL6-x86_64/cmake/prefix/bin/cmake \
+        -DHDF5_ROOT=/dls_sw/work/tools/RHEL6-x86_64/hdf5_trunk/prefix \
+        -DLOG4CXX_ROOT_DIR=/dls_sw/prod/tools/RHEL6-x86_64/log4cxx/0-10-0/prefix \
+        -DHDF5_USE_STATIC_LIBRARIES=ON \
+        -DWITH_MPI=OFF \
+        ..
+
 
 Running the benchmark
 ---------------------

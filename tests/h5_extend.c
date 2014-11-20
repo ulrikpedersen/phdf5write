@@ -30,7 +30,7 @@
 #define DIM1 1024
 #define DIM2 1024
 #define NTIM 4000
-//#define PARALLEL
+
 
 int
 main (int argc, char **argv)
@@ -87,6 +87,7 @@ main (int argc, char **argv)
      */
     H5Pset_fapl_mpio(plist_id, comm, info);
     plist_id = H5Pcreate(H5P_FILE_ACCESS);
+    printf("We are fully MPI parallel...\n");
 #endif
 
     for (j = 0; j < dims[0]; j++)
