@@ -128,7 +128,9 @@ struct Fixture{
     int zero;
     int yoffset;
 
+#ifdef H5_HAVE_PARALLEL
     MPI_Comm mpi_comm;
+#endif
     char mpi_name[100];
     int mpi_name_len;
     int mpi_size;

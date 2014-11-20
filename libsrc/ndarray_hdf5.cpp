@@ -180,7 +180,7 @@ int NDArrayToHDF5::h5_open(const char *filename)
         }
     }
     H5Pget_istore_k(create_plist, &istorek);
-    LOG4CXX_DEBUG(log, "istorek set to: " << istorek);
+    LOG4CXX_INFO(log, "istorek set to: " << istorek);
 
     // Ensure file is closed even if objects are still open.
     hdfcode = H5Pset_fclose_degree(file_access_plist, H5F_CLOSE_STRONG);
@@ -237,10 +237,6 @@ int NDArrayToHDF5::h5_open(const char *filename)
     if (retcode < 0) {
     	LOG4CXX_ERROR(log, "Failed to create file layout");
     }
-
-#ifdef H5_HAVE_PARALLEL
-    MPI_Barrier(this->mpi_comm);
-#endif
 
     return retcode;
 }
@@ -301,10 +297,6 @@ int NDArrayToHDF5::h5_close()
 //    	this->h5file = H5I_INVALID_HID;
 //    	retcode = -1;
 //    }
-
-#ifdef H5_HAVE_PARALLEL
-    MPI_Barrier(this->mpi_comm);
-#endif
 
     if (this->h5file != H5I_INVALID_HID) {
     	this->write_ndattributes();
