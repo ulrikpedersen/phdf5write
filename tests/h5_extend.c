@@ -27,9 +27,9 @@
 #define FILENAME    "extend.h5"
 #define DATASETNAME "ExtendibleArray"
 #define RANK         3
-#define DIM1 1024
-#define DIM2 1024
-#define NTIM 4000
+#define DIM1 6
+#define DIM2 4
+#define NTIM 2
 
 
 int
@@ -88,13 +88,16 @@ main (int argc, char **argv)
     H5Pset_fapl_mpio(plist_id, comm, info);
     plist_id = H5Pcreate(H5P_FILE_ACCESS);
     printf("We are fully MPI parallel...\n");
+
+    dimsext[1] = DIM1 * mpi_size;
+    maxdims[1] = DIM1 * mpi_size;
 #endif
 
-
     /* Create the data space with unlimited dimensions. */
-    dataspace = H5Screate_simple (RANK, dims, maxdims); 
+    dataspace = H5Screate_simple (RANK, dimsext, maxdims);
 
     status = H5Pset_alignment( plist_id, 64*1024, 4*1024*1024);
+    H5Pset_fclose_degree(plist_id, H5F_CLOSE_STRONG);
 
     /* Create a new file. If file exists its contents will be overwritten. */
     file = H5Fcreate (FILENAME, H5F_ACC_TRUNC, H5P_DEFAULT, plist_id);
@@ -107,15 +110,15 @@ main (int argc, char **argv)
     /* Create a new dataset within the file using chunk 
        creation properties.  */
     hid_t dset_acc_plist = H5Pcreate(H5P_DATASET_ACCESS);
-    H5Pset_chunk_cache(dset_acc_plist, 10, DIM1*DIM2*sizeof(int), 1.0);
+    H5Pset_chunk_cache(dset_acc_plist, 10, 10*DIM1*DIM2*sizeof(int), 1.0);
 
     dataset = H5Dcreate2 (file, DATASETNAME, H5T_NATIVE_INT, dataspace,
                           H5P_DEFAULT, prop, dset_acc_plist);
     H5Pclose(dset_acc_plist);
 
     /* Write data to dataset */
-    status = H5Dwrite(dataset, H5T_NATIVE_INT, H5S_ALL, H5S_ALL,
-                      H5P_DEFAULT, data);
+    //status = H5Dwrite(dataset, H5T_NATIVE_INT, H5S_ALL, H5S_ALL,
+    //                  H5P_DEFAULT, data);
 
     ttol = 0.;
     icnt = 0;
@@ -126,23 +129,37 @@ main (int argc, char **argv)
         }
     }
 
+#ifdef PARALLEL
+    dataext[0][0] = (int) mpi_size;
+    dataext[0][1] = (int) mpi_rank;
+#endif
+
     for  (t = 1; t < NTIM; t++) {
 
 
         /* Extend the dataset. */
-        size[0] = dims[0] + t;
+        size[0] = t;
         size[1] = dims[1];
+#ifdef PARALLEL
+        size[1] = dims[1]*mpi_size;
+#endif
         size[2] = dims[2];
         status = H5Dset_extent (dataset, size);
 
         /* Select a hyperslab in extended portion of dataset  */
         filespace = H5Dget_space (dataset);
-        offset[0] = t;
+        offset[0] = t-1;
         offset[1] = 0;
+#ifdef PARALLEL
+        offset[1] = dims[1]*mpi_rank;
+        printf("Offset: %lld\n", offset[1]);
+#endif
         offset[2] = 0;
         dimsext[0] = 1;
+        printf("dims:   %lld, %lld, %lld\n", dims[0], dims[1], dims[2]);
+        printf("offset: %lld, %lld, %lld\n", offset[0], offset[1], offset[2]);
         status = H5Sselect_hyperslab (filespace, H5S_SELECT_SET, offset, NULL,
-                                      dimsext, NULL);
+                                      dims, NULL);
 
         /* Define memory space */
         memspace = H5Screate_simple (RANK, dims, NULL);
@@ -157,6 +174,7 @@ main (int argc, char **argv)
         /* Write the data to the extended portion of dataset  */
         status = H5Dwrite (dataset, H5T_NATIVE_INT, memspace, filespace,
                            H5P_DEFAULT, dataext);
+        status = H5Sclose (memspace);
 
         if (t == NTIM-1) {
             printf("Flushing dataset...\n");
