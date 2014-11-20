@@ -25,11 +25,6 @@
 
 #define NUM_WRITE_STEPS 2
 
-// debugging...
-#ifdef H5_HAVE_PARALLEL
-#undef H5_HAVE_PARALLEL
-#endif
-
 typedef struct {
 	vec_ds_t dims_dset_size;
 	vec_ds_t dims_frame_size;
