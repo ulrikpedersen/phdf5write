@@ -63,7 +63,6 @@ main (int argc, char **argv)
 
     double t1, t2, ttol;
     double mb;
-    plist_id = H5Pcreate(H5P_FILE_ACCESS);
     dataxfer_plist_id = H5P_DEFAULT;
     int mpi_size=1, mpi_rank=0;
 #ifdef PARALLEL 
@@ -92,14 +91,17 @@ main (int argc, char **argv)
     /*
      * Set up file access property list with parallel I/O access
      */
+    plist_id = H5Pcreate(H5P_FILE_ACCESS);
     H5Pset_fapl_mpio(plist_id, comm, info);
     printf("We are fully MPI parallel... %s\n", mpi_name);
 
-    //dataxfer_plist_id = H5Pcreate(H5P_DATASET_XFER);
-    //H5Pset_dxpl_mpio(dataxfer_plist_id, H5FD_MPIO_INDEPENDENT);
+    dataxfer_plist_id = H5Pcreate(H5P_DATASET_XFER);
+    H5Pset_dxpl_mpio(dataxfer_plist_id, H5FD_MPIO_INDEPENDENT);
 
     dimsext[1] = DIM1 * mpi_size;
     maxdims[1] = DIM1 * mpi_size;
+#else
+    plist_id = H5Pcreate(H5P_FILE_ACCESS);
 #endif
 
     /* Create the data space with unlimited dimensions. */
