@@ -198,45 +198,6 @@ main (int argc, char **argv)
     status = H5Sclose (dataspace);
     status = H5Fclose (file);
 
-    goto skip;
-
-    /********************************************
-     * Re-open the file and read the data back. *
-     ********************************************/
-
-    file = H5Fopen (FILENAME, H5F_ACC_RDONLY, H5P_DEFAULT);
-    dataset = H5Dopen2 (file, DATASETNAME, H5P_DEFAULT);
-
-    filespace = H5Dget_space (dataset);
-    rank = H5Sget_simple_extent_ndims (filespace);
-    status_n = H5Sget_simple_extent_dims (filespace, dimsr, NULL);
-
-    prop = H5Dget_create_plist (dataset);
-
-    if (H5D_CHUNKED == H5Pget_layout (prop)) 
-        rank_chunk = H5Pget_chunk (prop, rank, chunk_dimsr);
-
-    memspace = H5Screate_simple (rank, dimsr, NULL);
-    status = H5Dread (dataset, H5T_NATIVE_INT, memspace, filespace,
-                      H5P_DEFAULT, rdata);
-
-    printf("\n");
-    printf("Dataset: \n");
-    for (j = 0; j < dimsr[0]; j++)
-    {
-        for (i = 0; i < dimsr[1]; i++)
-            printf("%d ", rdata[j][i]);
-        printf("\n");
-    }
-
-    status = H5Pclose (prop);
-    status = H5Dclose (dataset);
-    status = H5Sclose (filespace);
-    status = H5Sclose (memspace);
-    status = H5Fclose (file);
-
-    skip:
-
 #ifdef PARALLEL
     MPI_Finalize();
 #endif
