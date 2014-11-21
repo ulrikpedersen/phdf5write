@@ -18,6 +18,9 @@
 #include <NDArray.h>
 #include "ndarray_hdf5.h"
 
+#include <cstdlib>
+#include <unistd.h>
+
 #include <log4cxx/logger.h>
 #include <log4cxx/xml/domconfigurator.h>
 
@@ -148,6 +151,8 @@ struct Fixture{
         mpi_size = 1;
         mpi_rank = 0;
         mpi_name_len = 100;
+
+
 #ifdef H5_HAVE_PARALLEL
 
         mpi_comm = MPI_COMM_WORLD;
@@ -166,6 +171,10 @@ struct Fixture{
 
         // output filename
         fname = config.filename;
+        char *hostname;
+        hostname = (char*)calloc(100, sizeof(char));
+        gethostname(hostname, 100);
+        fname.append(hostname);
 
         // Define the dimensions and number of frames to run here
         //numframes = NUM_FRAMES;

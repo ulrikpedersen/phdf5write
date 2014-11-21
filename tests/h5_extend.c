@@ -18,11 +18,11 @@
  *  must be chunked in order to be extendible.
  *
  */
-
-
+#include <string.h>
 #include "hdf5.h"
 #include "stdlib.h"
 #include <time.h>
+#include <unistd.h>
 
 #define FILENAME    "extend.h5"
 #define DATASETNAME "ExtendibleArray"
@@ -43,8 +43,6 @@ main (int argc, char **argv)
     hsize_t      maxdims[3] = {H5S_UNLIMITED, DIM1, DIM2};
     herr_t       status;                             
     hsize_t      chunk_dims[3] = {1, DIM1, DIM2};
-
-
 
     /* Variables used in extending and writing to the extended portion of dataset */
     hsize_t      size[3];
@@ -104,6 +102,9 @@ main (int argc, char **argv)
     plist_id = H5Pcreate(H5P_FILE_ACCESS);
 #endif
 
+    char *hostname = calloc(100, sizeof(char));
+    gethostname(hostname, 100);
+
     /* Create the data space with unlimited dimensions. */
     dataspace = H5Screate_simple (RANK, dimsext, maxdims);
 
@@ -111,7 +112,7 @@ main (int argc, char **argv)
     H5Pset_fclose_degree(plist_id, H5F_CLOSE_STRONG);
 
     /* Create a new file. If file exists its contents will be overwritten. */
-    file = H5Fcreate (FILENAME, H5F_ACC_TRUNC, H5P_DEFAULT, plist_id);
+    file = H5Fcreate (strcat(hostname, FILENAME), H5F_ACC_TRUNC, H5P_DEFAULT, plist_id);
     H5Pclose(plist_id);
 
     /* Modify dataset creation properties, i.e. enable chunking  */
