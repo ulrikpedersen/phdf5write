@@ -169,7 +169,7 @@ int DimensionDesc::grow_by_block(DimensionDesc& block)
 
 const dimsize_t * DimensionDesc::dim_sizes()
 {
-    const dimsize_t * ptr = this->dims.data();
+    const dimsize_t * ptr = &(this->dims.front());
     return ptr;
 }
 
